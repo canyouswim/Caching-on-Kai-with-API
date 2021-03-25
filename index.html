@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="rgb(106, 0, 128)" />
+    <title>C:Kai</title>
+    <link rel="stylesheet" type="text/css" href="src/css/header.css" />
+    <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />
+    <link rel="stylesheet" type="text/css" href="src/css/root.css" />
+    <link rel="stylesheet" type="text/css" href="src/css/main.css" />	
+    <link rel="stylesheet" href="src/leaflet/leaflet.css" />	
+	<link rel="stylesheet" type="text/css" href="src/css/kaios-toaster.css" />
+	
+
+	
+	
+	<script src="src/leaflet/leaflet.js" defer></script>
+	
+
+    <script src="src/app.js" defer></script>
+    <script src="src/KaiOS.js" defer></script>
+    <script src="src/kaios-toaster.js" defer></script>
+    <script src="src/someInputs.js" defer></script>
+
+
+
+	<style>body { padding: 0; margin: 0; } #map { height: 100%; width: 100vw; }</style>	
+	
+	
+	
+	
+	
+  </head>
+
+  <body>
+
+	
+    <div id="views">
+
+		<div class="view" id="viewMap")>
+
+			<div id="map-container">
+			<div id="content2"> </div>	
+			<div id="mapCenter" style="display: block; color: 'grey'; position:absolute; top:45%; left:49%; z-index: 2000;">+</div>	
+
+				<center>
+					<br><img src="/assets/appLogo/Logo_caching-on-kai_FullName.png"/><br><br>
+					<b>Caching-on-Kai</b><br>
+					Geocaching for everyone else<br>
+					v3.0.0
+				</center>
+			</div>		  
+			<div id="compassContainer">
+
+				<div id="mapViewCompass">
+
+					<img src="/assets/icons/icons8-gps-32.png" id="compass"/>	
+				</div>
+				<div id="content">Waiting on GPS lock...</div>					
+			</div>			
+		</div>
+
+		<div class="view" id="viewList">
+			<div id="CacheList" class="list">Waiting on the list of caches...<br><br>Press the Call button or select "Refresh Cache List" from the Options menu to load caches based on the map position</div>
+		</div>
+
+		<div class="view" id="viewCompass">
+			<div id="NorthCompassContainer">
+				<img src="/assets/icons/icons8-north-direction-150.png" id="NorthCompass"/>	
+			</div>
+			<div id="largeCompassContainer">
+				<img src="/assets/icons/icons8-gps-96.png" id="largeCompass"/>			
+			</div>				
+			<div id="distanceToCache">Distance</div>
+			<div id="bearingToCache"></div>
+			<div id="gpsAccuracy">Accuracy</div>
+			<div id="cacheName">Name</div>
+
+		</div>
+
+
+
+
+
+
+
+		
+		<div class="view" id="viewCache">
+			<div id="CacheHeaderDetail">Waiting on cache details...<br><br>No cache selected yet :)</div>
+			<div id="CacheDetails"></div>
+			<div id="CacheDescription"></div>
+			<div id="CacheHint"></div>
+			<div id="CacheLogs"></div>
+			<div id="CachePhotos"></div>
+			<div id="CacheActions">
+			<!--*: View Logs<br>
+			0: View Photo Gallery<br>
+			#: Log Cache--></div>
+		</div>
+		
+		<div class="view" id="LogCache"></div>		
+		
+		<div class="view" id="Help">
+		  Help goes here
+		</div>
+
+		
+		
+		<div class="view" id="viewOptions">
+			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
+			<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
+			<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache Details</div></button>	
+			<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
+			<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
+			<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
+			<button class="navItem" tabIndex="60" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
+			<button class="navItem" tabIndex="70" data-function="viewShortcuts">View all Shortcuts</button>			
+			<button class="navItem" tabIndex="80" data-function="viewSettings">Settings</button>		
+			<button class="navItem" tabIndex="90" data-function="quit">Quit</button>			
+		</div>	
+
+		<div class="view" id="About">
+	
+		</div>
+		
+		<div class="view" id="Settings">
+			<div><b>Settings</b> app v3.0.0</div>			
+			<!--Dist Traveled: <div id="TravelDistance">not calculated</div>
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Show distance traveled?</legend>
+			  <select id="saveTravelDistance">
+				<option value="yes" selected>Yes</option>
+				<option value="no">No, but save distances traveled so far</option>
+				<option value="noClear">No, and clear distances traveled</option>				
+			  </select>
+			</fieldset>
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">On load, start at...</legend>
+			  <select id="initialLocation">
+				<option value="GPS" selected>GPS position</option>
+				<option value="Home">Home loc from geocaching.com</option>
+			  </select>
+			</fieldset>-->
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
+			  <select id="initialCacheLoad">
+				<option value="YesLoadCaches" selected>Yes - load immediately based on my position</option>
+				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
+			  </select>
+			</fieldset>			
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
+			  <select id="displayUnits">
+				<option value="mi" selected>feet/miles</option>
+				<option value="km">meters/kilometers</option>
+			  </select>
+			</fieldset>
+				<fieldset>
+			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
+			  <select id="coorRep">
+				<option value="DDD" selected>ND.dº WD.dº</option>
+				<option value="DMM">NDºM.m' WDºM.m'</option>
+				<option value="DMS">NDºM'S.s" WDºM'S.s"</option>
+			  </select>
+			</fieldset>
+			<!--<fieldset>
+			  <legend class="navItem" tabIndex="30">Max # of caches to store</legend>
+			  <select id="maxNumCaches">
+				<option value="50" selected>50</option>
+				<option value="100">100</option>
+				<option value="150">150</option>				
+			  </select>	
+			</fieldset>-->		
+			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="40" data-function="About">About</button>
+		</div>
+		
+		<div class="view" id="viewAllShortcuts">
+				1 -ZOOM+ 3 <br>
+				2: Take Picture <br>
+				ENTER: Action Menu<br>
+				CALL: Refresh Cache List<br>
+				4: Cache List <br>
+				5: Toggle Center on Cache / Center on GPS<br>
+				6: View Map<br>
+				7: Cache Details<br>
+				8: Toggle Cache Icons on Map<br>
+				9: View Compass<br>
+				*: View Cache Logs<br>
+				0: View Cache Gallery<br>
+				#: Log Cache
+		</div>
+
+		<div class="view" id="viewCacheOptions">
+			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>				
+			<button class="navItem" tabIndex="10" data-function="viewCache"><div id="viewCacheText">4: View Cache Details</div></button>			
+			<button class="navItem" tabIndex="20" data-function="viewLogs"><div id="viewLogsText">*: View Cache Logs</div></button>
+			<button class="navItem" tabIndex="30" data-function="viewGallery"><div id="viewGalleryText">0: View Cache Gallery</div></button>	
+			<button class="navItem" tabIndex="40" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
+			<button class="navItem" tabIndex="50" data-function="LogCache"><div id="logCacheText">#: Log Cache</div></button>
+			<button class="navItem" tabIndex="60" data-function="refreshList">✆: Refresh Cache List</button>	
+		
+		</div>	
+		
+		<div class="view" id="enterWaypoint">
+			<!--<button class="navItem" tabIndex="0" data-function="viewWaypoints">View stored WayPoints<sub>(not available)</sub></button>
+			<button class="navItem" tabIndex="10" data-function="createWPDirectly">#: Create new WayPoint<sub>(not available)</sub></button>-->
+			<button class="navItem" tabIndex="20" data-function="createWPfromMap">*: Create new WayPoint from Map View</button>	
+			<button class="navItem" tabIndex="30" data-function="deleteAllWaypoints">Delete all WayPoints</button>	
+			<!--<button class="navItem" tabIndex="20" data-function="app.newKeyCallback.pushAsterisk">Create new WayPoint from Map View</button>		-->
+		</div>
+		
+		<div class="view" id="viewActions">
+			Select action:
+			<button class="navItem" tabIndex="0" data-function="cancel">None/Cancel</button>
+			<button class="navItem" tabIndex="10" data-function="createWaypoint">Create wayPoint here</button>
+			<button class="navItem" tabIndex="20" data-function="centerOnMe">Recenter on me</button>	
+			<div id="showCacheNav"></div>			
+		</div>		
+
+		<div class="view" id="editWaypoint">
+		Edit Waypoint
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Name</legend>
+			  <input id="waypointName" value="text" />
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Coordinates</legend>
+			  <input id="waypointCoords" value="text" />
+			</fieldset>		
+			<fieldset>
+			  <legend class="navItem" tabIndex="20">Description</legend>
+			  <input id="waypointDescription" value="text" />
+			</fieldset>					
+			<button class="navItem" tabIndex="30" data-function="saveWaypoint">Save Waypoint</button>
+			<button class="navItem" tabIndex="40" data-function="cancel">Cancel</button>			
+		</div>	
+
+	</div>	 	 
+	 
+	
+    <div id="softkeyBar">
+      <button id="bar-back"></button>
+      <button id="bar-action"></button>
+      <button id="bar-options"></button>
+    </div>
+
+    <div id="keyOverlay"></div>
+
+    
+
+
+  </body>
+</html>

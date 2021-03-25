@@ -1,0 +1,355 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+* {
+  outline: 0 ! important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  color: black;
+  background-color: darkslategray;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  overflow: hidden;
+  font-size: 1em;
+}
+
+/*///////////////////////////
+///TOAST////////////////*/
+
+div#toast {
+    position: fixed;
+    height: auto;
+    overflow: none;
+    top: -100px;
+    background: black;
+    color: white;
+    z-index: 2000;
+    min-width: 100%;
+    padding: 5px;
+}
+
+/*///////////////////////////
+///MAP////////////////*/
+
+div#content2 {
+	display: block; 
+	position:absolute; 
+	top:0; 
+	left:0; 
+	z-index: 2000;
+	background-color: white;
+}
+
+div#map-container {
+    height: 226px;
+    width: 100%;
+}
+
+div#viewList {
+    height: 100%;
+    width: 100%;
+}
+
+div#content {
+	height: 100px;
+	width: 208px;
+}
+
+#compassContainer{
+	position: relative;
+}
+
+#mapViewCompass{
+	float: left;
+}
+
+#viewCompass{
+	background-color: white;
+}
+
+#cacheName{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 65px;	
+	padding: 10px;
+	text-align: center;
+	z-index: 10;	
+}
+
+#distanceToCache{
+	position: absolute;	
+	left: 0;
+	bottom: 35px;
+	width: 40%;
+	height: 65px;
+	padding: 10px;
+	text-align: left;
+	z-index: 10;		
+}
+
+
+#gpsAccuracy{
+	position: absolute;
+	right: 0;
+	bottom: 35px;
+	width: 60%;
+	height: 65px;	
+	padding: 10px;
+	text-align: right;
+	z-index: 10;		
+}	
+
+
+
+
+#compass{
+	width:32px;
+	height: 32px;
+	transform-origin: 50% 50%;
+	-webkit-transform-origin: 50% 50%;
+	-moz-transform-origin: 50% 50%;
+}
+
+#compass-North{
+	width:32px;
+	height: 32px;
+	transform-origin: 50% 50%;
+	-webkit-transform-origin: 50% 50%;
+	-moz-transform-origin: 50% 50%;
+}
+
+#NorthCompassContainer{
+	position: relative;
+	left: 40px;
+	top: 40px;
+	z-index: 9;
+	width:150px;
+	height: 150px;
+	transform-origin: 50% 50%;
+	-webkit-transform-origin: 50% 50%;
+	-moz-transform-origin: 50% 50%;	
+	
+}
+
+#largeCompassContainer{
+	position: absolute;
+	left: 74px;
+	top: 70px;
+	z-index: 10;
+	width:96px;
+	height: 96px;
+	transform-origin: 50% 50%;
+	-webkit-transform-origin: 50% 50%;
+	-moz-transform-origin: 50% 50%;	
+}
+
+#viewCache{
+	width:100%;
+	height:100%;
+	overflow-x: hidden;
+	overflow-y: scroll;	 	
+}
+
+#CacheHeaderDetail{
+	position:relative;
+}
+
+#CacheActions{
+  margin: auto;
+  width: 80%;
+  background: MediumSeaGreen;
+  color: white;
+  border: 1px dotted black;	
+  text-align: center;
+  padding: 5px;
+}
+
+.cache-type{
+	position:relative;
+	height:48px;
+	width:48px;
+	left:0;
+	top:0;
+}
+
+.cache-type-img{
+	float:left;
+	height:48px;
+	width:48px;
+}
+
+.cache-icon{
+	float:left;
+	height:48px;
+	width:48px;	
+}
+
+.badge{
+	position:absolute;
+	left:-4px;
+	top:-4px;
+	width:24px;
+	height:24px;
+}
+
+
+h1 {
+  margin: 0;
+  line-height: 2em;
+}
+
+button {
+  background: black;
+  font-size: 1.0em;
+  text-align: center;
+  border: none;
+}
+
+button::-moz-focus-inner {
+  border: 0;
+  padding: 0
+}
+
+.displayItem {
+  width: 100%;
+  height: 50px;
+  border: 1px dotted black;
+  overflow: auto;	
+	
+}
+
+.navItem {
+  position:relative;
+  display: block;
+  float: left;
+  color: #323232;
+  background-color: white;
+  text-overflow: ellipsis;
+  width: 100%;
+  margin: 0 0 3% 0;
+ 
+}
+
+#softkeyBar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 10%;
+  line-height: 150%;
+  background-color: black;
+}
+
+#softkeyBar button {
+  color: white;
+  background-color: black;
+  font-size: 1.0em;
+  width: 32%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+#views {
+  height: 90%;
+}
+
+.view {
+  overflow: -moz-hidden-unscrollable;
+  overflow: hidden;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 3%;
+  height: 100%;
+}
+
+.view * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.view select, .view input {
+  width: 100%;
+  font-size: 1em;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0;
+  background-color: #CCCCCC;
+  color: #323232;
+  height: 1.4em;
+}
+
+.view select:focus, .view input:focus, .navItem:focus {
+  background-color: purple;
+  border-color: purple;
+  color: white;
+}
+
+.list div, .grid div {
+  padding: 2%;
+}
+
+.list div h3, .grid div h3 {
+  line-height: 2em;
+  margin: 0;
+}
+
+.grid div {
+  margin: 0;
+  border: 1px solid darkslategray;
+}
+
+fieldset {
+  border: none;
+  margin: 0;
+  padding: 0 0 1em 0;
+}
+
+#ad-container {
+  float: left;
+}
+
+#ad-container>div {
+  outline: none;
+}
+
+#ad-container>div:focus {
+  outline: solid 0.2em purple ! important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#keyOverlay {
+  display: none;
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  height: auto;
+  background: black;
+  color: white;
+  opacity: 0.8;
+  text-align: center;
+  font-size: 1em;
+  z-index: 100;  
+}
+
+#keyOverlay span {
+  display: block;
+}
