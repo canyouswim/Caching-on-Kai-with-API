@@ -20,10 +20,16 @@
     }
   },
   
+ 
+	"dependencies": {
+		"ads-sdk": "1.4.1"
+	},
+ 
+  
 	"redirects": [
 	  {
-		"from": "http://facebook.com/authentication/success.html",
-		"to": "/app/main_interface.html"
+		"from": "https://caching-on-kai.com",
+		"to": "/index.html"
 	  }
 	],  
   
@@ -50,7 +56,7 @@
 
 	"systemXHR": {
 	"description": "Required to load remote content"
-	} 
+	}
   }
 
 
