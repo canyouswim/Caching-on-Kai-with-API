@@ -653,7 +653,21 @@ window.addEventListener("load", function () {
 				//var userLimits = JSON.parse(userDetails.geocacheLimits);
 				console.log(`username: ${userDetails.username}`);
 				console.log(`remaining cache views: ${userDetails.geocacheLimits.fullCallsRemaining}`);
-			
+				document.getElementById("username").innerHTML = userDetails.username;
+				document.getElementById("userCode").innerHTML = userDetails.referenceCode;
+				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
+				document.getElementById("cacheViewsRemaining").innerHTML = "Remaining views: " + userDetails.geocacheLimits.fullCallsRemaining;	
+				if(userDetails.membershipLevelId == 1) {
+					document.getElementById("membershipType").innerHTML = "BASIC";
+				} else if (userDetails.membershipLevelId == 2) {
+					document.getElementById("membershipType").innerHTML = "Charter";					
+				}  else if (userDetails.membershipLevelId == 3) {
+					document.getElementById("membershipType").innerHTML = "Premium";					
+				} else {
+					document.getElementById("membershipType").innerHTML = "Unknown";	
+				};
+				localStorage.setItem('membershipLevelId',userDetails.membershipLevelId);
+				localStorage.setItem('fullCallsRemaining',userDetails.fullCallsRemaining);
 
 				
 			}  else if (geostatus == 401) {
