@@ -137,6 +137,14 @@
 			<div id="membershipType"></div>
 			<div id="homeLocation"></div>
 			<div id="cacheViewsRemaining"></div>
+			
+			
+
+
+			
+			
+			
+			
 			<!--Dist Traveled: <div id="TravelDistance">not calculated</div>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Show distance traveled?</legend>
@@ -153,22 +161,29 @@
 				<option value="Home">Home loc from geocaching.com</option>
 			  </select>
 			</fieldset>-->
+			
+			
+
 			<fieldset>
-			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
+			  <legend class="navItem" tabIndex="0">File:</legend>
+			    <input id="input1" type="file"/>	
+			</fieldset>
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Load caches on load...</legend>
 			  <select id="initialCacheLoad">
 				<option value="YesLoadCaches" selected>Yes - load immediately based on my position</option>
 				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
 			  </select>
 			</fieldset>			
 			<fieldset>
-			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
+			  <legend class="navItem" tabIndex="20">Display distance as...</legend>
 			  <select id="displayUnits">
 				<option value="mi" selected>feet/miles</option>
 				<option value="km">meters/kilometers</option>
 			  </select>
 			</fieldset>
 				<fieldset>
-			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
+			  <legend class="navItem" tabIndex="30">Display coordinates as...</legend>
 			  <select id="coorRep">
 				<option value="DDD" selected>ND.dº WD.dº</option>
 				<option value="DMM">NDºM.m' WDºM.m'</option>
@@ -183,8 +198,8 @@
 				<option value="150">150</option>				
 			  </select>	
 			</fieldset>-->		
-			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
-			<button class="navItem" tabIndex="40" data-function="About">About</button>
+			<button class="navItem" tabIndex="40" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="50" data-function="About">About</button>
 		</div>
 		
 		<div class="view" id="viewAllShortcuts">
