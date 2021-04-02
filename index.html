@@ -26,7 +26,7 @@
     <script src="src/KaiOS.js" defer></script>
     <script src="src/kaios-toaster.js" defer></script>
     <script src="src/someInputs.js" defer></script>
-    <script src="src/kaiads.v4.min.js" defer></script>	
+    <script src="src/kaiads.v4.min.js" defer></script>
 
 
 
@@ -44,7 +44,7 @@
     <div id="views">
 
 		<div class="view" id="viewMap")>
-
+			<div id="ad-container"></div>	
 			<div id="map-container">
 			<div id="content2"> </div>	
 			<div id="mapCenter" style="display: block; color: 'grey'; position:absolute; top:45%; left:49%; z-index: 2000;">+</div>	
@@ -64,7 +64,7 @@
 				</div>
 				<div id="content">Waiting on GPS lock...</div>					
 			</div>	
-			<div id="ad-container"></div>			
+		
 		</div>
 
 		<div class="view" id="viewList">
@@ -131,7 +131,11 @@
 		</div>
 		
 		<div class="view" id="Settings">
-			<div><b>Settings</b> app v3.0.0</div>			
+			<div><b>Settings</b> app v3.0.0</div>
+			<div id="username"></div>
+			<div id="userCode"></div>
+			<div id="homeLocation"></div>
+			<div id="cacheViewsRemaining"></div>
 			<!--Dist Traveled: <div id="TravelDistance">not calculated</div>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Show distance traveled?</legend>

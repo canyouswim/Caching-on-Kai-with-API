@@ -1,6 +1,23 @@
 //global module
 var MODULE = (function () {
 
+//=========================================
+// Geocaching API details
+var useAPI = true;
+var rootAPIurl = "https://staging.api.groundspeak.com/v1/" // staging
+//var rootAPIurl = //production
+
+// Authorization server details
+var config = {
+	client_id: "11BA3E15-D061-4AC7-A39A-F0BF8A8FBEC3",
+	client_secret: "2B6726F6-5B9B-4FF8-A01D-4C877BD30C2A",
+	redirect_uri: "https://caching-on-kai.com",
+	authorization_endpoint: "https://staging.geocaching.com/oauth/authorize.aspx",
+	token_endpoint: "https://oauth-staging.geocaching.com/token",
+	requested_scopes: "*"
+};
+//========================================
+
 var app = {};
 // use the custom module namespace 'app' for all variables and functions you need to access through other scripts
 app.views = new Array();
@@ -469,14 +486,20 @@ app.keyCallback = {
 			}
 		},	
 		push5: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("5");	
+			var testing = true;
+			
+			if (testing) {
+				getToken();
+			} else {
+				if(myStatus!=="First Run"){		
+					if(app.editWPmode==2){	
+						editWP("5");	
+					}	
+					else{	
+						app.keyCallback.FocusOnCache();	
+					}
 				}	
-				else{	
-					app.keyCallback.FocusOnCache();	
-				}
-			}			
+			}
 		},	
 		push6: function(){	
 			if(myStatus!=="First Run"){		
@@ -554,8 +577,9 @@ app.keyCallback = {
 		
 	}
 
-
-// startup
+//============================================
+//============================================
+// startup activities here
 window.addEventListener("load", function () {
 	//console.log(`checking what the currently set units are`);
 	
@@ -583,26 +607,6 @@ window.addEventListener("load", function () {
 		myUnits = "mi";
 	};
 	
-	
-	//console.log(`local units are ${myUnits}`); 
-	//app.saveTravelDistance = localStorage.getItem('saveTravelDistance');
-	
-	//if(app.saveTravelDistance == null) {
-	//	console.log(`first time this app has been run, setting saveTravelDistance`);
-	//	localStorage.setItem('saveTravelDistance',"yes");
-	//	localStorage.setItem('myTravelDistance',0);
-	//	app.saveTravelDistance = "yes";
-	//}
-		
-	//app.myTravelDistance = localStorage.getItem('myTravelDistance');
-
-	//if(myUnits =="mi"){
-	//	displayDistanceTraveled.innerHTML = app.myTravelDistance + "ft";
-	//} else {
-	//	displayDistanceTraveled.innerHTML = app.myTravelDistance + "m";		  
-	//}
-			
-	
 	cacheIconDisplay = document.getElementById("cacheIconDisplay");
 	cacheIconDisplay.innerHTML = "Show all cache icons on map";
 	
@@ -610,10 +614,85 @@ window.addEventListener("load", function () {
 	
 	var viewRoot = document.getElementById("views");
     app.views = viewRoot.querySelectorAll('.view');
+	
+	//----------------------------
+	// get logged in and gather an API token
+	
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var geomethod = "GET";	
+	var geourl = rootAPIurl + "users/me?fields=referenceCode%2Cusername%2CmembershipLevelId%2ChomeCoordinates%2CgeocacheLimits"
+	
+	var token = localStorage.getItem("access_token");
+	
+	if (token !== null) {
+		console.log('we have a token');
+		xhr.open(geomethod, geourl, true);
+		
+		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+		//xhr.withCredentials = true;
+
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			console.log('headers received'); 
+		  } else if (geoloadstate == 3) {
+			  console.log('loading data');
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				console.log(`status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+				console.log(`response: ${siteText}`);
+				
+				var userDetails = JSON.parse(siteText);
+				//var userLimits = JSON.parse(userDetails.geocacheLimits);
+				console.log(`username: ${userDetails.username}`);
+				console.log(`remaining cache views: ${userDetails.geocacheLimits.fullCallsRemaining}`);
+			
+
+				
+			}  else if (geostatus == 401) {
+				// token has expired, refresh and tell caller to retry
+				console.log('refreshing token');
+				refreshToken();
+
+			}
+		  }  else {
+			// Oh no! There has been an error with the request!
+			console.log("some problem...");
+		  }
+		} 
+		
+		xhr.send();	
+	} else {
+		getToken();
+
+	};		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	//-----------------------------
+	
+	
+	
+	
     // load first view
     showView(0,false);
     initView();		
 });
+//===================================================
+//===================================================
 
 function showOverlay(overlayContent) {
 	var keyOverlay = document.getElementById('keyOverlay');
@@ -931,16 +1010,6 @@ app.updateNavItems = function (index) {
 app.navItems = app.currentView.querySelectorAll('.navItem');
 }
 
-function openURL(url) {
-	var external = url.includes('http');
-	if (external) {
-	  window.open(url);
-	} else {
-	  window.location.assign(url);
-	}
-	softkeyBar();
-}
-
 // decide what the left soft button will do
 function leftButton() {
 	var leftButtonHTML = app.backButton.innerHTML;
@@ -1247,101 +1316,6 @@ function softkeyBar() {
 		//console.log(`Button/Action: ${app.optionsButton.innerHTML}/${app.optionButtonAction}`);
 	}
 };
-
-function ZoomMap(in_out) {
-
-	var current_zoom_level = map.getZoom();
-	//console.log(`ZoomMap ${in_out}, current zoom ${current_zoom_level}`);	
-		if (in_out == "in") {
-				current_zoom_level = current_zoom_level + 1
-				map.setZoom(current_zoom_level);
-			}
-		if (in_out == "out") {
-			current_zoom_level = current_zoom_level - 1
-			map.setZoom(current_zoom_level);
-		}
-		zoom_level = current_zoom_level;
-		zoom_speed();
-	//console.log(`New Zoom ${zoom_level}`);
-}
-
-function zoom_speed() {
-	if (zoom_level <= 7) {
-		step = 1;
-	}
-
-
-	if (zoom_level > 7) {
-		step = 0.1;
-	}
-
-
-	if (zoom_level > 11) {
-		step = 0.001;
-	}
-	
-	if (zoom_level > 16) {
-		step = .0001;
-	}
-
-	return step;
-}
-
-function MovemMap(direction) {
-	//console.log(`MovemMap ${direction}`);
-	console.log(`lat/lng: ${current_lat}/${current_lng}`);
-	if (direction == "left") {
-		zoom_speed()
-		isFocusedonMe = "no";
-		current_lng = current_lng - step;
-		map.panTo(new L.LatLng(current_lat, current_lng));
-	}
-
-	if (direction == "right") {
-		zoom_speed()
-		isFocusedonMe = "no";
-		current_lng = Number(current_lng) + Number(step);
-		map.panTo(new L.LatLng(current_lat, current_lng));
-	}
-
-	if (direction == "up") {
-		zoom_speed()
-		isFocusedonMe = "no";
-		current_lat = Number(current_lat) + Number(step);
-		map.panTo(new L.LatLng(current_lat, current_lng));
-
-	}
-
-	if (direction == "down") {
-		zoom_speed()
-		isFocusedonMe = "no";
-		current_lat = current_lat - step;
-		map.panTo(new L.LatLng(current_lat, current_lng));
-
-	}
-	
-	if (direction == "reFocus") {
-		isFocusedonMe = "yes";	
-		isFocusedonCache = "no";
-		//console.log(`current latlng: ${my_current_lat}, ${my_current_lng}`);
-		map.panTo(new L.LatLng(my_current_lat,my_current_lng));
-		current_lat = crd.latitude;
-		current_lng = crd.longitude;
-
-	}
-	
-	if (direction == "focusOnCache") {
-		isFocusedonMe = "no";
-		isFocusedonCache = "yes";
-		current_lat = CacheLat;
-		current_lng = CacheLng;
-		//console.log('move to cache');
-		map.panTo(new L.LatLng(CacheLat,CacheLng));		
-	}
-	
-	var myCoords=displayPosition(current_lat,current_lng,app.gpsCoordRepresentation);	
-	wpContainer.innerHTML = "&#x2295; "+myCoords;	
-}
 
 function success(pos) {
   crd = pos.coords;
@@ -1703,87 +1677,6 @@ function error(err) {
 }
 
 
-function roundToTwo(num) {    
-  return +(Math.round(num + "e+2")  + "e-2");
-}
-
-// convert degrees to radians
-function deg2rad(deg) {
-	rad = deg * Math.PI/180; // radians = degrees * pi/180
-	return rad;
-}
-
-// round to the nearest 1/1000
-function round(x) {
-	return Math.round( x * 1000) / 1000;
-}	
-
-			
-//function findDistance(cor2) {
-function findDistance(startLat,startLng,endLat,endLng) {	
-	var t1, n1, t2, n2, lat1, lon1, lat2, lon2, dlat, dlon, a, c, dm, dk, mi, km;
-	
-
-	
-	// get values for lat1, lon1, lat2, and lon2
-	//t1 = frm.lat1.value;
-	//t1 = cor1.latitude;
-	//n1 = frm.lon1.value;
-	//n1 = cor1.longitude;
-	//t2 = frm.lat2.value;
-	//t2 = cor2.latitude;
-	//n2 = frm.lon2.value;
-	//n2 = cor2.longitude;
-	
-	// convert coordinates to radians
-	lat1 = deg2rad(startLat);
-	lon1 = deg2rad(startLng);
-	lat2 = deg2rad(endLat);
-	lon2 = deg2rad(endLng);
-	
-	// find the differences between the coordinates
-	dlat = lat2 - lat1;
-	dlon = lon2 - lon1;
-	
-	// here's the heavy lifting
-	a  = Math.pow(Math.sin(dlat/2),2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dlon/2),2);
-	c  = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); // great circle distance in radians
-	dm = c * Rm; // great circle distance in miles
-	dk = c * Rk; // great circle distance in km
-	
-	// round the results down to the nearest 1/1000
-	mi = round(dm);
-	km = round(dk);
-
-	if (myUnits=="mi"){
-		return mi;
-	} else {
-		return km;
-	}
-}	
-
-// Converts from radians to degrees.
-function toDegrees(radians) {
-  return radians * 180 / Math.PI;
-}
-
-function bearing(startLat, startLng, destLat, destLng){
-  startLat = deg2rad(startLat);
-  startLng = deg2rad(startLng);
-  destLat = deg2rad(destLat);
-  destLng = deg2rad(destLng);
-
-
-  //console.log('start bearing calc');
-  y = Math.sin(destLng - startLng) * Math.cos(destLat);
-  x = Math.cos(startLat) * Math.sin(destLat) -
-        Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-  brng = Math.atan2(y, x);
-  //console.log(`brng: ${brng}`);
-  brng = toDegrees(brng);
-  return (brng + 360) % 360;
-}
-
 function ListCachesFromMapCenter() {
 	// get the lat/lng of the center of the current map view and refresh the list of caches from that point instead
 	// of the current GPS location
@@ -1799,39 +1692,303 @@ function ListCachesFromMapCenter() {
 
 function ListCaches(myLat,myLng,loadFromStorage) {
 	if(loadFromStorage =="no"){
-		//================================================================================
-		//
-		// Get cache list from Geocaching.com
-		//
-		//console.log('starting get caches');
-		var xhr = new XMLHttpRequest({ mozSystem: true });
-			var geomethod = "GET";
-			var geourl = "https://www.geocaching.com/play/search?lat=" + myLat + "&lng=" + myLng + "&origin=" + myLat + ",+" + myLng;
 
-		xhr.open(geomethod, geourl, true);
+		
+		if (useAPI) {
 
-		xhr.withCredentials = true;
+		
+			
+			
+			
+		} else {
+		
+			
+			//================================================================================
+			//
+			// Get cache list from Geocaching.com
+			//
+			//console.log('starting get caches');
+			var xhr = new XMLHttpRequest({ mozSystem: true });
+				var geomethod = "GET";
+				var geourl = "https://www.geocaching.com/play/search?lat=" + myLat + "&lng=" + myLng + "&origin=" + myLat + ",+" + myLng;
+
+			xhr.open(geomethod, geourl, true);
+
+			xhr.withCredentials = true;
 
 
-		xhr.onreadystatechange = function () {
-		  var geoloadstate = xhr.readyState;
-		  //console.log(`Load state: ${geoloadstate}`);
-		  if (geoloadstate == 1) {
-			  //console.log('request opened');
-		  } else if (geoloadstate == 2) {
-			//console.log('headers received'); 
-		  } else if (geoloadstate == 3) {
-			  //console.log('loading data');
-		  } else if (geoloadstate == 4) {
-			var geostatus = xhr.status;
+			xhr.onreadystatechange = function () {
+			  var geoloadstate = xhr.readyState;
+			  //console.log(`Load state: ${geoloadstate}`);
+			  if (geoloadstate == 1) {
+				  //console.log('request opened');
+			  } else if (geoloadstate == 2) {
+				//console.log('headers received'); 
+			  } else if (geoloadstate == 3) {
+				  //console.log('loading data');
+			  } else if (geoloadstate == 4) {
+				var geostatus = xhr.status;
 
-			if (geostatus >= 200 && geostatus < 400) {
-			  var siteText = xhr.response;
+				if (geostatus >= 200 && geostatus < 400) {
+				  var siteText = xhr.response;
+				  
+				  var siteDOM = new DOMParser().parseFromString(siteText, "text/html");
+
+				  //drop the response into local storage for future retrieval if need on re-load of app
+				  localStorage.setItem('geocachingResponse', siteText);
+
+					if(siteDOM.title=="Geocaching") {
+						console.log('not logged in');
+						var CacheURL = "https://www.geocaching.com/account/signin";
+						openURL(CacheURL);							
+					} else {
+
+					  var geoList = siteDOM.getElementsByTagName("tbody").namedItem("geocaches");
+					  
+						//console.log(`returned page title: ${siteDOM.title}`);
+
+					  geoCacheDetails = geoList.getElementsByTagName("tr");
+
+					  CacheCount = geoCacheDetails.length;	
+
+						//================================================================================
+						//
+						// Display list of caches
+						//
+						//
+						var listContainer = document.getElementById('CacheList');
+						listContainer.innerHTML = '';
+						
+						CacheListID = 0;
+			
+				//Loading up caches...
+						
+						kaiosToaster({
+						  message: 'Loading up caches...',
+						  position: 'north',
+						  type: 'warning',
+						  timeout: 3000
+						})				
+
+
+						// remove all the cache icon markers on the map, but only if they've been placed in the first place :) 
+						if (haveAllMarkersBeenPlaced == true) {
+							for (let i = 0; i < arrayCache.length; i++) {
+								arrayCacheMarker[i].remove();
+							};
+						};
+						//clear out any existing caches in the array					
+						arrayCache.length = 0;
+						arrayCacheMarker.length = 0;
+						showingAllCaches = "no";
+
+						for (let i = 0; i < CacheCount; i++) {
+			
+							// the "data-premium" attribute is present when the user is not premium and the cache is premium only.  ignore those if not premium user
+							var CachePremium = geoCacheDetails[i].hasAttribute("data-premium");
+							//console.log(`cache ${i} is premium: ${CachePremium}`);
+							
+							var CacheName = geoCacheDetails[i].getElementsByClassName("cache-name");
+							var CacheDetails = geoCacheDetails[i].getElementsByClassName("cache-details");
+							var CacheDetailsStr = CacheDetails[0].innerHTML;
+							var CacheDetailsArray = CacheDetailsStr.split(" | ");
+								var CacheType = CacheDetailsArray[0];
+								var geoCode = CacheDetailsArray[1];
+							 
+							var CacheOwner = geoCacheDetails[i].getElementsByClassName("owner");
+							var Distance = geoCacheDetails[i].getElementsByClassName("mobile-show pri-6");
+							var CacheBadge = geoCacheDetails[i].getElementsByClassName("cache-type");
+							var CacheBadgeStr = CacheBadge[0].innerHTML;
+							
+							var CacheBadgeArray = CacheBadgeStr.split("<svg");
+							var CacheFound;
+								if (CacheBadgeArray.length > 2) {
+									CacheFound = "yes";
+								} else {
+									CacheFound = "no"
+								}	
+
+							//console.log(`ListCaches${i}: found? ${CacheFound}, code: ${geoCode}, type ${CacheType}`);
+							var LastCache;
+							if(i == CacheCount-1) {
+								LastCache = "yes";
+							} else {
+								LastCache = "no";
+							}								
+								
+							var entry = document.createElement("div");
+							entry.className = 'navItem';
+							entry.tabIndex = i * 10;		
+
+							var BadgeContent = document.createElement("span");
+							BadgeContent.innerHTML = CacheBadge[0].innerHTML;
+							entry.appendChild(BadgeContent);
+
+							var headline = document.createElement("span");
+							
+							
+							
+							if(CachePremium == true) {
+								headline.innerHTML = "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b><br>" + Distance[0].innerText;							
+							} else {
+								headline.innerHTML = "<b>" + CacheName[0].innerHTML + "</b><br>" + Distance[0].innerText;
+							}
+							entry.appendChild(headline);						
+							
+							// clear out any previously stored cache details in the local storage, to get ready for 
+							// loading in these new details
+							var ThisStoredCacheName = "storedCacheDetails" + i;
+							localStorage.setItem(ThisStoredCacheName, null);							
+								
+
+								
+							if (CachePremium == false)	{								
+								var ContainerSize = geoCacheDetails[i].getElementsByClassName("pri-3");
+								var TerrainDifficulty = geoCacheDetails[i].getElementsByClassName("pri-1");
+									var Terrain = TerrainDifficulty[0].innerText;
+									var Difficulty = TerrainDifficulty[1].innerText;
+									var Placed = TerrainDifficulty[2].innerText;								
+
+
+
+								LoadCacheDetailsToArray(geoCode,CacheType,CacheFound,CacheBadge[0].innerHTML,LastCache,i,"no");			
+
+								var cLat = 0;
+								var cLng = 0;
+
+								entry.setAttribute('data-function', 'NavToCacheDetails');
+								entry.setAttribute('NavCode',geoCode);
+
+							} else {
+							// load a stub of the cache into the array as a placeholder in case it's a premium only cache
+							
+								arrayCacheObject = {
+									cacheName: "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b>", 
+									cacheBadge: CacheBadge[0].innerHTML,
+									cacheDescription: "This is a premium only cache.",
+									cacheHiddenDate: "",
+									cacheDifficulty: "",
+									cacheTerrain: "",
+									cacheSize: "",
+									cacheGUID: "",
+									cacheLat: 0,
+									cacheLng: 0,
+									cacheCode: geoCode,
+									cacheType: CacheType,
+									cacheFound: CacheFound,
+									cacheOriginID: i								
+								}
+								arrayCache[i] = arrayCacheObject;						
+								entry.setAttribute('data-function', 'NavToCacheDetails');
+								entry.setAttribute('NavCode',geoCode);	
+
+								//=================================
+								//
+								// load up local storage with a text blob with all the cache details in it
+								// one localstorage variable per cache
+								
+								var TMPstoredCacheDetails = "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b>";
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheBadge[0].innerHTML;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "This is a premium only cache.";
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";					
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";		
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + 0;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + 0;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + geoCode;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheType;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheFound;
+								TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + i;						
+								
+								storedCacheName = "storedCacheDetails" + i;
+								localStorage.setItem(storedCacheName, TMPstoredCacheDetails);
+								
+								//
+								//
+								//==================================							
+							}
+							listContainer.appendChild(entry);						
+						}				
+					
+	// One More for "WAYPOINTS"		
+					// how many waypoints do we have in storage?
+					var waypointCount = Number(localStorage.getItem('waypointCount'));
+					for (let x = 1; x < waypointCount; x++) {				
+						//createWPcontainer();
+						var tempX = x + 49;
+						var cacheListLoc = x + CacheCount - 1;
+						storedCacheName = "storedCacheDetails_WP" + tempX;
+						var arrayWaypointID = 49 + x;
+						storedCacheDetails = localStorage.getItem(storedCacheName);
+						if(storedCacheDetails !== null) {
+							var individualCacheDetails = storedCacheDetails.split("< |v| >");
+							arrayCacheObject = {
+								cacheName: individualCacheDetails[0], //0
+								cacheBadge: individualCacheDetails[1], //1
+								cacheDescription: individualCacheDetails[2], //2
+								cacheHiddenDate: individualCacheDetails[3], //3
+								cacheDifficulty: individualCacheDetails[4], //4
+								cacheTerrain: individualCacheDetails[5], //5
+								cacheSize: individualCacheDetails[6], //6
+								cacheGUID: individualCacheDetails[7], //7
+								cacheLat: individualCacheDetails[8], //8
+								cacheLng: individualCacheDetails[9], //9
+								cacheCode: individualCacheDetails[10], //10
+								cacheType: individualCacheDetails[11], //11
+								cacheFound: individualCacheDetails[12], //12
+								cacheOriginID: individualCacheDetails[13] //13
+							}
+							arrayCache[cacheListLoc] = arrayCacheObject;
+							
+							//and we can't forget to update the list of caches with these waypoints as well :) 
+							
+							var listContainer = document.getElementById('CacheList');	
+							var entry = document.createElement("div");	
+								entry.className = 'navItem';	
+								entry.name='CacheList_WP';	
+								entry.tabIndex = cacheListLoc*10;	
+							var BadgeContent = document.createElement("span");				
+								BadgeContent.innerHTML = "<img src='/assets/icons/icons8-waypoint-map-48.png'>";													
+								entry.appendChild(BadgeContent);	
+							var headline = document.createElement("span");	
+								headline.innerHTML = "<b>WayPoint #" + (cacheListLoc - CacheCount + 1) + "</b><br>";	
+								entry.appendChild(headline);						
+							entry.setAttribute('data-function', 'NavToCacheDetails');	
+							// need to create a new ID for this new waypoint - will use "waypoint" + the current location in the cache array
+							var waypointArrayID = "WAYPOINT" + arrayWaypointID;
+							entry.setAttribute('NavCode',waypointArrayID);						
+							listContainer.appendChild(entry);							
+						}
+					}
+					
+					}
+				
+				}
+			  } else {
+				  // Oh no! There has been an error with the request!
+				  console.log("some problem...");
+				
+			  } 
+			}
+			xhr.send();	
+		};
+	} else {
+		
+		if (useAPI) {
+			// load in from storage, from data pulled from API
+			
+		} else {
+		
+			// load up caches from localstorage, if they existing
+			// NOTE: i know this is janky as hell at the moment :)  
+
+			var siteText = localStorage.getItem('geocachingResponse');			  
+			  
+			if (siteText !== null) {
 			  
 			  var siteDOM = new DOMParser().parseFromString(siteText, "text/html");
-
-			  //drop the response into local storage for future retrieval if need on re-load of app
-			  localStorage.setItem('geocachingResponse', siteText);
 
 				if(siteDOM.title=="Geocaching") {
 					console.log('not logged in');
@@ -1855,12 +2012,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					var listContainer = document.getElementById('CacheList');
 					listContainer.innerHTML = '';
 					
-					CacheListID = 0;
-		
-			//Loading up caches...
-					
 					kaiosToaster({
-					  message: 'Loading up caches...',
+					  message: 'Loading up caches from localStorage...',
 					  position: 'north',
 					  type: 'warning',
 					  timeout: 3000
@@ -1877,9 +2030,9 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					arrayCache.length = 0;
 					arrayCacheMarker.length = 0;
 					showingAllCaches = "no";
-
+					
 					for (let i = 0; i < CacheCount; i++) {
-		
+
 						// the "data-premium" attribute is present when the user is not premium and the cache is premium only.  ignore those if not premium user
 						var CachePremium = geoCacheDetails[i].hasAttribute("data-premium");
 						//console.log(`cache ${i} is premium: ${CachePremium}`);
@@ -1930,13 +2083,6 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 							headline.innerHTML = "<b>" + CacheName[0].innerHTML + "</b><br>" + Distance[0].innerText;
 						}
 						entry.appendChild(headline);						
-						
-						// clear out any previously stored cache details in the local storage, to get ready for 
-						// loading in these new details
-						var ThisStoredCacheName = "storedCacheDetails" + i;
-						localStorage.setItem(ThisStoredCacheName, null);							
-							
-
 							
 						if (CachePremium == false)	{								
 							var ContainerSize = geoCacheDetails[i].getElementsByClassName("pri-3");
@@ -1945,9 +2091,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 								var Difficulty = TerrainDifficulty[1].innerText;
 								var Placed = TerrainDifficulty[2].innerText;								
 
-
-
-							LoadCacheDetailsToArray(geoCode,CacheType,CacheFound,CacheBadge[0].innerHTML,LastCache,i,"no");			
+							//LoadCacheDetailsToArray(geoCode,CacheType,CacheFound,CacheBadge[0].innerHTML,LastCache,i,"yes");			
 
 							var cLat = 0;
 							var cLng = 0;
@@ -1956,337 +2100,105 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 							entry.setAttribute('NavCode',geoCode);
 
 						} else {
-						// load a stub of the cache into the array as a placeholder in case it's a premium only cache
 						
-							arrayCacheObject = {
-								cacheName: "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b>", 
-								cacheBadge: CacheBadge[0].innerHTML,
-								cacheDescription: "This is a premium only cache.",
-								cacheHiddenDate: "",
-								cacheDifficulty: "",
-								cacheTerrain: "",
-								cacheSize: "",
-								cacheGUID: "",
-								cacheLat: 0,
-								cacheLng: 0,
-								cacheCode: geoCode,
-								cacheType: CacheType,
-								cacheFound: CacheFound,
-								cacheOriginID: i								
-							}
-							arrayCache[i] = arrayCacheObject;						
-							entry.setAttribute('data-function', 'NavToCacheDetails');
-							entry.setAttribute('NavCode',geoCode);	
 
-							//=================================
-							//
-							// load up local storage with a text blob with all the cache details in it
-							// one localstorage variable per cache
-							
-							var TMPstoredCacheDetails = "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b>";
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheBadge[0].innerHTML;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "This is a premium only cache.";
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";					
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";		
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + "";
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + 0;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + 0;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + geoCode;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheType;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + CacheFound;
-							TMPstoredCacheDetails = TMPstoredCacheDetails + "< |v| >" + i;						
-							
-							storedCacheName = "storedCacheDetails" + i;
-							localStorage.setItem(storedCacheName, TMPstoredCacheDetails);
-							
-							//
-							//
-							//==================================							
+
+							entry.setAttribute('data-function', 'NavToCacheDetails');
+							entry.setAttribute('NavCode',geoCode);							
 						}
 						listContainer.appendChild(entry);						
-					}				
-				
-// One More for "WAYPOINTS"		
-				// how many waypoints do we have in storage?
-				var waypointCount = Number(localStorage.getItem('waypointCount'));
-				for (let x = 1; x < waypointCount; x++) {				
-					//createWPcontainer();
-					var tempX = x + 49;
-					var cacheListLoc = x + CacheCount - 1;
-				    storedCacheName = "storedCacheDetails_WP" + tempX;
-					var arrayWaypointID = 49 + x;
-					storedCacheDetails = localStorage.getItem(storedCacheName);
-					if(storedCacheDetails !== null) {
-						var individualCacheDetails = storedCacheDetails.split("< |v| >");
-						arrayCacheObject = {
-							cacheName: individualCacheDetails[0], //0
-							cacheBadge: individualCacheDetails[1], //1
-							cacheDescription: individualCacheDetails[2], //2
-							cacheHiddenDate: individualCacheDetails[3], //3
-							cacheDifficulty: individualCacheDetails[4], //4
-							cacheTerrain: individualCacheDetails[5], //5
-							cacheSize: individualCacheDetails[6], //6
-							cacheGUID: individualCacheDetails[7], //7
-							cacheLat: individualCacheDetails[8], //8
-							cacheLng: individualCacheDetails[9], //9
-							cacheCode: individualCacheDetails[10], //10
-							cacheType: individualCacheDetails[11], //11
-							cacheFound: individualCacheDetails[12], //12
-							cacheOriginID: individualCacheDetails[13] //13
-						}
-						arrayCache[cacheListLoc] = arrayCacheObject;
-						
-						//and we can't forget to update the list of caches with these waypoints as well :) 
-						
-						var listContainer = document.getElementById('CacheList');	
-						var entry = document.createElement("div");	
-							entry.className = 'navItem';	
-							entry.name='CacheList_WP';	
-							entry.tabIndex = cacheListLoc*10;	
-						var BadgeContent = document.createElement("span");				
-							BadgeContent.innerHTML = "<img src='/assets/icons/icons8-waypoint-map-48.png'>";													
-							entry.appendChild(BadgeContent);	
-						var headline = document.createElement("span");	
-							headline.innerHTML = "<b>WayPoint #" + (cacheListLoc - CacheCount + 1) + "</b><br>";	
-							entry.appendChild(headline);						
-						entry.setAttribute('data-function', 'NavToCacheDetails');	
-						// need to create a new ID for this new waypoint - will use "waypoint" + the current location in the cache array
-						var waypointArrayID = "WAYPOINT" + arrayWaypointID;
-						entry.setAttribute('NavCode',waypointArrayID);						
-						listContainer.appendChild(entry);							
 					}
+					//====================================
+					//
+					// now finish loading cache details into the arrayCache array
+					
+					for (let j = 0; j < CacheCount; j++) {
+						oneMore=j;
+						storedCacheName = "storedCacheDetails" + j;
+						storedCacheDetails = localStorage.getItem(storedCacheName);
+						if(storedCacheDetails !== null) {
+							var individualCacheDetails = storedCacheDetails.split("< |v| >");
+							arrayCacheObject = {
+								cacheName: individualCacheDetails[0], //0
+								cacheBadge: individualCacheDetails[1], //1
+								cacheDescription: individualCacheDetails[2], //2
+								cacheHiddenDate: individualCacheDetails[3], //3
+								cacheDifficulty: individualCacheDetails[4], //4
+								cacheTerrain: individualCacheDetails[5], //5
+								cacheSize: individualCacheDetails[6], //6
+								cacheGUID: individualCacheDetails[7], //7
+								cacheLat: individualCacheDetails[8], //8
+								cacheLng: individualCacheDetails[9], //9
+								cacheCode: individualCacheDetails[10], //10
+								cacheType: individualCacheDetails[11], //11
+								cacheFound: individualCacheDetails[12], //12
+								cacheOriginID: individualCacheDetails[13] //13
+							}
+							arrayCache[j] = arrayCacheObject;
+
+						}
+					}
+						
+	// One More for "WAYPOINTS"		
+					// how many waypoints do we have in storage?
+					var waypointCount = Number(localStorage.getItem('waypointCount'));
+					for (let x = 1; x < waypointCount; x++) {				
+						//createWPcontainer();
+						var tempX = x + 49;
+						storedCacheName = "storedCacheDetails_WP" + tempX;
+						var arrayWaypointID = CacheCount + x - 1;
+						storedCacheDetails = localStorage.getItem(storedCacheName);
+						if(storedCacheDetails !== null) {
+							var individualCacheDetails = storedCacheDetails.split("< |v| >");
+							arrayCacheObject = {
+								cacheName: individualCacheDetails[0], //0
+								cacheBadge: individualCacheDetails[1], //1
+								cacheDescription: individualCacheDetails[2], //2
+								cacheHiddenDate: individualCacheDetails[3], //3
+								cacheDifficulty: individualCacheDetails[4], //4
+								cacheTerrain: individualCacheDetails[5], //5
+								cacheSize: individualCacheDetails[6], //6
+								cacheGUID: individualCacheDetails[7], //7
+								cacheLat: individualCacheDetails[8], //8
+								cacheLng: individualCacheDetails[9], //9
+								cacheCode: individualCacheDetails[10], //10
+								cacheType: individualCacheDetails[11], //11
+								cacheFound: individualCacheDetails[12], //12
+								cacheOriginID: individualCacheDetails[13] //13
+							}
+							arrayCache[arrayWaypointID] = arrayCacheObject;
+							
+							//and we can't forget to update the list of caches with these waypoints as well :) 
+							
+							var listContainer = document.getElementById('CacheList');	
+							var entry = document.createElement("div");	
+								entry.className = 'navItem';	
+								entry.name='CacheList_WP';	
+								entry.tabIndex = arrayWaypointID*10;	
+							var BadgeContent = document.createElement("span");				
+								BadgeContent.innerHTML = "<img src='/assets/icons/icons8-waypoint-map-48.png'>";													
+								entry.appendChild(BadgeContent);	
+							var headline = document.createElement("span");	
+								headline.innerHTML = "<b>WayPoint #" + (arrayWaypointID - CacheCount + 1) + "</b><br>";	
+								entry.appendChild(headline);						
+							entry.setAttribute('data-function', 'NavToCacheDetails');	
+							// need to create a new ID for this new waypoint - will use "waypoint" + the current location in the cache array
+							
+							var waypointArrayID = "WAYPOINT" + tempX;
+							entry.setAttribute('NavCode',waypointArrayID);						
+							listContainer.appendChild(entry);							
+						}
+					}	
+					kaiosToaster({
+					message: 'Finished loading in caches from storage',
+					position: 'north',
+					type: 'success',
+					timeout: 3000
+					})	
+					//========================================
 				}
-				
-				}
-			
-			}
-		  } else {
-			  // Oh no! There has been an error with the request!
-			  console.log("some problem...");
-			
-		  } 
+			}		
 		}
-		xhr.send();	
-	} else {
-		// load up caches from localstorage, if they existing
-		// NOTE: i know this is janky as hell at the moment :)  
-
-		var siteText = localStorage.getItem('geocachingResponse');			  
-		  
-		if (siteText !== null) {
-		  
-		  var siteDOM = new DOMParser().parseFromString(siteText, "text/html");
-
-			if(siteDOM.title=="Geocaching") {
-				console.log('not logged in');
-				var CacheURL = "https://www.geocaching.com/account/signin";
-				openURL(CacheURL);							
-			} else {
-
-			  var geoList = siteDOM.getElementsByTagName("tbody").namedItem("geocaches");
-			  
-				//console.log(`returned page title: ${siteDOM.title}`);
-
-			  geoCacheDetails = geoList.getElementsByTagName("tr");
-
-			  CacheCount = geoCacheDetails.length;	
-
-				//================================================================================
-				//
-				// Display list of caches
-				//
-				//
-				var listContainer = document.getElementById('CacheList');
-				listContainer.innerHTML = '';
-				
-				kaiosToaster({
-				  message: 'Loading up caches from localStorage...',
-				  position: 'north',
-				  type: 'warning',
-				  timeout: 3000
-				})				
-
-
-				// remove all the cache icon markers on the map, but only if they've been placed in the first place :) 
-				if (haveAllMarkersBeenPlaced == true) {
-					for (let i = 0; i < arrayCache.length; i++) {
-						arrayCacheMarker[i].remove();
-					};
-				};
-				//clear out any existing caches in the array					
-				arrayCache.length = 0;
-				arrayCacheMarker.length = 0;
-				showingAllCaches = "no";
-				
-				for (let i = 0; i < CacheCount; i++) {
-
-					// the "data-premium" attribute is present when the user is not premium and the cache is premium only.  ignore those if not premium user
-					var CachePremium = geoCacheDetails[i].hasAttribute("data-premium");
-					//console.log(`cache ${i} is premium: ${CachePremium}`);
-					
-					var CacheName = geoCacheDetails[i].getElementsByClassName("cache-name");
-					var CacheDetails = geoCacheDetails[i].getElementsByClassName("cache-details");
-					var CacheDetailsStr = CacheDetails[0].innerHTML;
-					var CacheDetailsArray = CacheDetailsStr.split(" | ");
-						var CacheType = CacheDetailsArray[0];
-						var geoCode = CacheDetailsArray[1];
-					 
-					var CacheOwner = geoCacheDetails[i].getElementsByClassName("owner");
-					var Distance = geoCacheDetails[i].getElementsByClassName("mobile-show pri-6");
-					var CacheBadge = geoCacheDetails[i].getElementsByClassName("cache-type");
-					var CacheBadgeStr = CacheBadge[0].innerHTML;
-					
-					var CacheBadgeArray = CacheBadgeStr.split("<svg");
-					var CacheFound;
-						if (CacheBadgeArray.length > 2) {
-							CacheFound = "yes";
-						} else {
-							CacheFound = "no"
-						}	
-
-					//console.log(`ListCaches${i}: found? ${CacheFound}, code: ${geoCode}, type ${CacheType}`);
-					var LastCache;
-					if(i == CacheCount-1) {
-						LastCache = "yes";
-					} else {
-						LastCache = "no";
-					}								
-						
-					var entry = document.createElement("div");
-					entry.className = 'navItem';
-					entry.tabIndex = i * 10;		
-
-					var BadgeContent = document.createElement("span");
-					BadgeContent.innerHTML = CacheBadge[0].innerHTML;
-					entry.appendChild(BadgeContent);
-
-					var headline = document.createElement("span");
-					
-					
-					
-					if(CachePremium == true) {
-						headline.innerHTML = "<b><i>PREMIUM</i> " + CacheName[0].innerHTML + "</b><br>" + Distance[0].innerText;							
-					} else {
-						headline.innerHTML = "<b>" + CacheName[0].innerHTML + "</b><br>" + Distance[0].innerText;
-					}
-					entry.appendChild(headline);						
-						
-					if (CachePremium == false)	{								
-						var ContainerSize = geoCacheDetails[i].getElementsByClassName("pri-3");
-						var TerrainDifficulty = geoCacheDetails[i].getElementsByClassName("pri-1");
-							var Terrain = TerrainDifficulty[0].innerText;
-							var Difficulty = TerrainDifficulty[1].innerText;
-							var Placed = TerrainDifficulty[2].innerText;								
-
-						//LoadCacheDetailsToArray(geoCode,CacheType,CacheFound,CacheBadge[0].innerHTML,LastCache,i,"yes");			
-
-						var cLat = 0;
-						var cLng = 0;
-
-						entry.setAttribute('data-function', 'NavToCacheDetails');
-						entry.setAttribute('NavCode',geoCode);
-
-					} else {
-					
-
-
-						entry.setAttribute('data-function', 'NavToCacheDetails');
-						entry.setAttribute('NavCode',geoCode);							
-					}
-					listContainer.appendChild(entry);						
-				}
-				//====================================
-				//
-				// now finish loading cache details into the arrayCache array
-				
-				for (let j = 0; j < CacheCount; j++) {
-					oneMore=j;
-					storedCacheName = "storedCacheDetails" + j;
-					storedCacheDetails = localStorage.getItem(storedCacheName);
-					if(storedCacheDetails !== null) {
-						var individualCacheDetails = storedCacheDetails.split("< |v| >");
-						arrayCacheObject = {
-							cacheName: individualCacheDetails[0], //0
-							cacheBadge: individualCacheDetails[1], //1
-							cacheDescription: individualCacheDetails[2], //2
-							cacheHiddenDate: individualCacheDetails[3], //3
-							cacheDifficulty: individualCacheDetails[4], //4
-							cacheTerrain: individualCacheDetails[5], //5
-							cacheSize: individualCacheDetails[6], //6
-							cacheGUID: individualCacheDetails[7], //7
-							cacheLat: individualCacheDetails[8], //8
-							cacheLng: individualCacheDetails[9], //9
-							cacheCode: individualCacheDetails[10], //10
-							cacheType: individualCacheDetails[11], //11
-							cacheFound: individualCacheDetails[12], //12
-							cacheOriginID: individualCacheDetails[13] //13
-						}
-						arrayCache[j] = arrayCacheObject;
-
-					}
-				}
-					
-// One More for "WAYPOINTS"		
-				// how many waypoints do we have in storage?
-				var waypointCount = Number(localStorage.getItem('waypointCount'));
-				for (let x = 1; x < waypointCount; x++) {				
-					//createWPcontainer();
-					var tempX = x + 49;
-				    storedCacheName = "storedCacheDetails_WP" + tempX;
-					var arrayWaypointID = CacheCount + x - 1;
-					storedCacheDetails = localStorage.getItem(storedCacheName);
-					if(storedCacheDetails !== null) {
-						var individualCacheDetails = storedCacheDetails.split("< |v| >");
-						arrayCacheObject = {
-							cacheName: individualCacheDetails[0], //0
-							cacheBadge: individualCacheDetails[1], //1
-							cacheDescription: individualCacheDetails[2], //2
-							cacheHiddenDate: individualCacheDetails[3], //3
-							cacheDifficulty: individualCacheDetails[4], //4
-							cacheTerrain: individualCacheDetails[5], //5
-							cacheSize: individualCacheDetails[6], //6
-							cacheGUID: individualCacheDetails[7], //7
-							cacheLat: individualCacheDetails[8], //8
-							cacheLng: individualCacheDetails[9], //9
-							cacheCode: individualCacheDetails[10], //10
-							cacheType: individualCacheDetails[11], //11
-							cacheFound: individualCacheDetails[12], //12
-							cacheOriginID: individualCacheDetails[13] //13
-						}
-						arrayCache[arrayWaypointID] = arrayCacheObject;
-						
-						//and we can't forget to update the list of caches with these waypoints as well :) 
-						
-						var listContainer = document.getElementById('CacheList');	
-						var entry = document.createElement("div");	
-							entry.className = 'navItem';	
-							entry.name='CacheList_WP';	
-							entry.tabIndex = arrayWaypointID*10;	
-						var BadgeContent = document.createElement("span");				
-							BadgeContent.innerHTML = "<img src='/assets/icons/icons8-waypoint-map-48.png'>";													
-							entry.appendChild(BadgeContent);	
-						var headline = document.createElement("span");	
-							headline.innerHTML = "<b>WayPoint #" + (arrayWaypointID - CacheCount + 1) + "</b><br>";	
-							entry.appendChild(headline);						
-						entry.setAttribute('data-function', 'NavToCacheDetails');	
-						// need to create a new ID for this new waypoint - will use "waypoint" + the current location in the cache array
-						
-						var waypointArrayID = "WAYPOINT" + tempX;
-						entry.setAttribute('NavCode',waypointArrayID);						
-						listContainer.appendChild(entry);							
-					}
-				}	
-				kaiosToaster({
-				message: 'Finished loading in caches from storage',
-				position: 'north',
-				type: 'success',
-				timeout: 3000
-				})	
-				//========================================
-			}
-		}		
 	}
 }	
 
@@ -3362,6 +3274,417 @@ function DeleteWaypoints () {
 	initView();		
 	
 };
+
+
+
+
+function ZoomMap(in_out) {
+
+	var current_zoom_level = map.getZoom();
+	//console.log(`ZoomMap ${in_out}, current zoom ${current_zoom_level}`);	
+		if (in_out == "in") {
+				current_zoom_level = current_zoom_level + 1
+				map.setZoom(current_zoom_level);
+			}
+		if (in_out == "out") {
+			current_zoom_level = current_zoom_level - 1
+			map.setZoom(current_zoom_level);
+		}
+		zoom_level = current_zoom_level;
+		zoom_speed();
+	//console.log(`New Zoom ${zoom_level}`);
+}
+
+function zoom_speed() {
+	if (zoom_level <= 7) {
+		step = 1;
+	}
+
+
+	if (zoom_level > 7) {
+		step = 0.1;
+	}
+
+
+	if (zoom_level > 11) {
+		step = 0.001;
+	}
+	
+	if (zoom_level > 16) {
+		step = .0001;
+	}
+
+	return step;
+}
+
+function MovemMap(direction) {
+	//console.log(`MovemMap ${direction}`);
+	//console.log(`lat/lng: ${current_lat}/${current_lng}`);
+	if (direction == "left") {
+		zoom_speed()
+		isFocusedonMe = "no";
+		current_lng = current_lng - step;
+		map.panTo(new L.LatLng(current_lat, current_lng));
+	}
+
+	if (direction == "right") {
+		zoom_speed()
+		isFocusedonMe = "no";
+		current_lng = Number(current_lng) + Number(step);
+		map.panTo(new L.LatLng(current_lat, current_lng));
+	}
+
+	if (direction == "up") {
+		zoom_speed()
+		isFocusedonMe = "no";
+		current_lat = Number(current_lat) + Number(step);
+		map.panTo(new L.LatLng(current_lat, current_lng));
+
+	}
+
+	if (direction == "down") {
+		zoom_speed()
+		isFocusedonMe = "no";
+		current_lat = current_lat - step;
+		map.panTo(new L.LatLng(current_lat, current_lng));
+
+	}
+	
+	if (direction == "reFocus") {
+		isFocusedonMe = "yes";	
+		isFocusedonCache = "no";
+		//console.log(`current latlng: ${my_current_lat}, ${my_current_lng}`);
+		map.panTo(new L.LatLng(my_current_lat,my_current_lng));
+		current_lat = crd.latitude;
+		current_lng = crd.longitude;
+
+	}
+	
+	if (direction == "focusOnCache") {
+		isFocusedonMe = "no";
+		isFocusedonCache = "yes";
+		current_lat = CacheLat;
+		current_lng = CacheLng;
+		//console.log('move to cache');
+		map.panTo(new L.LatLng(CacheLat,CacheLng));		
+	}
+	
+	var myCoords=displayPosition(current_lat,current_lng,app.gpsCoordRepresentation);	
+	wpContainer.innerHTML = "&#x2295; "+myCoords;	
+}
+	
+
+function openURL(url) {
+	var external = url.includes('http');
+	if (external) {
+	  window.open(url);
+	} else {
+	  window.location.assign(url);
+	}
+	softkeyBar();
+}
+
+
+function roundToTwo(num) {    
+  return +(Math.round(num + "e+2")  + "e-2");
+}
+
+// convert degrees to radians
+function deg2rad(deg) {
+	rad = deg * Math.PI/180; // radians = degrees * pi/180
+	return rad;
+}
+
+// round to the nearest 1/1000
+function round(x) {
+	return Math.round( x * 1000) / 1000;
+}	
+
+			
+//function findDistance(cor2) {
+function findDistance(startLat,startLng,endLat,endLng) {	
+	var t1, n1, t2, n2, lat1, lon1, lat2, lon2, dlat, dlon, a, c, dm, dk, mi, km;
+	
+
+	
+	// get values for lat1, lon1, lat2, and lon2
+	//t1 = frm.lat1.value;
+	//t1 = cor1.latitude;
+	//n1 = frm.lon1.value;
+	//n1 = cor1.longitude;
+	//t2 = frm.lat2.value;
+	//t2 = cor2.latitude;
+	//n2 = frm.lon2.value;
+	//n2 = cor2.longitude;
+	
+	// convert coordinates to radians
+	lat1 = deg2rad(startLat);
+	lon1 = deg2rad(startLng);
+	lat2 = deg2rad(endLat);
+	lon2 = deg2rad(endLng);
+	
+	// find the differences between the coordinates
+	dlat = lat2 - lat1;
+	dlon = lon2 - lon1;
+	
+	// here's the heavy lifting
+	a  = Math.pow(Math.sin(dlat/2),2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(dlon/2),2);
+	c  = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); // great circle distance in radians
+	dm = c * Rm; // great circle distance in miles
+	dk = c * Rk; // great circle distance in km
+	
+	// round the results down to the nearest 1/1000
+	mi = round(dm);
+	km = round(dk);
+
+	if (myUnits=="mi"){
+		return mi;
+	} else {
+		return km;
+	}
+}	
+
+// Converts from radians to degrees.
+function toDegrees(radians) {
+  return radians * 180 / Math.PI;
+}
+
+function bearing(startLat, startLng, destLat, destLng){
+  startLat = deg2rad(startLat);
+  startLng = deg2rad(startLng);
+  destLat = deg2rad(destLat);
+  destLng = deg2rad(destLng);
+
+
+  //console.log('start bearing calc');
+  y = Math.sin(destLng - startLng) * Math.cos(destLat);
+  x = Math.cos(startLat) * Math.sin(destLat) -
+        Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
+  brng = Math.atan2(y, x);
+  //console.log(`brng: ${brng}`);
+  brng = toDegrees(brng);
+  return (brng + 360) % 360;
+}
+
+	
+//--------------------------------------------
+// OAuth stuff here 
+
+
+
+
+	
+
+function logout() {
+	localStorage.clear();
+	
+	//clear cookies
+	 var c = document.cookie.split("; ");
+	 for (i in c) 
+	  document.cookie =/^[^=]+/.exec(c[i])[0]+"=;expires=Thu, 01 Jan 1970 00:00:00 GMT";  	
+
+};
+
+
+
+	function getToken(){
+		// Create and store a random "state" value
+		var state = "aselkjg123";
+		localStorage.setItem("pkce_state", state);
+
+		// Create and store a new PKCE code_verifier (the plaintext random secret)
+		//var code_verifier = generateRandomString();
+		//localStorage.setItem("pkce_code_verifier", code_verifier);
+
+		// Hash and base64-urlencode the secret to use as the challenge
+		//var code_challenge = await pkceChallengeFromVerifier(code_verifier);
+
+		// Build the authorization URL
+		var url = config.authorization_endpoint 
+			+ "?response_type=code"
+			+ "&client_id="+(config.client_id)
+			+ "&state="+(state)
+			+ "&scope="+(config.requested_scopes)
+			+ "&redirect_uri="+(config.redirect_uri)
+			//+ "&code_challenge="+encodeURIComponent(code_challenge)
+			//+ "&code_challenge_method=S256"
+			;
+
+		// Redirect to the authorization server
+		window.open(url);
+		
+		
+	};
+
+
+
+	function refreshToken() {
+
+		sendPostRequest(config.token_endpoint, {
+			grant_type: "refresh_token",
+			client_id: config.client_id,
+			client_secret: config.client_secret,
+			redirect_uri: config.redirect_uri,
+			refresh_token: localStorage.getItem("refresh_token")
+		}, function(request, body) {
+
+			// Initialize your application now that you have an access token.
+			// Here we just display it in the browser.
+			//document.getElementById("access_token").innerText = body.access_token;
+
+			//document.getElementById("token").classList = "";
+
+			// Replace the history entry to remove the auth code from the browser address bar
+			//window.history.replaceState({}, null, "/");
+			
+			console.log('Refreshing token');
+			console.log(`Access Token: ${body.access_token}`);
+			console.log(`Refresh Token: ${body.refresh_token}`);
+			console.log(`Expires in ${body.expires_in} seconds`);
+			
+			var refresh_after = (body.expires_in * 1000)-5000;
+			var token_expires = Date.now() + refresh_after;
+			
+			localStorage.setItem("token_expires", token_expires);		
+			localStorage.setItem("access_token",body.access_token);
+			localStorage.setItem("refresh_token",body.refresh_token);
+			
+			//window.close();
+
+		}, function(request, error) {
+			// This could be an error response from the OAuth server, or an error because the 
+			// request failed such as if the OAuth server doesn't allow CORS requests
+			//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
+			//document.getElementById("error").classList = "";
+		});
+};
+	
+	
+	// Parse a query string into an object
+	function parseQueryString(string) {
+		if(string == "") { return {}; }
+		var segments = string.split("&").map(s => s.split("=") );
+		var queryString = {};
+		segments.forEach(s => queryString[s[0]] = s[1]);
+		return queryString;
+	};
+	
+	// Make a POST request and parse the response as JSON
+	function sendPostRequest(url, params, success, error) {
+		var request = new XMLHttpRequest();
+		request.open('POST', url, true);
+		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+		request.onload = function() {
+			var body = {};
+			try {
+				body = JSON.parse(request.response);
+			} catch(e) {}
+
+			if(request.status == 200) {
+				success(request, body);
+			} else {
+				error(request, body);
+			}
+		}
+		request.onerror = function() {
+			error(request, {});
+		}
+		var body = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+		request.send(body);
+	};	
+	
+	
+	// Handle the redirect back from the authorization server and
+	// get an access token from the token endpoint
+
+	if(localStorage.getItem("access_token")==null) {;
+	var q = parseQueryString(window.location.search.substring(1));
+
+	// Check if the server returned an error string
+	if(q.error) {
+		//alert("Error returned from authorization server: "+q.error);
+		//document.getElementById("error_details").innerText = q.error+"\n\n"+q.error_description;
+		//document.getElementById("error").classList = "";
+	};
+
+	// If the server returned an authorization code, attempt to exchange it for an access token
+	if(q.code) {
+
+		// Verify state matches what we set at the beginning
+		if(localStorage.getItem("pkce_state") != q.state) {
+			console.log(`q.state: ${q.state}`);
+			console.log(`stored state: ${localStorage.getItem("pkce_state")}`);
+			//alert("Invalid state");
+		} else {
+
+			// Exchange the authorization code for an access token
+			sendPostRequest(config.token_endpoint, {
+				grant_type: "authorization_code",
+				code: q.code,
+				client_id: config.client_id,
+				client_secret: config.client_secret,
+				redirect_uri: config.redirect_uri
+				//code_verifier: localStorage.getItem("pkce_code_verifier")
+			}, function(request, body) {
+
+				// Initialize your application now that you have an access token.
+				// Here we just display it in the browser.
+				//document.getElementById("access_token").innerText = body.access_token;
+
+				//document.getElementById("token").classList = "";
+
+				// Replace the history entry to remove the auth code from the browser address bar
+				//window.history.replaceState({}, null, "/");
+				
+				console.log(`Access Token: ${body.access_token}`);
+				console.log(`Refresh Token: ${body.refresh_token}`);
+				console.log(`Expires in ${body.expires_in} seconds`);
+				
+				var refresh_after = (body.expires_in * 1000)-5000;
+				var token_expires = Date.now() + refresh_after;
+				
+				localStorage.setItem("token_expires", token_expires);
+				localStorage.setItem("access_token",body.access_token);
+				localStorage.setItem("refresh_token",body.refresh_token);
+				
+				
+				window.close();
+
+			}, function(request, error) {
+				// This could be an error response from the OAuth server, or an error because the 
+				// request failed such as if the OAuth server doesn't allow CORS requests
+				//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
+				//document.getElementById("error").classList = "";
+			});
+		}
+
+		// Clean these up since we don't need them anymore
+		localStorage.removeItem("pkce_state");
+		//localStorage.removeItem("pkce_code_verifier");
+	};
+	} else {
+		// Replace the history entry to remove the auth code from the browser address bar
+		//window.history.replaceState({}, null, "/");
+		
+		console.log(`Access Token: ${localStorage.getItem("access_token")}`);
+		console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
+		console.log(`Token Expires: ${localStorage.getItem("token_expires")}`);	
+		var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
+		console.log(`Seconds till expiration: ${time_till_expire}`);
+		if(time_till_expire < 3400) {refreshToken()};
+	};
+	
+	
+
+
+
+
+
+
+//-------------------------------------------
+
+
+
 	
 
 id = navigator.geolocation.watchPosition(success, error, options);	
