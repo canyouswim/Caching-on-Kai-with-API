@@ -10,6 +10,8 @@ var numCachesToLoad = 50; // how many caches should i load at one time?
 var useAPI = true;
 var rootAPIurl = "https://staging.api.groundspeak.com/v1/"; // staging
 //var rootAPIurl = //production
+var rootSiteURL = "https://staging.geocaching.com";
+
 
 // Authorization server details
 var config = {
@@ -1238,6 +1240,9 @@ function execute() {
 				case 'quit':
 				  window.close();
 				  break;
+				case 'Logout':
+				  logout();
+				  break;				  
 				case 'changeColor':
 				  app.activeNavItem.style.backgroundColor = 'green';
 				  //console.log('changing color');
@@ -3392,13 +3397,18 @@ function bearing(startLat, startLng, destLat, destLng){
 
 function logout() {
 	localStorage.clear();
-	
-	//clear cookies
-	 var c = document.cookie.split("; ");
-	 for (i in c) 
-	  document.cookie =/^[^=]+/.exec(c[i])[0]+"=;expires=Thu, 01 Jan 1970 00:00:00 GMT";  	
+	console.log('starting logout');
 
+	openURL(rootSiteURL);
+
+	//<form action="/account/logout" id="logout-form" method="post">
+	//<input name="returnUrl" type="hidden" value="https://staging.geocaching.com">
+	//<button data-event-action="Header Click" data-event-category="data" data-event-label="Sign Out" title="Sign out" type="submit">Sign out</button>
+	//</form>
+	
 };
+
+
 
 
 
