@@ -1,6 +1,6 @@
 {
   "version": "3.0.0",
-  "name": "Caching on Kai",
+  "name": "v3 Caching on Kai",
   "description": "Geocaching for the rest of us",
   "type": "privileged",
   "origin": "app://caching-on-kai",
@@ -10,11 +10,12 @@
     "112": "/assets/appLogo/Logo_caching-on-kai_112x112.png"
   },
   "developer": {
-    "name": "canyouswim"
+    "name": "canyouswim",
+    "url": "https://caching-on-kai.com"
   },
   "locales": {
     "en-US": {
-      "name": "Caching on Kai",
+      "name": "v3 Caching on Kai",
       "subtitle": "Geocaching for the rest of us",
       "description": "Geocaching"
     }
