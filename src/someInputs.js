@@ -9,6 +9,8 @@
     var select4_value;
     var select5;
     var select5_value;	
+    var input1;
+    var input1_value;	
 
     window.addEventListener("load", function () {
         select1 = document.getElementById('initialLocation');
@@ -16,6 +18,7 @@
         select3 = document.getElementById('displayUnits');
         select4 = document.getElementById('saveTravelDistance');
 		select5 = document.getElementById('coorRep');
+        input1 = document.getElementById('input1');		
         loadStorage();
         app.updateInputs();
     })
@@ -26,6 +29,7 @@
         select3_value = select3.value;
 		select4_value = select4.value;
 		select5_value = select5.value;
+        input1_value = input1.value;		
         updateStorage();
     }
 
@@ -35,11 +39,13 @@
         select3_value = setSelectByValue(select3, localStorage.getItem('units'));
         select4_value = setSelectByValue(select4, localStorage.getItem('saveTravelDistance'));
         select5_value = setSelectByValue(select5, localStorage.getItem('coorRep'));		
+        input1_value = setInput(input1, localStorage.getItem('input1'));		
     }
 
     function updateStorage() {
 		
-	   localStorage.setItem('initialLocation', select1_value);
+		localStorage.setItem('input1', input1_value);
+	    localStorage.setItem('initialLocation', select1_value);
         localStorage.setItem('initialCacheLoad', select2_value);
         localStorage.setItem('units', select3_value);
 

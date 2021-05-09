@@ -119,57 +119,61 @@
 	// the escape key will dismiss the ad on the PC 
 	// on the device or simulator press left soft key
 	var fullscreenAd = true; /* switch between fullscreen and responsive ad */
-	var testMode = 0; /* set to 0 for real ads */
+	var testMode = 1; /* set to 0 for real ads */
+	var turnoffAds = false;
 
-	document.addEventListener("DOMContentLoaded", () => {
-		var adContainer;
-		var adMaxHeight;
-		var adMaxWidth;
-		var adTabIndex;
 
-		if (!fullscreenAd) {
-			adContainer = document.getElementById('ad-container');
-			adMaxHeight = 60;
-			adMaxWidth = 224;
-			adTabIndex = 50; /* last item on the main menu, in this example */
-		}
+	if (!turnoffAds) {
+		document.addEventListener("DOMContentLoaded", () => {
+			var adContainer;
+			var adMaxHeight;
+			var adMaxWidth;
+			var adTabIndex;
 
-		try {
-			// display ad
-			getKaiAd({
-				publisher: '07b4b80f-0c30-4a81-9d5c-ef57389db951',
-				app: 'Caching-on-Kai',
-				test: testMode,
-				/* only for responsive ads */
-				h: adMaxHeight,
-				w: adMaxWidth,
-				container: adContainer,
-				/* up to here */
-
-				/* error codes */
-				/* https://www.kaiads.com/publishers/sdk.html#error */
-				onerror: err => console.error('KaiAds error catch:', err),
-				onready: ad => {
-					ad.call('display', {
-						tabindex: adTabIndex,
-						navClass: 'navItem',
-						display: 'block'
-					})
-
-					ad.on('click', () => console.log('ad clicked'))
-					ad.on('close', closeAd)
-					ad.on('display', displayAd)
-
-				}
-			});
-		} catch (e) {
-			var message = 'KaiAds not available: https://www.kaiads.com/publishers/sdk.html';
-			console.log(message);
 			if (!fullscreenAd) {
-				adContainer.innerText = message;
+				adContainer = document.getElementById('ad-container');
+				adMaxHeight = 60;
+				adMaxWidth = 224;
+				adTabIndex = 50; /* last item on the main menu, in this example */
 			}
-		}
-	});
+
+			try {
+				// display ad
+				getKaiAd({
+					publisher: '07b4b80f-0c30-4a81-9d5c-ef57389db951',
+					app: 'Caching-on-Kai',
+					test: testMode,
+					/* only for responsive ads */
+					h: adMaxHeight,
+					w: adMaxWidth,
+					container: adContainer,
+					/* up to here */
+
+					/* error codes */
+					/* https://www.kaiads.com/publishers/sdk.html#error */
+					onerror: err => console.error('KaiAds error catch:', err),
+					onready: ad => {
+						ad.call('display', {
+							tabindex: adTabIndex,
+							navClass: 'navItem',
+							display: 'block'
+						})
+
+						ad.on('click', () => console.log('ad clicked'))
+						ad.on('close', closeAd)
+						ad.on('display', displayAd)
+
+					}
+				});
+			} catch (e) {
+				var message = 'KaiAds not available: https://www.kaiads.com/publishers/sdk.html';
+				console.log(message);
+				if (!fullscreenAd) {
+					adContainer.innerText = message;
+				}
+			}
+		});
+	};
 
 	function displayAd() {
 		console.log('ad displayed');
