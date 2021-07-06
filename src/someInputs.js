@@ -13,12 +13,13 @@
     var input1_value;	
 
     window.addEventListener("load", function () {
+		console.log('trying to set the right settings values now');
         select1 = document.getElementById('initialLocation');
         select2 = document.getElementById('initialCacheLoad');
         select3 = document.getElementById('displayUnits');
         select4 = document.getElementById('saveTravelDistance');
 		select5 = document.getElementById('coorRep');
-        input1 = document.getElementById('input1');		
+        //input1 = document.getElementById('input1');		
         loadStorage();
         app.updateInputs();
     })
@@ -29,7 +30,7 @@
         select3_value = select3.value;
 		select4_value = select4.value;
 		select5_value = select5.value;
-        input1_value = input1.value;		
+        //input1_value = input1.value;		
         updateStorage();
     }
 
@@ -39,7 +40,7 @@
         select3_value = setSelectByValue(select3, localStorage.getItem('units'));
         select4_value = setSelectByValue(select4, localStorage.getItem('saveTravelDistance'));
         select5_value = setSelectByValue(select5, localStorage.getItem('coorRep'));		
-        input1_value = setInput(input1, localStorage.getItem('input1'));		
+        //input1_value = setInput(input1, localStorage.getItem('input1'));		
     }
 
     function updateStorage() {

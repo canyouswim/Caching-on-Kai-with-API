@@ -27,7 +27,7 @@
     <script src="src/kaios-toaster.js" defer></script>
     <script src="src/someInputs.js" defer></script>
     <script src="src/helperFunctions.js" defer></script>	
-    <script src="src/kaiads.v4.min.js" defer></script>
+   <!-- <script src="src/kaiads.v4.min.js" defer></script>-->
 
 
 
@@ -94,16 +94,34 @@
 
 		
 		<div class="view" id="viewCache">
-			<div id="CacheHeaderDetail">Waiting on cache details...<br><br>No cache selected yet :)</div>
+			<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
 			<div id="CacheDetails"></div>
-			<div id="CacheDescription"></div>
-			<div id="CacheHint"></div>
-			<div id="CacheLogs"></div>
-			<div id="CachePhotos"></div>
-			<div id="CacheActions">
-			<!--*: View Logs<br>
-			0: View Photo Gallery<br>
-			#: Log Cache--></div>
+			
+			<div id="PromptForFullDetails" style="display:block">
+				<p><b>Do you wish to load the full details for this cache?</b></p>		
+			</div>
+			<div id="CacheFullDetails" style="display:none">
+				<div class="tab">
+				  <button class="tablinks">Details</button>
+				  <button class="tablinks">Logs</button>
+				  <button class="tablinks">Gallery</button>
+				</div>		
+			
+				<div id="Details" class="tabcontent" style="display:block;">		
+					<div id="CacheDescription"></div>
+					<div id="CacheHint"></div>
+					<!--<div id="CacheActions"></div>-->
+				</div>
+				
+				<div id="Logs" class="tabcontent" style="display:none;">
+					<div id="CacheLogs"></div>
+				</div>
+
+				<div id="Gallery" class="tabcontent" style="display:none;">
+					<div id="CachePhotos"></div>
+								Cache Photos Here...
+				</div>			
+			</div>
 		</div>
 		
 		<div class="view" id="LogCache"></div>		
@@ -140,51 +158,28 @@
 			<div id="cacheViewsRemaining"></div>
 			
 			
-
-
-			
-			
-			
-			
-			<!--Dist Traveled: <div id="TravelDistance">not calculated</div>
-			<fieldset>
-			  <legend class="navItem" tabIndex="0">Show distance traveled?</legend>
-			  <select id="saveTravelDistance">
-				<option value="yes" selected>Yes</option>
-				<option value="no">No, but save distances traveled so far</option>
-				<option value="noClear">No, and clear distances traveled</option>				
-			  </select>
-			</fieldset>
-			<fieldset>
-			  <legend class="navItem" tabIndex="0">On load, start at...</legend>
-			  <select id="initialLocation">
-				<option value="GPS" selected>GPS position</option>
-				<option value="Home">Home loc from geocaching.com</option>
-			  </select>
-			</fieldset>-->
-			
 			
 
-			<fieldset>
+			<!--<fieldset>
 			  <legend class="navItem" tabIndex="0">File:</legend>
 			    <input id="input1" type="file"/>	
-			</fieldset>
+			</fieldset>-->
 			<fieldset>
-			  <legend class="navItem" tabIndex="10">Load caches on load...</legend>
+			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
 			  <select id="initialCacheLoad">
-				<option value="YesLoadCaches" selected>Yes - load immediately based on my position</option>
+				<option value="YesLoadCaches">Yes - load immediately based on my position</option>
 				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
 			  </select>
 			</fieldset>			
 			<fieldset>
-			  <legend class="navItem" tabIndex="20">Display distance as...</legend>
+			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
 			  <select id="displayUnits">
 				<option value="mi" selected>feet/miles</option>
 				<option value="km">meters/kilometers</option>
 			  </select>
 			</fieldset>
 				<fieldset>
-			  <legend class="navItem" tabIndex="30">Display coordinates as...</legend>
+			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
 			  <select id="coorRep">
 				<option value="DDD" selected>ND.dº WD.dº</option>
 				<option value="DMM">NDºM.m' WDºM.m'</option>
@@ -199,9 +194,9 @@
 				<option value="150">150</option>				
 			  </select>	
 			</fieldset>-->		
-			<button class="navItem" tabIndex="40" data-function="Help">Help</button>		
-			<button class="navItem" tabIndex="50" data-function="About">About</button>
-			<button class="navItem" tabIndex="60" data-function="Logout">Logout</button>				
+			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="40" data-function="About">About</button>
+			<button class="navItem" tabIndex="50" data-function="Logout">Logout</button>				
 		</div>
 		
 		<div class="view" id="viewAllShortcuts">
@@ -242,8 +237,9 @@
 		<div class="view" id="viewActions">
 			Select action:
 			<button class="navItem" tabIndex="0" data-function="cancel">None/Cancel</button>
-			<button class="navItem" tabIndex="10" data-function="createWaypoint">Create wayPoint here</button>
-			<button class="navItem" tabIndex="20" data-function="centerOnMe">Recenter on me</button>	
+			<button class="navItem" tabIndex="10" data-function="refreshList">Load caches near here</button>
+			<button class="navItem" tabIndex="20" data-function="createWaypoint">Create wayPoint here</button>
+			<button class="navItem" tabIndex="30" data-function="centerOnMe">Recenter on me</button>	
 			<div id="showCacheNav"></div>			
 		</div>		
 
@@ -265,7 +261,46 @@
 			<button class="navItem" tabIndex="40" data-function="cancel">Cancel</button>			
 		</div>	
 
+		<div class="view" id="logCache">
+			<div id="logHeader">Log this geocache</div>
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Log Type</legend>
+			  <select id="logType">
+				<option value="2">Found It</option>
+				<option value="3">Didn't Find It</option>
+				<option value="4">Write note</option>				
+			  </select>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Log Details</legend>
+			  <textarea id="logText" value="" rows="5" columns="30"></textarea>
+			</fieldset>
+			<fieldset>
+			  <legend class="navItem" tabIndex="20">Date Found</legend>
+			  <input id="logDate" type="date"/>
+			</fieldset>			
+			<fieldset>
+			  <legend class="navItem" tabIndex="30">Attach Image:</legend>
+			    <input id="logImage" type="file"/>	
+			</fieldset>
+			<fieldset>			
+			  <legend class="navItem" tabIndex="40">Award a Favorite Point?</legend>
+			  <select id="logFav" type="radio">
+				<option value="false">No</option>
+				<option value="true">Yes</option>
+			  </select>	
+			</fieldset>			  
+			<button class="navItem" tabIndex="50" data-function="submitLog">Submit</button>
+			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>			
+		
+		</div>
+
+		<div class="view" id="showModal">
+			<div id="message">no message set</div>
+		</div>
+
 	</div>	 	 
+
 	 
 	
     <div id="softkeyBar">
@@ -275,6 +310,7 @@
     </div>
 
     <div id="keyOverlay"></div>
+
 
     
 

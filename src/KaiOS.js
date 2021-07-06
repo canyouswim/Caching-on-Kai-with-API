@@ -12,7 +12,7 @@
 		switch (e.key) {
 			case 'Backspace':
 				e.preventDefault(); // prevent the app from closing
-				break;
+				break;			
 		}
 	}
 
@@ -33,7 +33,9 @@
 				break;
 			case 'SoftLeft':
 			case 'Control': /* use on PC */
-				app.keyCallback.softLeft();
+				if(app.fullAdVisible == false) {
+					app.keyCallback.softLeft();
+				}
 				break;
 			case 'SoftRight':
 			case 'Alt': /* use on PC */
