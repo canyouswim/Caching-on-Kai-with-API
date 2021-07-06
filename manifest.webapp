@@ -3,7 +3,7 @@
   "name": "v3 Caching on Kai",
   "description": "Geocaching for the rest of us",
   "type": "privileged",
-  "origin": "app://caching-on-kai",
+  "origin": "app://caching-on-kai.com",
   "launch_path": "/index.html",
   "icons": {
     "56": "/assets/appLogo/Logo_caching-on-kai_56x56.png",
