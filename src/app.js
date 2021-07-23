@@ -2608,7 +2608,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					cacheShortDescription: "", //20
 					cacheAttributes: "", //21
 					cacheFindCount: "", //22
-					cacheUserData: "" //23
+					cacheUserData: "", //23
+					cacheImages: "" //24
 				};
 				arrayCache[i] = arrayCacheObject;		
 				
@@ -2851,7 +2852,8 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
 						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
 						arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
-						arrayCache[CacheID].cacheUserData = cacheDetails.userData;						
+						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+						arrayCache[CacheID].cacheImages = cacheDetails.images;
 							
 						// our array is now updated - go show the cache details
 						ShowCacheDetails(CacheID,false);
@@ -3024,6 +3026,51 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				
 				listContainer.appendChild(entry);
 			}
+			
+			//================================================================================
+			//
+			// Display list of images
+			//
+			//
+			var listContainer = document.getElementById('CachePhotos');
+			listContainer.innerHTML = '';
+			var imageCount = arrayCache[CacheID].cacheImages.length;		
+			console.log(`ImgCount: ${imageCount}`);
+			
+			var logListID = 0;
+
+			//
+			// cycle through all the returned logs and 
+			//	load them into the cache listing page for display / selection by the user 
+			//
+			for (let i = 0; i < imageCount; i++) {
+
+				// parse out the returned response 
+				
+				var imageDesc = arrayCache[CacheID].cacheImages[i].description;
+				var imageDateRaw = arrayCache[CacheID].cacheImages[i].capturedDate;
+				var imageThumbnail = "<img src='" + arrayCache[CacheID].cacheImages[i].thumbnailUrl + "'>";
+				var imageLargeURL = arrayCache[CacheID].cacheImages[i].largeUrl;				
+				var imageDate = imageDateRaw.slice(0,10);	
+				var imageOwnerCode = arrayCache[CacheID].cacheImages[i].ownerCode;				
+
+									
+				// now work on loading those details into the cache details page 
+				
+				var entry = document.createElement("div");
+				entry.className = 'navItem';
+				entry.tabIndex = i * 10;	
+
+
+				var headline = document.createElement("span");
+				headline.innerHTML = imageDate + "<br>" + imageThumbnail + "<br>" + imageDesc;
+				
+				// take that structured HTML and drop it into the page:
+				entry.appendChild(headline);	
+				
+				listContainer.appendChild(entry);
+			}			
+			
 		} else {
 
 		}
@@ -4019,46 +4066,49 @@ function logout() {
 	//<button data-event-action="Header Click" data-event-category="data" data-event-label="Sign Out" title="Sign out" type="submit">Sign out</button>
 	//</form>	
 	
-	var request = new XMLHttpRequest();
-	var url = "https://staging.geocaching.com/account/logout";
 	var params = {
 		id: "logout-form",
-		returnURL: redirect_uri
+		returnURL: config.redirect_uri
 	};
 
+	var logoutURL = rootSiteURL + "/account/logout";	
+	var token = localStorage.getItem("access_token");
+	var request = new XMLHttpRequest({ mozSystem: true });
 	
+	localStorage.clear();
 	
-	
-	request.open('POST', url, true);
-	request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-	request.onload = function() {
-		var body = {};
-		try {
-			body = JSON.parse(request.response);
-		} catch(e) {}
-
-		if(request.status == 200) {
-			console.log(`POST success`);
-			//success(request, body);
-		} else {
-			console.log(`POST error`);
-			//error(request, body);
+	request.onreadystatechange = function() {
+		console.log(`state: ${this.readyState} | status: ${this.status}`);
+		if (this.readyState == 3) {	
+			console.log(`clearing storage`);
+			localStorage.clear();
 		}
-	};
-	request.onerror = function() {
-		console.log(`error: ${request}`);
-		//error(request, {});
-	};
-	var body = Object.keys(params).map(key => key + '=' + params[key]).join('&');
-	request.send(body);
-
-
-
-
-	//openURL(rootSiteURL);
-
-
+		if (this.readyState == 4)  { // && (this.status == 200 || this.status == 201))
+			body = JSON.parse(this.response);
+			// send up success message and punt the user back to previous screen
+			kaiosToaster({	
+			  message: 'Logged out successfully',	
+			  position: 'north',	
+			  type: 'success',	
+			  timeout: 3000	
+			});	
+			//goBack();
+			localStorage.clear();
+			window.close();
+		} else if(this.readyState == 4 && (this.status !== 200 || this.status !== 201)) {
+			// some issue
+			body = JSON.parse(this.response);
+			var responseError = "There was an error on the log submission: " + body.errorMessage;
+			showModal(responseError);
+		}
+	}		
+	request.open("POST", logoutURL, true);
 	
+	//request.setRequestHeader("Content-Type", "application/json;");
+	//request.setRequestHeader("Accept", "application/json;");
+	//request.setRequestHeader("Authorization", "bearer " + token);
+	
+	request.send(JSON.stringify(params));
 };
 
 
