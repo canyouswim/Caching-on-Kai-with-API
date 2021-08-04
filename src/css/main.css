@@ -204,11 +204,12 @@ h1 {
 }
 
 button {
-  background: black;
+  background: white;
   font-size: 1.0em;
   text-align: center;
   border: none;
 }
+
 
 button::-moz-focus-inner {
   border: 0;
@@ -305,6 +306,15 @@ button::-moz-focus-inner {
 }
 
 .list div h3, .grid div h3 {
+  line-height: 2em;
+  margin: 0;
+}
+
+.listLogs div, .grid div {
+  padding: 2%;
+}
+
+.listLogs div h3, .grid div h3 {
   line-height: 2em;
   margin: 0;
 }

@@ -13,7 +13,7 @@
     var input1_value;	
 
     window.addEventListener("load", function () {
-		console.log('trying to set the right settings values now');
+		//console.log('trying to set the right settings values now');
         select1 = document.getElementById('initialLocation');
         select2 = document.getElementById('initialCacheLoad');
         select3 = document.getElementById('displayUnits');
