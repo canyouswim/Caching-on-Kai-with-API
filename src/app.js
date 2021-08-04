@@ -133,6 +133,7 @@ var openweather_api = "";
 var tabIndex = 0;
 var debug = "false";
 var CacheListID = 0;
+var currentCacheID;
 
 var tilesLayer;
 var tileLayer;
@@ -260,22 +261,14 @@ app.keyCallback = {
     	dLeft: function () {
 				if(app.editWPmode==2){
 					editWP("LEFT");
-				} else if (windowOpen=="viewCache") {
-					// switch tabs	
-					switchTab(false);
-				}
-				else{
+				}else{
 				navHorizontal(false);
 				} 
 			},
 	    dRight: function () { 
 				if(app.editWPmode==2){
 					editWP("RIGHT");
-				} else if (windowOpen=="viewCache") {
-					//switch tabs	
-					switchTab(true);
-				}
-				else{
+				}else{
 				navHorizontal(true);
 				} 
 			
@@ -389,8 +382,8 @@ app.keyCallback = {
 			if(gotoCache.cacheDistance < 0.01) {
 				// we assume if you're closer than 0.01 mile/km, we'll open that cache details
 				LoadCacheDetails(gotoCache.cacheCode,false);
-				showView(3,false);	
-				initView();					
+				//showView(3,false);	
+				//initView();					
 			};
 		},
 		ShowAbout: function () { aboutDialog(); },	
@@ -656,16 +649,16 @@ window.addEventListener("load", function () {
 
 		xhr.onreadystatechange = function () {
 		  var geoloadstate = xhr.readyState;
-		  console.log(`Load state: ${geoloadstate}`);
+		  //console.log(`Load state: ${geoloadstate}`);
 		  if (geoloadstate == 1) {
-			  console.log('request opened');
+			  //console.log('request opened');
 		  } else if (geoloadstate == 2) {
-			console.log('headers received'); 
+			//console.log('headers received'); 
 		  } else if (geoloadstate == 3) {
-			  console.log('loading data');
+			 // console.log('loading data');
 		  } else if (geoloadstate == 4) {
 			var geostatus = xhr.status;
-				console.log(`status: ${geostatus}`);
+				//console.log(`status: ${geostatus}`);
 			if (geostatus >= 200 && geostatus < 400) {
 			  var siteText = xhr.response;				
 				console.log(`response: ${siteText}`);
@@ -746,83 +739,7 @@ function navScreenTop() {
 }
 
 // vertical navigation in increments of 10
-function navVertical(forward) {
-	//console.log(`is the InputFocused? ${app.isInputFocused()}`);
-	//console.log(`windowOpen=${windowOpen}`);
-	if (windowOpen == "viewMap") {
-		// move map around
-		if (forward) {
-			MovemMap('down');		
-		} else {
-			MovemMap('up');
-		}
-	} else if (windowOpen == "viewCache") {
 
-		if(forward == true) {
-			app.currentView.scrollBy(0, 50);
-		} else {
-			app.currentView.scrollBy(0, -50);
-		}
-	} else if (windowOpen == "viewAllShortcuts") {
-
-		if(forward == true) {
-			app.currentView.scrollBy(0, 50);
-		} else {
-			app.currentView.scrollBy(0, -50);
-		}	
-	} else if (!app.isInputFocused() && !app.fullAdVisible) {
-      app.updateNavItems();
-      // jump to tabIndex
-      var next = app.currentNavId;
-
-	  
-      next += forward ? 10 : -10;
-      if (next > getNavTabIndex(app.navItems.length - 1)) {
-        // if larger than last index
-        next = next % 10;
-        // try to stay in same column
-        if (app.navItems[next]) {
-          focusActiveButton(app.navItems[next]);
-        } else {
-          focusActiveButton(app.navItems[0]);
-        }
-      } else if (next < 0) {
-        // if smaller than 0
-
-		var lastTab = getNavTabIndex(app.navItems.length - 1);
-        var rowIndex = parseInt(Math.floor(lastTab * 0.1) * 10);
-        // try to stay in same column
-        var columnIndex = (next + 10) % 10;
-        next = rowIndex + columnIndex;
-        for (var i = 0; i < app.navItems.length; i++) {
-          if (getNavTabIndex(i) == next) {
-            focusActiveButton(app.navItems[i]);
-            break;
-          }
-        }
-      } else {
-        var found = false;
-        for (var i = 0; i < app.navItems.length; i++) {
-          if (getNavTabIndex(i) == next) {
-            focusActiveButton(app.navItems[i]);
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          // nothing found, try start of next row
-          var round = Math.floor(next / 10) * 10;
-          for (var i = 0; i < app.navItems.length; i++) {
-            if (getNavTabIndex(i) == round) {
-              focusActiveButton(app.navItems[i]);
-              found = true;
-              break;
-            } 
-          }
-        }
-      }
-    }
-};
 
 function getNavTabIndex(i) {
 	return parseInt(app.navItems[i].getAttribute('tabIndex'));
@@ -836,11 +753,11 @@ function focusActiveButton(element) {
     // scroll to top
     if (app.currentNavId == 0) {
       try {
-        app.currentView.scrollTo(0, 0);
+        //app.currentView.scrollTo(0, 0);
       } catch (e) { }
     } else {
       // smooth scrolling into view
-      app.activeNavItem.scrollIntoView({ behavior: "smooth" });
+      //app.activeNavItem.scrollIntoView({ behavior: "smooth" });
     }
 
 
@@ -903,11 +820,135 @@ function switchTab(forward) {
   //  tablinks[i].className = tablinks[i].className.replace(" active", "");
   //}
   //document.getElementById(cityName).style.display = "block";
-  //evt.currentTarget.className += " active";
+  //evt.currentTargeclassName += " active";
 }
 
-// horizontal navigation in increments of 1
+function navVertical(forward) {
+	//console.log(`is the InputFocused? ${app.isInputFocused()}`);
+	//console.log(`windowOpen=${windowOpen}`);
+	if (windowOpen == "viewMap") {
+		// move map around
+		if (forward) {
+			MovemMap('down');		
+		} else {
+			MovemMap('up');
+		}
+	} else if (windowOpen == "viewCache") {
+
+		if(forward == true) {
+			app.currentView.scrollBy(0, 50);
+		} else {
+			app.currentView.scrollBy(0, -50);
+		}
+	} else if (windowOpen == "viewAllShortcuts") {
+
+		if(forward == true) {
+			app.currentView.scrollBy(0, 50);
+		} else {
+			app.currentView.scrollBy(0, -50);
+		}	
+	} else if (!app.isInputFocused() && !app.fullAdVisible) {
+		
+		app.updateNavItems();
+		// jump to tabIndex
+		var next = app.currentNavId;
+		var navID = next/10;
+		next += forward ? 10 : -10;		
+		
+		var jumpToNextTab = true;
+		
+		//console.log(`navID = ${navID}`);
+		//console.log(`next: ${next}`);		
+		
+		if (windowOpen == "viewCacheGallery") {
+			var myElement = document.getElementsByClassName("listGalleryView")[0];				
+		} else if (windowOpen == "viewCacheLogs") {
+			var myElement = document.getElementsByClassName("listLogsView")[0];				
+		} else {
+			var myElement = document.getElementsByClassName("list")[0];	
+		}
+		
+		
+		
+		//var bounding = myElement.getBoundingClientRect();
+
+		var bounding = myElement.getElementsByClassName("navItem")[navID].getBoundingClientRect();
+		
+		//console.log(`bound right: ${bounding.right}, bottom: ${bounding.bottom}`);
+
+		if ((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) || (bounding.top > ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) ) {
+			jumpToNextTab = true;
+			//console.log('Element is in the viewport!');
+		} else {
+			jumpToNextTab = false;
+			//console.log('Element is NOT in the viewport!');
+		}
+		
+		//console.log(`jumpToTab=${jumpToNextTab} - post bounding check`);
+		// at the top of the list - force to scroll now if not at the top of the pageX
+		if (navID==0 && forward==false) { jumpToNextTab=false };
+
+		//console.log(`jumpToTab=${jumpToNextTab} - post top of list check`);
+
+		if(jumpToNextTab){
+
+			if (next > getNavTabIndex(app.navItems.length - 1)) {
+				//console.log(`next: ${next} ?>? ${getNavTabIndex(app.navItems.length - 1)}`);
+				// if larger than last index
+				next = next % 10;
+				// try to stay in same column
+				if (app.navItems[next]) {
+				  focusActiveButton(app.navItems[next]);
+				} else {
+				  focusActiveButton(app.navItems[0]);
+				}
+			} else if (next < 0) {
+				// if smaller than 0
+				var lastTab = getNavTabIndex(app.navItems.length - 1);
+				var rowIndex = parseInt(Math.floor(lastTab * 0.1) * 10);
+				// try to stay in same column
+				var columnIndex = (next + 10) % 10;
+				next = rowIndex + columnIndex;
+				for (var i = 0; i < app.navItems.length; i++) {
+				  if (getNavTabIndex(i) == next) {
+					focusActiveButton(app.navItems[i]);
+					break;
+				  }
+				}
+			} else {
+				var found = false;
+				for (var i = 0; i < app.navItems.length; i++) {
+				  if (getNavTabIndex(i) == next) {
+					focusActiveButton(app.navItems[i]);
+					found = true;
+					break;
+				  }
+				}
+				if (!found) {
+				  // nothing found, try start of next row
+				  var round = Math.floor(next / 10) * 10;
+				  for (var i = 0; i < app.navItems.length; i++) {
+					if (getNavTabIndex(i) == round) {
+					  focusActiveButton(app.navItems[i]);
+					  found = true;
+					  break;
+					}
+				  }
+				}
+			}
+		} else {
+			if(forward == true) {
+				app.currentView.scrollBy(0, 50);
+			} else {
+				app.currentView.scrollBy(0, -50);
+			}			
+		}
+    }		
+};
+
+
 function navHorizontal(forward) {
+	//console.log(`in navHorizontal, windowOpen=${windowOpen}, cacheID=${currentCacheID}`);
 	if (windowOpen == "viewMap") {
 		// move map around
 		if (forward) {
@@ -915,7 +956,7 @@ function navHorizontal(forward) {
 		} else {
 			MovemMap('left');
 		}
-	} else if (windowOpen=="viewCache") {
+	} else if (windowOpen=="viewCacheOLD") {
 		// move to the next or previous cache details and set the position in the overall cache list
 		var gotoCacheID;
 		if (forward) {
@@ -930,9 +971,30 @@ function navHorizontal(forward) {
 			//console.log(`CacheListID = ${CacheListID}`);
 		  //windowOpen = "viewCache";
 		  LoadCacheDetails(gotoCacheID,false);
-		  showView(3,false);
-		  initView();			
+		  //showView(3,false);
+		  //initView();			
 				
+	} else if (windowOpen=="viewCache") {
+		// forward from Cache details goes to log view.  backwards goes to image gallery
+		if (forward) {
+			viewCacheLogs(currentCacheID);			
+		} else {
+			viewCacheGallery(currentCacheID);				
+		}
+	} else if (windowOpen=="viewCacheLogs") {
+		// forward from log view goes to image gallery.  backwards goes to cache details
+		if (forward) {
+			viewCacheGallery(currentCacheID);				
+		} else {
+			ShowCacheDetails(currentCacheID,false);				
+		}
+	} else if (windowOpen=="viewCacheGallery") {
+		// forward from image gallery goes to cache details, backwards goes to log view
+		if (forward) {
+			ShowCacheDetails(currentCacheID,false);				
+		} else {
+			viewCacheLogs(currentCacheID);				
+		}		
 	} else if (!app.isInputFocused() && !app.fullAdVisible) {
       app.updateNavItems();
       // jump to array index for continuous horizontal navigation
@@ -955,10 +1017,11 @@ function navHorizontal(forward) {
 
 app.isInputFocused = function () {
 	var activeTag = document.activeElement.tagName.toLowerCase();
-	//console.log(`Active tag is ${activeTag}`);
+	console.log(`Active tag is ${activeTag}`);
 	var isInput = false;
 	// the focus switches to the 'body' element for system ui overlays
-	if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' || activeTag == 'body' || activeTag == 'html') {
+	//if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' || activeTag == 'body' || activeTag == 'html') {
+	if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' ) {		
 	  isInput = true;
 	}
 	return isInput;
@@ -1058,8 +1121,11 @@ function initView() {
 		windowOpen = "Settings";
 		app.leftSoftButton = "Back";
 		app.optionEnabled = false;
+	} else if (app.currentViewName == 'viewCacheLogs') {
+		windowOpen = "viewCacheLogs";
+		app.leftSoftButton = "CacheDetails";
+		app.optionEnabled = true;
 	}
-
 	// focus first menu entry
 	if (app.currentView.querySelector(".navItem")) {
 	  app.updateNavItems();
@@ -1067,6 +1133,8 @@ function initView() {
 		CacheListID = CacheListID/10;
 		//app.currentNavid = CacheListID;
 		focusActiveButton(app.navItems[CacheListID]);
+	  } else if(app.currentViewName == 'viewCache') {
+		  
 	  } else {
 		focusActiveButton(app.navItems[0]);	
 	  }
@@ -1100,20 +1168,9 @@ function leftButton() {
 	}
 }
 
-function viewCacheLogs() {
-	 if(cacheGUIDvalue != '') {
-		 //var CacheURL = " https://www.geocaching.com/seek/cache_logbook.aspx?guid=" + cacheGUIDvalue
-		 var CacheURL = "https://www.geocaching.com/seek/cdpf.aspx?guid=" + cacheGUIDvalue + "&lc=10";
-		 openURL(CacheURL);				 				 
-	 }	
-};
 
-function viewCacheGallery() {
-	 if(cacheGUIDvalue != '') {
-		 var CacheGalleryURL = "https://www.geocaching.com/seek/gallery.aspx?guid=" + cacheGUIDvalue;
-		 openURL(CacheGalleryURL);
-	 }	
-};
+
+
 
 function logThisCache() {
 	 if (navGeoCode !='') {
@@ -1383,8 +1440,8 @@ function execute() {
 				 break;
 				case 'gotoNearestCache':
 					LoadCacheDetails(gotoCache.cacheCode,false);
-					showView(3,false);	
-					initView();					
+					//showView(3,false);	
+					//initView();					
 				 break;
 				case 'createWaypoint':
 					showView(0,false);
@@ -1414,10 +1471,10 @@ function execute() {
 					initView();
 				 break;				 
 				case 'viewLogs':
-					viewCacheLogs();
+					
 				 break;
 				case 'viewGallery':
-					viewCacheGallery();
+					
 				 break;
 				case 'LogCache':
 					logThisCache();
@@ -1501,8 +1558,8 @@ function execute() {
 				  //console.log(`ID in list: ${CacheListID}`);
 				  windowOpen = "viewCache";
 				  LoadCacheDetails(navGeoCode,false);
-				  showView(3,false);
-				  initView();
+				  //showView(3,false);
+				  //initView();
 				//  softkeyBar();	
 				  break;	
 				case 'About':
@@ -1575,6 +1632,7 @@ function softkeyBar() {
 			app.optionButtonAction = 'viewOptions';
 		} else if(app.currentViewName == "viewCache") {
 			app.backButton.innerHTML = "Caches";
+			
 			app.actionButton.innerHTML = "GoNav";
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewOptions';
@@ -2103,7 +2161,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			// only pull lite data for Basic users/me
 		//	values = values + "&lite=true";
 		//} else {
-			//Charter + Premium members pull all caches details up front
+		//Charter + Premium members pull all caches details up front
 		//	values = values + "&lite=false";
 		//};
 		values = values + "&take=" + numCachesToLoad; //how many caches to return?
@@ -2408,7 +2466,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			  type: 'warning',
 			  timeout: 3000
 			});	
-			console.log(`response from storage: ${siteText}`);
+			//console.log(`response from storage: ${siteText}`);
 			//===============================================================
 			// now parse the returned JSON out and do stuff with it
 			
@@ -2779,8 +2837,10 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 		}	
 
 	// force to always load full details if we're not a basic user
-	if(userMembershipLevelId !== 1) {
+	console.log(`userMembershipLevelId = ${userMembershipLevelId}`);
+	if(userMembershipLevelId != 1) {
 		loadFullDetails = true;
+		//console.log('trying to set loadFullDetails to true');
 	}
 		
 		
@@ -2856,6 +2916,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						arrayCache[CacheID].cacheImages = cacheDetails.images;
 							
 						// our array is now updated - go show the cache details
+						//viewCacheLogs(CacheID);
 						ShowCacheDetails(CacheID,false);
 						
 					}  else if (geostatus == 401) {
@@ -2874,18 +2935,24 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 
 			};	
 		} else {
+			//viewCacheLogs(CacheID);
 			ShowCacheDetails(CacheID,true);			
 		};
 	} else {
 		// we already have the cache fully loaded - go direct to showing it
+		//viewCacheLogs(CacheID);
 		ShowCacheDetails(CacheID,false);
 	}
 }
 
 function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 	// load up what are previous and next caches in the array are
-	console.log(`promptToLoadFullDetails: ${promptToLoadFullDetails}`);
+	//console.log(`promptToLoadFullDetails: ${promptToLoadFullDetails}`);
 
+	currentCacheID = CacheID;
+
+	showView(3,false);	
+	initView();	
 	
 	var myArrayLength = arrayCache.length;			
 	if(CacheID==0) {
@@ -3015,11 +3082,13 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				
 				var entry = document.createElement("div");
 				entry.className = 'navItem';
-				entry.tabIndex = i * 10;	
+				var myIndex = i*10;				
+				entry.tabIndex = myIndex;
+
 
 
 				var headline = document.createElement("span");
-				headline.innerHTML = "<b>" + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
+				headline.innerHTML = "<b>" + myIndex + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
 				
 				// take that structured HTML and drop it into the page:
 				entry.appendChild(headline);	
@@ -3081,6 +3150,147 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 	}
 }
 
+function viewCacheLogs(CacheID) {
+	windowOpen="viewCacheLogs";
+	showView(16,false);	
+	initView();	
+
+	
+	var CacheHeader = document.getElementById('CacheLogHeaderDetail');		
+	CacheHeader.innerHTML = '';	
+		var BadgeContent = document.createElement("span");
+		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+	CacheHeader.appendChild(BadgeContent);	
+
+	var TempCacheLat = arrayCache[CacheID].cacheLat;
+	var TempCacheLng = arrayCache[CacheID].cacheLng;
+	var strTripDistance;
+	
+	if (TempCacheLat !== 0 && TempCacheLng !== 0) {
+		var tripDistance = findDistance(my_current_lat,my_current_lng,TempCacheLat,TempCacheLng);
+		//console.log(`Cache distance is ${tripDistance}`);
+		//console.log(`showing cache distance, myUnits are ${myUnits}`);
+		if(myUnits == "mi") {
+			if(tripDistance < .5) {
+				strTripDistance = `${roundToTwo(tripDistance * 5280)}ft`;
+			} else {
+				strTripDistance = `${roundToTwo(tripDistance)}mi`;		
+			};
+		} else {
+			if(tripDistance < .5) {
+				strTripDistance = `${roundToTwo(tripDistance * 1000)}m`;
+			} else {
+				strTripDistance = `${roundToTwo(tripDistance)}km`;
+			};
+		};
+	} else {
+		strTripDistance = "";
+	}
+
+
+	var CacheLevels = document.getElementById('CacheLogDetails');
+	CacheLevels.innerHTML = '';	
+		var CacheLevelsDetail = document.createElement("span");
+		CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
+	CacheLevels.appendChild(CacheLevelsDetail);		
+	//================================================================================
+	//
+	// Display list of logs
+	//
+	//
+	var listContainer = document.getElementById('CacheLogsView');
+	listContainer.innerHTML = '';
+	var logCount = arrayCache[CacheID].cacheLogs.length;		
+	
+	
+	var logListID = 0;
+
+	//
+	// cycle through all the returned logs and 
+	//	load them into the cache listing page for display / selection by the user 
+	//
+	for (let i = 0; i < logCount; i++) {
+
+		// parse out the returned response 
+		
+		var logText = arrayCache[CacheID].cacheLogs[i].text;
+		var logFavorite = arrayCache[CacheID].cacheLogs[i].usedFavoritePoint;
+		var logOwnerName = arrayCache[CacheID].cacheLogs[i].owner.username;
+		var logDateRaw = arrayCache[CacheID].cacheLogs[i].loggedDate;
+		var logDate = logDateRaw.slice(0,10);		
+		var logTypeImg = "<img src='" + arrayCache[CacheID].cacheLogs[i].geocacheLogType.imageUrl + "'>";
+		var logType = arrayCache[CacheID].cacheLogs[i].geocacheLogType.name;
+
+							
+		// now work on loading those details into the cache details page 
+		
+		var entry = document.createElement("div");
+		entry.className = 'navItem';
+		var myIndex = i*10;				
+		entry.tabIndex = myIndex;
+
+
+
+		var headline = document.createElement("span");
+		headline.innerHTML = "<b>" + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
+		
+		// take that structured HTML and drop it into the page:
+		entry.appendChild(headline);	
+		
+		listContainer.appendChild(entry);
+	}
+};
+
+function viewCacheGallery(CacheID) {
+	windowOpen="viewCacheGallery";	
+	showView(17,false);	
+	initView();	
+	
+	var CacheHeader = document.getElementById('CacheGalleryHeaderDetail');		
+	CacheHeader.innerHTML = '';	
+		var BadgeContent = document.createElement("span");
+		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+	CacheHeader.appendChild(BadgeContent);	
+
+	var TempCacheLat = arrayCache[CacheID].cacheLat;
+	var TempCacheLng = arrayCache[CacheID].cacheLng;
+	var strTripDistance;
+	
+	if (TempCacheLat !== 0 && TempCacheLng !== 0) {
+		var tripDistance = findDistance(my_current_lat,my_current_lng,TempCacheLat,TempCacheLng);
+		//console.log(`Cache distance is ${tripDistance}`);
+		//console.log(`showing cache distance, myUnits are ${myUnits}`);
+		if(myUnits == "mi") {
+			if(tripDistance < .5) {
+				strTripDistance = `${roundToTwo(tripDistance * 5280)}ft`;
+			} else {
+				strTripDistance = `${roundToTwo(tripDistance)}mi`;		
+			};
+		} else {
+			if(tripDistance < .5) {
+				strTripDistance = `${roundToTwo(tripDistance * 1000)}m`;
+			} else {
+				strTripDistance = `${roundToTwo(tripDistance)}km`;
+			};
+		};
+	} else {
+		strTripDistance = "";
+	}
+
+
+	var CacheLevels = document.getElementById('CacheGalleryDetails');
+	CacheLevels.innerHTML = '';	
+		var CacheLevelsDetail = document.createElement("span");
+		CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
+	CacheLevels.appendChild(CacheLevelsDetail);		
+	
+	// ====================================================
+	//
+	//  Pull cache image gallery
+	//
+	//
+	
+};
 
 function ShowCacheOnMap(CacheCode) {
 	var CacheID = -1;
@@ -4076,6 +4286,7 @@ function logout() {
 	var request = new XMLHttpRequest({ mozSystem: true });
 	
 	localStorage.clear();
+	window.close();
 	
 	request.onreadystatechange = function() {
 		console.log(`state: ${this.readyState} | status: ${this.status}`);
@@ -4292,8 +4503,8 @@ function refreshToken(method,action) {
 		//window.history.replaceState({}, null, "/");
 		
 		console.log(`Access Token: ${localStorage.getItem("access_token")}`);
-		console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
-		console.log(`Token Expires: ${localStorage.getItem("token_expires")}`);	
+		//console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
+		//console.log(`Token Expires: ${localStorage.getItem("token_expires")}`);	
 
 		console.log(`Seconds till expiration: ${time_till_expire}`);
 		if(time_till_expire < 3400) {refreshToken();};
@@ -4366,13 +4577,13 @@ function pullFromAPI(method,action,myLat,myLng, cacheGC) {
 		// this then listens for a change in the request call and acts appropriately
 		xhr.onreadystatechange = function () {
 		  var geoloadstate = xhr.readyState;
-		  console.log(`Load state: ${geoloadstate}`);
+		  //console.log(`Load state: ${geoloadstate}`);
 		  if (geoloadstate == 1) {
-			  console.log('request opened');
+			  //console.log('request opened');
 		  } else if (geoloadstate == 2) {
-			console.log('headers received'); 
+			//console.log('headers received'); 
 		  } else if (geoloadstate == 3) {
-			  console.log('loading data');
+			 // console.log('loading data');
 		  } else if (geoloadstate == 4) { // means we have a response now
 			var geostatus = xhr.status;
 				console.log(`status for ${action}: ${geostatus}`);

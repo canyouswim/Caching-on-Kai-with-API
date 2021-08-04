@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <meta name="theme-color" content="rgb(106, 0, 128)" />
+    <meta name="theme-color" content="#02874D" />
     <title>C:Kai</title>
     <link rel="stylesheet" type="text/css" href="src/css/header.css" />
     <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />
@@ -44,7 +44,7 @@
 	
     <div id="views">
 
-		<div class="view" id="viewMap")>
+		<div class="view" id="viewMap")>  <!-- view 0 -->
 			<div id="ad-container"></div>	
 			<div id="map-container">
 			<div id="content2"> </div>	
@@ -68,11 +68,11 @@
 		
 		</div>
 
-		<div class="view" id="viewList">
+		<div class="view" id="viewList">  <!-- view 1 -->
 			<div id="CacheList" class="list">Waiting on the list of caches...<br><br>Press the Call button or select "Refresh Cache List" from the Options menu to load caches based on the map position</div>
 		</div>
 
-		<div class="view" id="viewCompass">
+		<div class="view" id="viewCompass">  <!-- view 2 -->
 			<div id="NorthCompassContainer">
 				<img src="/assets/icons/icons8-north-direction-150.png" id="NorthCompass"/>	
 			</div>
@@ -85,54 +85,29 @@
 			<div id="cacheName">Name</div>
 
 		</div>
-
-
-
-
-
-
-
 		
-		<div class="view" id="viewCache">
+		<div class="view" id="viewCache">  <!-- view 3 -->
 			<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
 			<div id="CacheDetails"></div>
-			
+			<br>
 			<div id="PromptForFullDetails" style="display:block">
-				<p><b>Do you wish to load the full details for this cache?</b></p>		
+				<div id="remainingCaches"></div>		
+				<button>Load full details for this cache</button>
 			</div>
-			<div id="CacheFullDetails" style="display:none">
-				<div class="tab">
-				  <button class="tablinks">Details</button>
-				  <button class="tablinks">Logs</button>
-				  <button class="tablinks">Gallery</button>
-				</div>		
 			
-				<div id="Details" class="tabcontent" style="display:block;">		
-					<div id="CacheDescription"></div>
-					<div id="CacheHint"></div>
-					<!--<div id="CacheActions"></div>-->
-				</div>
-				
-				<div id="Logs" class="tabcontent" style="display:none;">
-					<div id="CacheLogs"></div>
-				</div>
-
-				<div id="Gallery" class="tabcontent" style="display:none;">
-					<div id="CachePhotos">Cache Photos Here...</div>
-						
-				</div>			
+			<div id="CacheFullDetails" style="display:none">
+				<div id="CacheDescription"></div>
+				<div id="CacheHint"> hint here</div>
 			</div>
 		</div>
 		
-		<div class="view" id="LogCache"></div>		
+		<div class="view" id="LogCacheOLD"></div>	  <!-- view 4 -->	
 		
-		<div class="view" id="Help">
+		<div class="view" id="Help">  <!-- view5 -->
 		  Help goes here
 		</div>
 
-		
-		
-		<div class="view" id="viewOptions">
+		<div class="view" id="viewOptions">  <!-- view 6 -->
 			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
 			<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
 			<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache Details</div></button>	
@@ -145,11 +120,11 @@
 			<button class="navItem" tabIndex="90" data-function="quit">Quit</button>			
 		</div>	
 
-		<div class="view" id="About">
+		<div class="view" id="About">  <!-- view 7 -->
 	
 		</div>
 		
-		<div class="view" id="Settings">
+		<div class="view" id="Settings">  <!-- view 8 -->
 			<div><b>Settings</b> app v3.0.0</div>
 			<div id="username"></div>
 			<div id="userCode"></div>
@@ -198,8 +173,8 @@
 			<button class="navItem" tabIndex="40" data-function="About">About</button>
 			<button class="navItem" tabIndex="50" data-function="Logout">Logout</button>				
 		</div>
-		
-		<div class="view" id="viewAllShortcuts">
+	
+		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
 				1 -ZOOM+ 3 <br>
 				2: Take Picture <br>
 				ENTER: Action Menu<br>
@@ -215,7 +190,7 @@
 				#: Log Cache
 		</div>
 
-		<div class="view" id="viewCacheOptions">
+		<div class="view" id="viewCacheOptions">  <!-- view 10 -->
 			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>				
 			<button class="navItem" tabIndex="10" data-function="viewCache"><div id="viewCacheText">4: View Cache Details</div></button>			
 			<button class="navItem" tabIndex="20" data-function="viewLogs"><div id="viewLogsText">*: View Cache Logs</div></button>
@@ -226,7 +201,7 @@
 		
 		</div>	
 		
-		<div class="view" id="enterWaypoint">
+		<div class="view" id="enterWaypoint">  <!-- view 11 -->
 			<!--<button class="navItem" tabIndex="0" data-function="viewWaypoints">View stored WayPoints<sub>(not available)</sub></button>
 			<button class="navItem" tabIndex="10" data-function="createWPDirectly">#: Create new WayPoint<sub>(not available)</sub></button>-->
 			<button class="navItem" tabIndex="20" data-function="createWPfromMap">*: Create new WayPoint from Map View</button>	
@@ -234,7 +209,7 @@
 			<!--<button class="navItem" tabIndex="20" data-function="app.newKeyCallback.pushAsterisk">Create new WayPoint from Map View</button>		-->
 		</div>
 		
-		<div class="view" id="viewActions">
+		<div class="view" id="viewActions">  <!-- view 12 -->
 			Select action:
 			<button class="navItem" tabIndex="0" data-function="cancel">None/Cancel</button>
 			<button class="navItem" tabIndex="10" data-function="refreshList">Load caches near here</button>
@@ -243,7 +218,7 @@
 			<div id="showCacheNav"></div>			
 		</div>		
 
-		<div class="view" id="editWaypoint">
+		<div class="view" id="editWaypoint">  <!-- view 13 -->
 		Edit Waypoint
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Name</legend>
@@ -261,7 +236,7 @@
 			<button class="navItem" tabIndex="40" data-function="cancel">Cancel</button>			
 		</div>	
 
-		<div class="view" id="logCache">
+		<div class="view" id="logCache">  <!-- view 14 -->
 			<div id="logHeader">Log this geocache</div>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Log Type</legend>
@@ -295,8 +270,22 @@
 		
 		</div>
 
-		<div class="view" id="showModal">
+		<div class="view" id="showModal">  <!-- view 15 -->
 			<div id="message">no message set</div>
+		</div>
+		
+		<div class="view" id="viewCacheLogs">  <!-- view 16 -->
+			<div id="CacheLogHeaderDetail">Waiting on cache details...<br></div>
+			<div id="CacheLogDetails"></div>
+			<br>
+			<div class="listLogsView" id="CacheLogsView"></div>
+		</div>		
+
+		<div class="view" id="viewCacheGallery">  <!-- view 17 -->
+			<div id="CacheGalleryHeaderDetail">Waiting on cache details...<br></div>
+			<div id="CacheGalleryDetails"></div>	
+			<br>
+			<div class="listGalleryView" id="CacheGallery"> Image gallery here</div>			
 		</div>
 
 	</div>	 	 
