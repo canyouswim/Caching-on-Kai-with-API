@@ -14,8 +14,8 @@
     <link rel="stylesheet" type="text/css" href="src/css/main.css" />	
     <link rel="stylesheet" href="src/leaflet/leaflet.css" />	
 	<link rel="stylesheet" type="text/css" href="src/css/kaios-toaster.css" />
-	
-	
+	<link rel="stylesheet" type="text/css" href="src/css/kaiui.css" />	
+
 
 	
 	
@@ -63,7 +63,7 @@
 
 					<img src="/assets/icons/icons8-gps-32.png" id="compass"/>	
 				</div>
-				<div id="content">Waiting on GPS lock...</div>					
+				<div id="content"><img src="/assets/Bars-1s.gif">Waiting on GPS lock...</div>
 			</div>	
 		
 		</div>
@@ -87,17 +87,23 @@
 		</div>
 		
 		<div class="view" id="viewCache">  <!-- view 3 -->
-			<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
-			<div id="CacheDetails"></div>
-			<br>
-			<div id="PromptForFullDetails" style="display:block">
-				<div id="remainingCaches"></div>		
-				<button>Load full details for this cache</button>
-			</div>
-			
-			<div id="CacheFullDetails" style="display:none">
-				<div id="CacheDescription"></div>
-				<div id="CacheHint"> hint here</div>
+			<div class="viewCacheDetails">
+				<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
+				<div id="CacheDetails"></div>
+				<div class="kui-separator"></div>				
+				<div id="PromptForFullDetails" style="display:block">
+					<div id="promptToLoadFullDetails"></div>		
+				</div>
+				
+				<div id="CacheFullDetails" style="display:none">
+					<div id="CacheDescription"></div>
+					<div class="kui-separator"></div>		
+					<b>Additional Hints</b>
+					<div id="CacheHintWrapper">
+						<div id="CacheHint" style="display:block">Hint here</div>
+						<div id="CacheHintShown" style="display:none">hint displayed here</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		
@@ -108,16 +114,16 @@
 		</div>
 
 		<div class="view" id="viewOptions">  <!-- view 6 -->
-			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
-			<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
-			<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache Details</div></button>	
-			<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
-			<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
-			<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
-			<button class="navItem" tabIndex="60" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
-			<button class="navItem" tabIndex="70" data-function="viewShortcuts">View all Shortcuts</button>			
-			<button class="navItem" tabIndex="80" data-function="viewSettings">Settings</button>		
-			<button class="navItem" tabIndex="90" data-function="quit">Quit</button>			
+				<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
+				<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
+				<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache Details</div></button>	
+				<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
+				<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
+				<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
+				<button class="navItem" tabIndex="60" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
+				<button class="navItem" tabIndex="70" data-function="viewShortcuts">View all Shortcuts</button>			
+				<button class="navItem" tabIndex="80" data-function="viewSettings">Settings</button>		
+				<button class="navItem" tabIndex="90" data-function="quit">Quit</button>	
 		</div>	
 
 		<div class="view" id="About">  <!-- view 7 -->
@@ -132,13 +138,6 @@
 			<div id="homeLocation"></div>
 			<div id="cacheViewsRemaining"></div>
 			
-			
-			
-
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="0">File:</legend>
-			    <input id="input1" type="file"/>	
-			</fieldset>-->
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
 			  <select id="initialCacheLoad">
@@ -191,13 +190,21 @@
 		</div>
 
 		<div class="view" id="viewCacheOptions">  <!-- view 10 -->
-			<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>				
-			<button class="navItem" tabIndex="10" data-function="viewCache"><div id="viewCacheText">4: View Cache Details</div></button>			
-			<button class="navItem" tabIndex="20" data-function="viewLogs"><div id="viewLogsText">*: View Cache Logs</div></button>
-			<button class="navItem" tabIndex="30" data-function="viewGallery"><div id="viewGalleryText">0: View Cache Gallery</div></button>	
-			<button class="navItem" tabIndex="40" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
-			<button class="navItem" tabIndex="50" data-function="LogCache"><div id="logCacheText">#: Log Cache</div></button>
-			<button class="navItem" tabIndex="60" data-function="refreshList">✆: Refresh Cache List</button>	
+			<button class="navItem" tabIndex="0" data-function="showCacheDetails">
+				<div id="showCacheDetailsText">View Cache Details</div></button>	
+			<button class="navItem" tabIndex="10" data-function="showCacheLogs">
+				<div id="showCacheLogsText">View Cache Logs</div></button>	
+			<button class="navItem" tabIndex="20" data-function="showCacheGallery">
+				<div id="showCacheGalleryText">View Image Gallery</div></button>				
+			<button class="navItem" tabIndex="30" data-function="showHint">
+				<div id="showCacheHint">Decrypt Hint</div></button>	
+			<button class="navItem" tabIndex="40" data-function="takePhoto">
+			
+				<div id="takePhotoText">2: Take a Photo</div></button>				
+			<button class="navItem" tabIndex="50" data-function="LogCache">
+				<div id="logCacheText">#: Log Cache</div></button>				
+			<button class="navItem" tabIndex="60" data-function="refreshCacheDetails">
+				<div id="refreshCache">Refresh Cache Details</div></button>
 		
 		</div>	
 		
@@ -277,14 +284,14 @@
 		<div class="view" id="viewCacheLogs">  <!-- view 16 -->
 			<div id="CacheLogHeaderDetail">Waiting on cache details...<br></div>
 			<div id="CacheLogDetails"></div>
-			<br>
+            <div class="kui-separator"></div>			
 			<div class="listLogsView" id="CacheLogsView"></div>
 		</div>		
 
 		<div class="view" id="viewCacheGallery">  <!-- view 17 -->
 			<div id="CacheGalleryHeaderDetail">Waiting on cache details...<br></div>
 			<div id="CacheGalleryDetails"></div>	
-			<br>
+            <div class="kui-separator"></div>				
 			<div class="listGalleryView" id="CacheGallery"> Image gallery here</div>			
 		</div>
 
@@ -300,7 +307,13 @@
 
     <div id="keyOverlay"></div>
 
-
+	<!-- loading spinner overlay -->
+	<div id="loadingOverlay" style="display:none"> 
+		<div class="loadingio-spinner-ball-mwr5d4m20h7" style="position:absolute; top:25%; left:28%; z-index: 9000;">
+			<img src="/assets/Ball-1s-100px.gif" id="loadingSpinner"/>	
+			<!--<div class="ldio-n3qazxvb22e"><div>-->
+		</div>
+	</div>
     
 
 

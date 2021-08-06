@@ -13,6 +13,9 @@ var rootAPIurl = "https://staging.api.groundspeak.com/v1/"; // staging
 //var rootAPIurl = //production
 var rootSiteURL = "https://staging.geocaching.com";
 
+// message to show to basic users when they look to download the full details of a particular cache
+var basicUserMessageForCacheDownload;
+
 
 // Authorization server details
 var config = {
@@ -85,7 +88,7 @@ var navGeoCode = "";
 var myMembershipLevel;
 
 var ShowCachesOnLoad = localStorage.getItem('initialCacheLoad');
-console.log(`showOnLoad? ${ShowCachesOnLoad}`);
+console.log(`showCachesOnLoad? ${ShowCachesOnLoad}`);
 
 var storedCacheDetails = "";
 
@@ -134,6 +137,7 @@ var tabIndex = 0;
 var debug = "false";
 var CacheListID = 0;
 var currentCacheID;
+var currentCacheFullLoaded=false;
 
 var tilesLayer;
 var tileLayer;
@@ -442,158 +446,161 @@ app.keyCallback = {
 };
 
 //new button inputs	
-	app.newKeyCallback={	
-		 push0: function(){	
-			if(myStatus!=="First Run"){
-				if(app.editWPmode==2){	
-					editWP("0");	
-				}	
-				else{	
-					viewCacheGallery();	
-				}	
+app.newKeyCallback={	
+	 push0: function(){	
+		if(myStatus!=="First Run"){
+			if(app.editWPmode==2){	
+				editWP("0");	
+			}	
+			else{	
+				//viewCacheGallery();	
+				loadingOverlay(false);
+			}	
+		}
+	},	
+	push1: function(){	
+		if(myStatus!=="First Run"){
+			if(app.editWPmode==2){	
+				editWP("1");	
+			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
+				switchCacheView(false);					
+			}else{	
+				app.keyCallback.ZoomOut();	
+			}	
+		}
+	},	
+	push2: function(){	
+		if(myStatus!=="First Run"){			
+			if(app.editWPmode==2){	
+				editWP("2");	
+			}	
+			 else if (app.editWPmode==0) {
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				//app.keyCallback.ShowSettings();
+				app.keyCallback.TakePicture();					
+				//app.keyCallback.ClosestCache();
 			}
-		},	
-		push1: function(){	
-			if(myStatus!=="First Run"){
-				if(app.editWPmode==2){	
-					editWP("1");	
-				} else if (windowOpen=="viewCache") {
-					navHorizontal(false);					
-				}else{	
-					app.keyCallback.ZoomOut();	
-				}	
-			}
-		},	
-		push2: function(){	
-			if(myStatus!=="First Run"){			
-				if(app.editWPmode==2){	
-					editWP("2");	
-				}	
-				 else if (app.editWPmode==0) {
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					//app.keyCallback.ShowSettings();
-					app.keyCallback.TakePicture();					
-					//app.keyCallback.ClosestCache();
-				}
-			}
-		},	
-		push3: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("3");	
-				} else if (windowOpen=="viewCache") {
-					navHorizontal(true);					
-				}	
-				else{	
-					app.keyCallback.ZoomIn();	
-				}	
-			}
-		},	
-		push4: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("4");	
-				} else if (app.editWPmode==0) {
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					app.keyCallback.ShowCacheList();	
-				}	
-			}
-		},	
-		push5: function(){	
-			var testing = true;
-			
-			if (testing) {
-				getToken();
-			} else {
-				if(myStatus!=="First Run"){		
-					if(app.editWPmode==2){	
-						editWP("5");	
-					}	
-					else{	
-						app.keyCallback.FocusOnCache();	
-					}
-				}	
-			}
-		},	
-		push6: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("6");	
-				}	
-				 else if (app.editWPmode==0) {
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					app.keyCallback.ShowMap();	
-				}	
-			}
-		},	
-		push7: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("7");	
-				}	
-				 else if (app.editWPmode==0) {
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					app.keyCallback.ShowDetails();	
-				}	
-			}
-		},	
-		push8: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("8");	
-				}	
-				else{	
-					app.keyCallback.MapAllCaches();	
-				}	
-			}
-		},    	
-		push9: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("9");	
-				}	
-				 else if (app.editWPmode==0) {
-					 
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					app.keyCallback.ShowCompass();	
-				}	
-			}
-		},    	
-		pushSharp: function(){	
-			if(myStatus!=="First Run"){		
-				if(app.editWPmode==2){	
-					editWP("#");	
-				}	
-				 else if (app.editWPmode==0) {
-					// disable numeric keys when we're still in the select mode for creating a new waypoint
-					app.keyCallback.LogCache();	
-				}	
-			}
-		},	
-		pushAsterisk: function(){	
-			if(myStatus!=="First Run"){						
-				if(windowOpen=="enterWaypoint"){
-						windowOpen = "viewMap";
-						showView(0,false);
-						initView();						 
-						giveMeWayPoint("EditWP"); 
-				}	
-				else { 
-						if(app.editWPmode==1){
-							giveMeWayPoint("EditWP");
-						}
-						if(app.editWPmode==0){app.keyCallback.ShowLogs();}
-							
-					
-				}
-			}
-		}	
+		}
+	},	
+	push3: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("3");	
+			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
+				switchCacheView(true);					
+			}	
+			else{	
+				app.keyCallback.ZoomIn();	
+			}	
+		}
+	},	
+	push4: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("4");	
+			} else if (app.editWPmode==0) {
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				app.keyCallback.ShowCacheList();	
+			}	
+		}
+	},	
+	push5: function(){	
+		var testing = true;
 		
-	};
+		if (testing) {
+			getToken();
+		} else {
+			if(myStatus!=="First Run"){		
+				if(app.editWPmode==2){	
+					editWP("5");	
+				}	
+				else{	
+					app.keyCallback.FocusOnCache();	
+				}
+			}	
+		}
+	},	
+	push6: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("6");	
+			}	
+			 else if (app.editWPmode==0) {
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				app.keyCallback.ShowMap();	
+			}	
+		}
+	},	
+	push7: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("7");	
+			}	
+			 else if (app.editWPmode==0) {
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				app.keyCallback.ShowDetails();	
+			}	
+		}
+	},	
+	push8: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("8");	
+			}	
+			else{	
+				app.keyCallback.MapAllCaches();	
+			}	
+		}
+	},    	
+	push9: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("9");	
+			}	
+			 else if (app.editWPmode==0) {
+				 
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				app.keyCallback.ShowCompass();	
+			}	
+		}
+	},    	
+	pushSharp: function(){	
+		if(myStatus!=="First Run"){		
+			if(app.editWPmode==2){	
+				editWP("#");	
+			}	
+			 else if (app.editWPmode==0) {
+				// disable numeric keys when we're still in the select mode for creating a new waypoint
+				//app.keyCallback.LogCache();	
+				
+			}	
+		}
+	},	
+	pushAsterisk: function(){	
+		if(myStatus!=="First Run"){						
+			if(windowOpen=="enterWaypoint"){
+					windowOpen = "viewMap";
+					showView(0,false);
+					initView();						 
+					giveMeWayPoint("EditWP"); 
+			}	
+			else { 
+					if(app.editWPmode==1){
+						giveMeWayPoint("EditWP");
+					}
+					if(app.editWPmode==0){updateUserDetails();}
+						
+				
+			}
+		}
+	}	
+		
+};
 
 //============================================
 //============================================
 // startup activities here
+
 window.addEventListener("load", function () {
 	console.log(`checking what the currently set units are`);
 	
@@ -642,7 +649,7 @@ window.addEventListener("load", function () {
 	var token = localStorage.getItem("access_token");
 	
 	if (token !== null) {
-		console.log('we have a token');
+		//console.log('we have a token');
 		xhr.open(geomethod, geourl, true);
 		
 		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
@@ -683,7 +690,9 @@ window.addEventListener("load", function () {
 				};
 				userMembershipLevelId = userDetails.membershipLevelId;
 				localStorage.setItem('membershipLevelId',userMembershipLevelId);
-				localStorage.setItem('fullCallsRemaining',userDetails.fullCallsRemaining);					
+				localStorage.setItem('fullCallsRemaining',userDetails.geocacheLimits.fullCallsRemaining);					
+				
+			
 				
 			}  else if (geostatus == 401) {
 				// token has expired, refresh and tell caller to retry
@@ -698,7 +707,9 @@ window.addEventListener("load", function () {
 		
 		xhr.send();	
 	} else {
-		getToken();
+		// this is the first time running the app, and we have not logged in yet - uncomment below to force login on the first run of the app
+		//console.log('We do not have a token at first log in, so trying to get one now');
+		//getToken();
 
 	};	
 
@@ -713,6 +724,7 @@ window.addEventListener("load", function () {
     showView(0,false);
     initView();		
 });
+
 //===================================================
 //===================================================
 
@@ -738,30 +750,28 @@ function navScreenTop() {
 	screenYscroll = 0;
 }
 
-// vertical navigation in increments of 10
-
-
 function getNavTabIndex(i) {
 	return parseInt(app.navItems[i].getAttribute('tabIndex'));
 };
   
-function focusActiveButton(element) {
+function focusActiveButton(element,forward) {
     //console.log(`trying to focus the active element: ${element}`);
 	app.activeNavItem = element;
     app.currentNavId = parseInt(app.activeNavItem.getAttribute('tabIndex'));
-
+	
+	//console.log(`focusActiveButton, forward=${forward}`);
+    app.activeNavItem.focus();
     // scroll to top
     if (app.currentNavId == 0) {
       try {
-        //app.currentView.scrollTo(0, 0);
+        if(forward==true) {app.currentView.scrollTo(0, 0);
+		};
       } catch (e) { }
     } else {
       // smooth scrolling into view
-      //app.activeNavItem.scrollIntoView({ behavior: "smooth" });
+      if(forward==true) {//app.activeNavItem.scrollIntoView({ behavior: "smooth" });
+	  };
     }
-
-
-    app.activeNavItem.focus();
     // update softkeys
     softkeyBar();
 };
@@ -898,9 +908,9 @@ function navVertical(forward) {
 				next = next % 10;
 				// try to stay in same column
 				if (app.navItems[next]) {
-				  focusActiveButton(app.navItems[next]);
+				  focusActiveButton(app.navItems[next],forward);
 				} else {
-				  focusActiveButton(app.navItems[0]);
+				  focusActiveButton(app.navItems[0],forward);
 				}
 			} else if (next < 0) {
 				// if smaller than 0
@@ -911,7 +921,7 @@ function navVertical(forward) {
 				next = rowIndex + columnIndex;
 				for (var i = 0; i < app.navItems.length; i++) {
 				  if (getNavTabIndex(i) == next) {
-					focusActiveButton(app.navItems[i]);
+					focusActiveButton(app.navItems[i],forward);
 					break;
 				  }
 				}
@@ -919,7 +929,7 @@ function navVertical(forward) {
 				var found = false;
 				for (var i = 0; i < app.navItems.length; i++) {
 				  if (getNavTabIndex(i) == next) {
-					focusActiveButton(app.navItems[i]);
+					focusActiveButton(app.navItems[i],forward);
 					found = true;
 					break;
 				  }
@@ -929,7 +939,7 @@ function navVertical(forward) {
 				  var round = Math.floor(next / 10) * 10;
 				  for (var i = 0; i < app.navItems.length; i++) {
 					if (getNavTabIndex(i) == round) {
-					  focusActiveButton(app.navItems[i]);
+					  focusActiveButton(app.navItems[i],forward);
 					  found = true;
 					  break;
 					}
@@ -946,7 +956,6 @@ function navVertical(forward) {
     }		
 };
 
-
 function navHorizontal(forward) {
 	//console.log(`in navHorizontal, windowOpen=${windowOpen}, cacheID=${currentCacheID}`);
 	if (windowOpen == "viewMap") {
@@ -956,7 +965,7 @@ function navHorizontal(forward) {
 		} else {
 			MovemMap('left');
 		}
-	} else if (windowOpen=="viewCacheOLD") {
+	} else if (windowOpen=="viewCache") {
 		// move to the next or previous cache details and set the position in the overall cache list
 		var gotoCacheID;
 		if (forward) {
@@ -974,7 +983,28 @@ function navHorizontal(forward) {
 		  //showView(3,false);
 		  //initView();			
 				
-	} else if (windowOpen=="viewCache") {
+	} else if (!app.isInputFocused() && !app.fullAdVisible) {
+      app.updateNavItems();
+      // jump to array index for continuous horizontal navigation
+      var currentTabIndex = app.currentNavId;
+      for (var i = 0; i < app.navItems.length; i++) {
+        if (getNavTabIndex(i) == currentTabIndex) {
+          var next = i;
+          next += forward ? 1 : -1;
+          if (next >= app.navItems.length) {
+            next = 0;
+          } else if (next < 0) {
+            next = app.navItems.length - 1;
+          }
+          focusActiveButton(app.navItems[next],true);
+          break;
+        }
+      }
+    }
+  };
+
+function switchCacheView(forward) {
+	if (windowOpen=="viewCache") {
 		// forward from Cache details goes to log view.  backwards goes to image gallery
 		if (forward) {
 			viewCacheLogs(currentCacheID);			
@@ -995,29 +1025,12 @@ function navHorizontal(forward) {
 		} else {
 			viewCacheLogs(currentCacheID);				
 		}		
-	} else if (!app.isInputFocused() && !app.fullAdVisible) {
-      app.updateNavItems();
-      // jump to array index for continuous horizontal navigation
-      var currentTabIndex = app.currentNavId;
-      for (var i = 0; i < app.navItems.length; i++) {
-        if (getNavTabIndex(i) == currentTabIndex) {
-          var next = i;
-          next += forward ? 1 : -1;
-          if (next >= app.navItems.length) {
-            next = 0;
-          } else if (next < 0) {
-            next = app.navItems.length - 1;
-          }
-          focusActiveButton(app.navItems[next]);
-          break;
-        }
-      }
-    }
-  };
+	}
+}
 
 app.isInputFocused = function () {
 	var activeTag = document.activeElement.tagName.toLowerCase();
-	console.log(`Active tag is ${activeTag}`);
+	//console.log(`Active tag is ${activeTag}`);
 	var isInput = false;
 	// the focus switches to the 'body' element for system ui overlays
 	//if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' || activeTag == 'body' || activeTag == 'html') {
@@ -1077,6 +1090,7 @@ function showView(index,isBack) {
 }
 
 // use the view's name
+// NOTE: this may or may not be working.  i'm using the showView by index to get around this for now
 function showViewByName(name) {
 	app.prevViewId = app.currentViewID;
 	var viewIndex = 0;
@@ -1109,8 +1123,8 @@ function initView() {
 	  windowOpen="viewList";
 	  app.leftSoftButton = "CacheList";
 	  app.optionEnabled = true;
-	} else if (app.currentViewName == 'viewCache') {
-		windowOpen = "viewCache";
+	} else if (app.currentViewName == 'viewCache' || app.currentViewName == 'viewCacheLogs' || app.currentViewName == 'viewCacheGallery') {
+		//windowOpen = "viewCache";
 		app.leftSoftButton = "CacheDetails";
 		app.optionEnabled = true;
 	} else if (app.currentViewName == 'viewOptions') {
@@ -1121,22 +1135,19 @@ function initView() {
 		windowOpen = "Settings";
 		app.leftSoftButton = "Back";
 		app.optionEnabled = false;
-	} else if (app.currentViewName == 'viewCacheLogs') {
-		windowOpen = "viewCacheLogs";
-		app.leftSoftButton = "CacheDetails";
-		app.optionEnabled = true;
 	}
 	// focus first menu entry
+	var forward=true;
 	if (app.currentView.querySelector(".navItem")) {
 	  app.updateNavItems();
 	  if (app.currentViewName == 'viewList') {
 		CacheListID = CacheListID/10;
 		//app.currentNavid = CacheListID;
-		focusActiveButton(app.navItems[CacheListID]);
-	  } else if(app.currentViewName == 'viewCache') {
-		  
+		focusActiveButton(app.navItems[CacheListID],forward);
+	  } else if(app.currentViewName == 'viewCacheLogs') {
+		focusActiveButton(app.navItems[0],forward);		  
 	  } else {
-		focusActiveButton(app.navItems[0]);	
+		focusActiveButton(app.navItems[0],forward);	
 	  }
 	}
 	softkeyBar();	
@@ -1144,7 +1155,7 @@ function initView() {
 
 // fill navigation array for current view
 app.updateNavItems = function (index) {
-app.navItems = app.currentView.querySelectorAll('.navItem');
+	app.navItems = app.currentView.querySelectorAll('.navItem');
 };
 
 // decide what the left soft button will do
@@ -1168,17 +1179,12 @@ function leftButton() {
 	}
 }
 
-
-
-
-
 function logThisCache() {
 	 if (navGeoCode !='') {
 		 //show the log cache div
 		windowOpen = "logCache";
 		var CacheID = -1;
 		var cacheFound = "no";
-
 
 		for (let i = 0; i < arrayCache.length; i++) {
 		  // search for cache in array
@@ -1190,8 +1196,6 @@ function logThisCache() {
 		  }
 		}	
 		
-
-
 		document.getElementById("logHeader").innerHTML = "<b>Enter a log for:</b> " + navGeoCode + "<br>";
 		document.getElementById("logHeader").innerHTML += arrayCache[CacheID].cacheName;
 		
@@ -1224,6 +1228,8 @@ function showModal(displayText){
 	document.getElementById("message").innerHTML = displayText;
 	showView(15,false);	
 	console.log(`text to show: ${displayText}`);
+	// update the initView function to allow for different user response options to this modal:
+	// yes-no | confirm-cancel | just OK, etc
 	initView();
 }
 
@@ -1424,18 +1430,19 @@ function execute() {
 			  openURL(app.activeNavItem.getAttribute('data-href'));
 			} else if (app.activeNavItem.getAttribute('data-function')) {
 			  var call = app.activeNavItem.getAttribute('data-function');
+			  //console.log(`execute call=${call}`);
 			  switch (call) {
 				case 'deleteAllWaypoints':
 					DeleteWaypoints();
 				 break;
 				case 'cancel':
-					console.log(`you selected Cancel`);
+					//console.log(`you selected Cancel`);
 					goBack();
 					//showView(0,false);
 					//initView();
 				 break;
 				case 'submitLog':
-					console.log(`you selected SubmitLog`);
+					//console.log(`you selected SubmitLog`);
 					submitLog();
 				 break;
 				case 'gotoNearestCache':
@@ -1466,10 +1473,35 @@ function execute() {
 					showView(3,false);
 					initView();
 				 break;
+				case 'showCacheDetails':
+					ShowCacheDetails(currentCacheID,false);				
+				 break;
+				case 'showCacheLogs':
+					viewCacheLogs(currentCacheID);
+				 break;	
+				case 'showCacheGallery':
+					viewCacheGallery(currentCacheID);
+				 break;
+				case 'loadCacheDetails':
+					loadAllCacheDetails(currentCacheID);
+				 break;
+				case 'refreshCacheDetails':
+					loadAllCacheDetails(currentCacheID);				
+				 break;
+				case 'loadFullCacheDetails':
+					LoadCacheDetails(arrayCache[currentCacheID].cacheCode,true);
+				 break;
 				case 'enterWaypoint':
 					showView(11,false);
 					initView();
-				 break;				 
+				 break;	
+				case 'showHint':
+					console.log('clicked showHint');
+					showHint();
+					showView(3,false);
+					initView();		
+					document.getElementById("CacheHintWrapper").scrollIntoView();					
+				 break;
 				case 'viewLogs':
 					
 				 break;
@@ -1477,6 +1509,7 @@ function execute() {
 					
 				 break;
 				case 'LogCache':
+					console.log('execute logThisCache');
 					logThisCache();
 				 break;				 
 				case 'viewList':
@@ -1516,6 +1549,10 @@ function execute() {
 					showView(8,false);
 					initView();				
 				 break;
+				case 'viewCacheSettings':
+					windowOpen="CacheSettings";
+					showView(10,true);
+					initView();
 				case 'toggleUnits':
 					//set the options list appropriately
 					var displayUnits = document.getElementById("unitsDisplay");					
@@ -1613,7 +1650,11 @@ function executeOption() {
 	  showView(6,false);
 	  initView();
 	  //softkeyBar();	
-  } 
+  } else if (app.optionButtonAction == 'viewCacheOptions') {
+	  windowOpen = "viewCacheOptions";
+	  showView(10,false);
+	  initView();
+  }
 };
 
 // set soft keys
@@ -1630,12 +1671,12 @@ function softkeyBar() {
 			app.actionButton.innerHTML = "SELECT";	
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewOptions';
-		} else if(app.currentViewName == "viewCache") {
+		} else if(app.currentViewName == "viewCache" || app.currentViewName == "viewCacheLogs" || app.currentViewName == "viewCacheGallery") {
 			app.backButton.innerHTML = "Caches";
 			
 			app.actionButton.innerHTML = "GoNav";
 			app.optionsButton.innerHTML = "Options";
-			app.optionButtonAction = 'viewOptions';
+			app.optionButtonAction = 'viewCacheOptions';
 		} else if(app.currentViewName == "viewCompass")  {
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "";
@@ -1672,8 +1713,10 @@ function softkeyBar() {
 function success(pos) {
 	// this is a decent spot to check to see if our token has expired
 	time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
-	//console.log(`time till token expires: ${time_till_expire}`);	
-	if(time_till_expire < 60) {refreshToken();};
+	//console.log(`time till token expires: ${time_till_expire}`);
+	//var refreshTokenStr = localStorage.getItem("refresh_token");
+	//console.log(`time_till_expire=${time_till_expire}`);
+	if(time_till_expire < 60 && time_till_expire > 0) {refreshToken();};
 	//================================================
 
   crd = pos.coords;
@@ -1693,16 +1736,20 @@ function success(pos) {
 	  movementDistance = movementDistance * 1000;
   }
 
-
+	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
 		// Pull list of caches near me and plot them on the map (but only if this is set to Yes in settings)
-		console.log(`ShowCachesOnLoad = ${ShowCachesOnLoad}`);
+		console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
 		if (ShowCachesOnLoad == "YesLoadCaches") {
 			ListCaches(my_current_lat,my_current_lng,"no");	
 		} else {
 			// this is if we don't want to pull the list of live cacheSize
 			// and instead pull them from local storage
-			ListCaches(0,0,"yes");					
+			if(userMembershipLevelId==1){
+				// basic members don't get to save caches in storage between sessions.
+			} else {
+				ListCaches(0,0,"yes");	
+			}
 		};
 
 		if(MapHasBeenDrawn == false) {
@@ -2134,11 +2181,83 @@ function error(err) {
 	
   } else {
 	  attempt = attempt + 1;
-	  mapContent = "Timeout #" + attempt;
+	  mapContent = "<img src='/assets/Bars-1s.gif'>Timeout #" + attempt;
 		container.innerHTML = mapContent;	  
   }		
 }
 
+function updateUserDetails() {
+	//----------------------------
+	// update our stored user details / stats
+	
+	var values = "users/me?fields=referenceCode%2Cusername%2CmembershipLevelId%2ChomeCoordinates%2CgeocacheLimits";
+
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var geomethod = "GET";	
+	var geourl = rootAPIurl + values;
+	
+	var token = localStorage.getItem("access_token");
+	
+	if (token !== null) {
+		//console.log('we have a token');
+		xhr.open(geomethod, geourl, true);
+		
+		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  //console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  //console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			//console.log('headers received'); 
+		  } else if (geoloadstate == 3) {
+			 // console.log('loading data');
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				//console.log(`status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+				console.log(`response: ${siteText}`);
+
+				//===============================================================
+				// now parse the returned JSON out and do stuff with it
+				
+				var userDetails = JSON.parse(siteText);
+				myUserAlias = userDetails.username;
+				document.getElementById("username").innerHTML = myUserAlias;
+				document.getElementById("userCode").innerHTML = userDetails.referenceCode;
+				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
+				document.getElementById("cacheViewsRemaining").innerHTML = "Remaining views: " + userDetails.geocacheLimits.fullCallsRemaining;	
+				if(userDetails.membershipLevelId == 1) {
+					document.getElementById("membershipType").innerHTML = "BASIC";
+				} else if (userDetails.membershipLevelId == 2) {
+					document.getElementById("membershipType").innerHTML = "Charter";					
+				}  else if (userDetails.membershipLevelId == 3) {
+					document.getElementById("membershipType").innerHTML = "Premium";					
+				} else {
+					document.getElementById("membershipType").innerHTML = "Unknown";	
+				};
+				userMembershipLevelId = userDetails.membershipLevelId;
+				localStorage.setItem('membershipLevelId',userMembershipLevelId);
+				localStorage.setItem('fullCallsRemaining',userDetails.geocacheLimits.fullCallsRemaining);					
+			}  else if (geostatus == 401) {
+				// token has expired, refresh and tell caller to retry
+				console.log('refreshing token');
+				refreshToken();
+			}
+		  }  else {
+			// Oh no! There has been an error with the request!
+			console.log("some problem...");
+		  }
+		}; 
+		
+		xhr.send();	
+	} else {
+		getToken();
+
+	};	
+}
 
 function ListCachesFromMapCenter() {
 	// get the lat/lng of the center of the current map view and refresh the list of caches from that point instead
@@ -2154,22 +2273,15 @@ function ListCachesFromMapCenter() {
 }
 
 function ListCaches(myLat,myLng,loadFromStorage) {
+	console.log(`ListCaches loadFromStorage=${loadFromStorage}`);
+
 	if(loadFromStorage =="no"){
+		updateUserDetails()		
 		var values = "geocaches/search?q=location: [" + myLat + "," + myLng + "]";
 		values = values + "&lite=true";			
-		//if (userMembershipLevelId == 1) {
-			// only pull lite data for Basic users/me
-		//	values = values + "&lite=true";
-		//} else {
-		//Charter + Premium members pull all caches details up front
-		//	values = values + "&lite=false";
-		//};
+
 		values = values + "&take=" + numCachesToLoad; //how many caches to return?
-
 		values = values + "&fields=referenceCode,name,difficulty,terrain,geocacheType,status,postedCoordinates,isPremiumOnly,userData,ownerAlias,placedDate,geocacheSize";			
-		//values = values + "&fields=referenceCode,name,difficulty,terrain,trackableCount,placedDate,geocacheType,geocacheSize,status,postedCoordinates,lastVisitedDate,ownerAlias,isPremiumOnly,shortDescription,longDescription,hints,attributes,findCount,userData";	
-
-	
 
 		var xhr = new XMLHttpRequest({ mozSystem: true });
 		var geomethod = "GET";	
@@ -2201,7 +2313,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					});							  
 			  } else if (geoloadstate == 4) {
 				var geostatus = xhr.status;
-				console.log(`status: ${geostatus}`);
+				//console.log(`status: ${geostatus}`);
 				if (geostatus >= 200 && geostatus < 400) {
 					var siteText = xhr.response;				
 					//console.log(`response: ${siteText}`);
@@ -2233,7 +2345,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					  type: 'warning',
 					  timeout: 3000
 					});				
-
+					// turn on the loading spinner
+					loadingOverlay(true);
 
 					// remove all the cache icon markers on the map, but only if they've been placed in the first place :) 
 					if (haveAllMarkersBeenPlaced == true) {
@@ -2429,6 +2542,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					  type: 'success',	
 					  timeout: 3000	
 					});	
+					// turn off the loading spinner
+					loadingOverlay(false);					
 
 				}  else if (geostatus == 401) {
 					// token has expired, refresh and tell caller to retry
@@ -2437,8 +2552,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 				}  else {
 				// Oh no! There has been an error with the request!
 				console.log("some problem...");
-			  }
-			}; 
+			    }
+			  }; 
 			}
 			kaiosToaster({
 			  message: 'Getting caches...',
@@ -2446,6 +2561,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			  type: 'warning',
 			  timeout: 3000
 			});	
+			// turn on the loading spinner
+			loadingOverlay(true);
 			
 			xhr.send();	
 		} else {
@@ -2459,13 +2576,16 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			console.log('no previous list of caches available to load');
 		} else {
 			//Loading up caches...
-			
+			updateUserDetails()				
 			kaiosToaster({
 			  message: 'Loading up caches from storage...',
 			  position: 'north',
 			  type: 'warning',
 			  timeout: 3000
 			});	
+			// turn on the loading spinner
+			loadingOverlay(true);	
+			
 			//console.log(`response from storage: ${siteText}`);
 			//===============================================================
 			// now parse the returned JSON out and do stuff with it
@@ -2673,6 +2793,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 				
 		}				
 		
+		// turn off the loading spinner
+		loadingOverlay(false);
 		// let the user know we're done processing data
 		kaiosToaster({	
 		  message: 'Caches loaded from storage',	
@@ -2821,6 +2943,11 @@ function ShowAllCachesOnMap(ShowCaches) {
 }
 
 function LoadCacheDetails(CacheCode,loadFullDetails) {
+	// turn on the loading spinner
+	loadingOverlay(true);
+	hideHint();
+	currentCacheFullLoaded = false;
+	
 	// the loadFullDetails flag is used for basic members to spend one of their 3 full detail cache loads
 	//   per day on loading this cache
 	//  premium users will always load full details by default, regardless of what this flag is set as
@@ -2837,12 +2964,13 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 		}	
 
 	// force to always load full details if we're not a basic user
-	console.log(`userMembershipLevelId = ${userMembershipLevelId}`);
+	//console.log(`userMembershipLevelId = ${userMembershipLevelId}`);
 	if(userMembershipLevelId != 1) {
+		// temp override loadFullDetails for the purposes of testing w/ a premium account
+		// uncomment below later on when done testing :) 
 		loadFullDetails = true;
 		//console.log('trying to set loadFullDetails to true');
 	}
-		
 		
 		// if we have not loaded all cache details yet, go do that now, and write them to the array 
 	if(cacheFullyLoaded == false) {
@@ -2917,6 +3045,9 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 							
 						// our array is now updated - go show the cache details
 						//viewCacheLogs(CacheID);
+						currentCacheFullLoaded = true;
+						// update our stored user stats as a result of loading this cache.
+						updateUserDetails();					
 						ShowCacheDetails(CacheID,false);
 						
 					}  else if (geostatus == 401) {
@@ -2945,14 +3076,37 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 	}
 }
 
+function loadAllCacheDetails(CacheID) {
+
+	
+}
+
+function updateCacheListWithLoaded(CacheID) {
+	// this will change the background color of caches in the list that have been fully loaded
+	// for easy reference when returning to the list
+	// we'll use the navcode class which is the geocache code to find the item we want
+	var cacheListEntry = document.getElementsByClassName("navItem");
+	cacheListEntry[CacheID].style.backgroundColor = "#00cd66";
+	
+}
+
 function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 	// load up what are previous and next caches in the array are
-	//console.log(`promptToLoadFullDetails: ${promptToLoadFullDetails}`);
+
 
 	currentCacheID = CacheID;
+	
+	// have we already fully loaded this cache up? we can skip prompting the basic user to download 
+	// details if so.
+	cacheFullyLoaded = arrayCache[CacheID].cacheFullyLoaded;	
+	if(cacheFullyLoaded==true) {currentCacheFullLoaded=true};
+
+	//console.log(`promptToLoadFullDetails: ${promptToLoadFullDetails}, cacheFullyLoaded=${cacheFullyLoaded}`);
 
 	showView(3,false);	
-	initView();	
+
+	// turn off loading spinner
+	loadingOverlay(false);	
 	
 	var myArrayLength = arrayCache.length;			
 	if(CacheID==0) {
@@ -3031,8 +3185,8 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				
 		// only show the cache description, logs, and image gallery if we're allowed to
 		// otherwise prompt the user if they wish to load these details
-		console.log('line 2740');
-		if(promptToLoadFullDetails !== true) {		
+		//console.log('line 2740');
+		if(promptToLoadFullDetails !== true || cacheFullyLoaded == true) {		
 			// first turn on visibility of the tabs and details/logs/images tabs
 			var showCacheFullDetails = document.getElementById('CacheFullDetails');
 			var hidePromptForLoad = document.getElementById('PromptForFullDetails');
@@ -3049,111 +3203,125 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			}
 			CacheDescStr.appendChild(CacheDescription);
 
-			//================================================================================
-			//
-			// Display list of logs
-			//
-			//
-			var listContainer = document.getElementById('CacheLogs');
-			listContainer.innerHTML = '';
-			var logCount = arrayCache[CacheID].cacheLogs.length;		
-			
-			
-			var logListID = 0;
-
-			//
-			// cycle through all the returned logs and 
-			//	load them into the cache listing page for display / selection by the user 
-			//
-			for (let i = 0; i < logCount; i++) {
-
-				// parse out the returned response 
-				
-				var logText = arrayCache[CacheID].cacheLogs[i].text;
-				var logFavorite = arrayCache[CacheID].cacheLogs[i].usedFavoritePoint;
-				var logOwnerName = arrayCache[CacheID].cacheLogs[i].owner.username;
-				var logDateRaw = arrayCache[CacheID].cacheLogs[i].loggedDate;
-				var logDate = logDateRaw.slice(0,10);		
-				var logTypeImg = "<img src='" + arrayCache[CacheID].cacheLogs[i].geocacheLogType.imageUrl + "'>";
-				var logType = arrayCache[CacheID].cacheLogs[i].geocacheLogType.name;
-
-									
-				// now work on loading those details into the cache details page 
-				
-				var entry = document.createElement("div");
-				entry.className = 'navItem';
-				var myIndex = i*10;				
-				entry.tabIndex = myIndex;
-
-
-
-				var headline = document.createElement("span");
-				headline.innerHTML = "<b>" + myIndex + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
-				
-				// take that structured HTML and drop it into the page:
-				entry.appendChild(headline);	
-				
-				listContainer.appendChild(entry);
+			var cacheHintHiddenDiv = document.getElementById('CacheHint');
+			var cacheHintShownDiv =  document.getElementById('CacheHintShown');
+			var hintStr = arrayCache[CacheID].cacheHint;
+			var hintLength = hintStr.length;
+			if (hintLength > 0) {
+				cacheHintHiddenDiv.innerHTML = "This cache has a hint. If you want to see it, select 'Options' and then 'Decrypt Hint'.";
+			} else {
+				cacheHintHiddenDiv.innerHTML = "This cache does not have a hint.";
 			}
+			cacheHintShownDiv.innerHTML = arrayCache[CacheID].cacheHint;
+
+			// reset cache option menu back to default
+			var cacheMenuOptions = document.getElementById('viewCacheOptions');
 			
-			//================================================================================
-			//
-			// Display list of images
-			//
-			//
-			var listContainer = document.getElementById('CachePhotos');
-			listContainer.innerHTML = '';
-			var imageCount = arrayCache[CacheID].cacheImages.length;		
-			console.log(`ImgCount: ${imageCount}`);
+			var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='showCacheDetails'>";
+			newCacheOptions = newCacheOptions + "<div id='showCacheDetailsText'>View Cache Details</div></button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='showCacheLogs'>";
+			newCacheOptions = newCacheOptions + "<div id='showCacheLogsText'>View Cache Logs</div></button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='showCacheGallery'>";
+			newCacheOptions = newCacheOptions + "<div id='showCacheGalleryText'>View Image Gallery</div></button>";				
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='showHint'>";
+			newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Decrypt Hint</div></button>";	
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='takePhoto'>";
 			
-			var logListID = 0;
+			newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='LogCache'>";
+			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-function='refreshCacheDetails'>";
+			newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+			cacheMenuOptions.innerHTML = newCacheOptions;
 
-			//
-			// cycle through all the returned logs and 
-			//	load them into the cache listing page for display / selection by the user 
-			//
-			for (let i = 0; i < imageCount; i++) {
+			// set the background color of the fully loaded cache in the cache listing page
+			updateCacheListWithLoaded(CacheID)
 
-				// parse out the returned response 
-				
-				var imageDesc = arrayCache[CacheID].cacheImages[i].description;
-				var imageDateRaw = arrayCache[CacheID].cacheImages[i].capturedDate;
-				var imageThumbnail = "<img src='" + arrayCache[CacheID].cacheImages[i].thumbnailUrl + "'>";
-				var imageLargeURL = arrayCache[CacheID].cacheImages[i].largeUrl;				
-				var imageDate = imageDateRaw.slice(0,10);	
-				var imageOwnerCode = arrayCache[CacheID].cacheImages[i].ownerCode;				
-
-									
-				// now work on loading those details into the cache details page 
-				
-				var entry = document.createElement("div");
-				entry.className = 'navItem';
-				entry.tabIndex = i * 10;	
-
-
-				var headline = document.createElement("span");
-				headline.innerHTML = imageDate + "<br>" + imageThumbnail + "<br>" + imageDesc;
-				
-				// take that structured HTML and drop it into the page:
-				entry.appendChild(headline);	
-				
-				listContainer.appendChild(entry);
-			}			
-			
+			initView();
 		} else {
+			// we are a non-premium user and need to be prompted to decide if we want to load the full details
+			// for this cache - construct that message now
+			var showCacheFullDetails = document.getElementById('CacheFullDetails');
+			var hidePromptForLoad = document.getElementById('PromptForFullDetails');
+			
+			showCacheFullDetails.style.display = "none";
+			hidePromptForLoad.style.display = "block";			
+			
+			var remainingFullCaches = localStorage.getItem('fullCallsRemaining');
+			
+			var promptToLoad = document.getElementById('promptToLoadFullDetails');
 
+			if (remainingFullCaches == 15998) {
+				// the user has no more available full cache loads for the day
+				// message to show to basic users when they look to download the full details of a particular cache
+				basicUserMessageForCacheDownload = "Hello " + myUserAlias + " - As a basic geocaching.com user, you are allowed to download the full details of up to <u>3</u> unique geocaches per day. You currently have <b>" + localStorage.getItem('fullCallsRemaining') + "</b> available downloads remaining for the day.";
+				basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + "<br><br>Upgrade to Geocaching.com Premium Membership today for as little at $2.50 per month to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade.";				
+
+				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
+				
+				// we also need to adjust the cache options menu to hide non-available options
+				var cacheMenuOptions = document.getElementById('viewCacheOptions');
+			
+				var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
+				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='refreshCacheDetails'>";
+				newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+				cacheMenuOptions.innerHTML = newCacheOptions;
+				
+			} else {
+				// message to show to basic users when they look to download the full details of a particular cache
+				basicUserMessageForCacheDownload = "Hello " + myUserAlias + " - As a basic geocaching.com user, you are allowed to download the full details of up to <u>3</u> unique geocaches per day. You currently have <b>" + localStorage.getItem('fullCallsRemaining') + "</b> available downloads remaining for the day";	
+
+				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
+				
+				// we also need to adjust the cache options menu to hide non-available options
+				var cacheMenuOptions = document.getElementById('viewCacheOptions');
+			
+				var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
+				newCacheOptions = newCacheOptions + "<div id='loadFullCacheDetailsText'>Load full cache details</div></button>";
+				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
+				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='refreshCacheDetails'>";
+				newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+				cacheMenuOptions.innerHTML = newCacheOptions;
+			}
+			initView();	
 		}
 	} else {
 		// did not find the cache
 		CompassCacheName.innerHTML = "<b>Could not find the cache from the list of retrieved caches...</b>";
 		CacheHeader.innerHTML = "<b>Could not find the cache from the list of retrieved caches...</b>";
+		initView();	
 	}
+		
+}
+
+function showHint() {
+	var hintPrompt = document.getElementById('CacheHint');
+	var hintDisplay = document.getElementById('CacheHintShown');
+	
+	hintDisplay.style.display = "block";
+	hintPrompt.style.display = "none";	
+}
+
+function hideHint() {
+	var hintPrompt = document.getElementById('CacheHint');
+	var hintDisplay = document.getElementById('CacheHintShown');
+	
+	hintDisplay.style.display = "none";
+	hintPrompt.style.display = "block";	
 }
 
 function viewCacheLogs(CacheID) {
+
 	windowOpen="viewCacheLogs";
-	showView(16,false);	
-	initView();	
+	showView(16,true);	
+
 
 	
 	var CacheHeader = document.getElementById('CacheLogHeaderDetail');		
@@ -3239,12 +3407,13 @@ function viewCacheLogs(CacheID) {
 		
 		listContainer.appendChild(entry);
 	}
+	initView();	
 };
 
 function viewCacheGallery(CacheID) {
 	windowOpen="viewCacheGallery";	
-	showView(17,false);	
-	initView();	
+	showView(17,true);	
+
 	
 	var CacheHeader = document.getElementById('CacheGalleryHeaderDetail');		
 	CacheHeader.innerHTML = '';	
@@ -3284,12 +3453,52 @@ function viewCacheGallery(CacheID) {
 		CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
 	CacheLevels.appendChild(CacheLevelsDetail);		
 	
-	// ====================================================
+
+	//================================================================================
 	//
-	//  Pull cache image gallery
+	// Display list of images
 	//
 	//
+	var listContainer = document.getElementById('CacheGallery');
+	listContainer.innerHTML = '';
+	var imageCount = arrayCache[CacheID].cacheImages.length;		
+	console.log(`ImgCount: ${imageCount}`);
 	
+	var logListID = 0;
+
+	//
+	// cycle through all the returned logs and 
+	//	load them into the cache listing page for display / selection by the user 
+	//
+	for (let i = 0; i < imageCount; i++) {
+
+		// parse out the returned response 
+		
+		var imageDesc = arrayCache[CacheID].cacheImages[i].description;
+		var imageDateRaw = arrayCache[CacheID].cacheImages[i].capturedDate;
+		var imageThumbnail = "<img src='" + arrayCache[CacheID].cacheImages[i].thumbnailUrl + "'>";
+		var imageLargeURL = arrayCache[CacheID].cacheImages[i].largeUrl;				
+		var imageDate = imageDateRaw.slice(0,10);	
+		var imageOwnerCode = arrayCache[CacheID].cacheImages[i].ownerCode;				
+
+							
+		// now work on loading those details into the cache details page 
+		
+		var entry = document.createElement("div");
+		entry.className = 'navItem';
+		entry.tabIndex = i * 10;
+		entry.setAttribute('data-href', imageLargeURL);		
+
+		var headline = document.createElement("span");
+		headline.innerHTML = imageDate + "<br>" + imageThumbnail + "<br>" + imageDesc;
+		
+		// take that structured HTML and drop it into the page:
+		entry.appendChild(headline);	
+		
+		listContainer.appendChild(entry);
+	}	
+	
+	initView();		
 };
 
 function ShowCacheOnMap(CacheCode) {
@@ -3375,23 +3584,23 @@ function FindClosestCache(sourceLat,sourceLng){
 };
 
 function aboutDialog() {
-	alert("Caching on Kai 0.1.5\nBuilt by canyouswim\nIcons by Icons8.com\nMap data OpenStreetMap.org, contributors CC-BY-SA");
+
 }
 
 function viewShortcuts() {
-	alert("1 -ZOOM+ 3\nENTER: Center on me\n4: Cache List\n5: Center on Cache\n6: View Map\n7:Cache Details");
-	
+
 }
-	//Use javadoc format to make documentation easy? 	
-	/**	
-	 * Converts two floats that represents latitude and longitude in lat,lng format into a string.	
-	 * @param lat float for latitude	
-	 * @param lng float for longitude	
-	 * @param format string for output format it can be: "DDD","DMM" or "DMS"	
-	 * 	
-	 * @return string with a beautiful pair of coordinates	
-	 */	
-	function displayPosition(lat,lng,format){	
+
+//Use javadoc format to make documentation easy? 	
+/**	
+ * Converts two floats that represents latitude and longitude in lat,lng format into a string.	
+ * @param lat float for latitude	
+ * @param lng float for longitude	
+ * @param format string for output format it can be: "DDD","DMM" or "DMS"	
+ * 	
+ * @return string with a beautiful pair of coordinates	
+ */	
+function displayPosition(lat,lng,format){	
 	var ret=" ";	
 	var latDisplay=0;	
 	var longDisplay=0;	
@@ -3493,18 +3702,19 @@ function viewShortcuts() {
 	   	
 	 ret=""+latDisplay+" "+longDisplay;   	
 	return ret;	
-	}	
-	/**	
-	 * returns latitude or longitude as a float, when they are codified in a string with this formats, for example:	
-	 * <ul>	
-	 * <li> N55.555°,S55.555°,E55.555° or W55.555°	
-	 * <li> N5°55.555',S5°55.555',E5°55.555' or W5°55.555'	
-	 * <li> N5°55'5.555",S5°55'5.555",E5°55'5.555" or W5°55'5.555"	
-	 * <ul>	
-	 * @param str A string with a codified Latitude or Longitude.	
-	 * @return Signed float number for latitude or longitude.	
-	 **/	
-	function extractValue(str){	
+}	
+
+/**	
+ * returns latitude or longitude as a float, when they are codified in a string with this formats, for example:	
+ * <ul>	
+ * <li> N55.555°,S55.555°,E55.555° or W55.555°	
+ * <li> N5°55.555',S5°55.555',E5°55.555' or W5°55.555'	
+ * <li> N5°55'5.555",S5°55'5.555",E5°55'5.555" or W5°55'5.555"	
+ * <ul>	
+ * @param str A string with a codified Latitude or Longitude.	
+ * @return Signed float number for latitude or longitude.	
+ **/	
+function extractValue(str){	
 		
 		var d=0,m=0,s=0;	
 		var val=0;	
@@ -3536,7 +3746,8 @@ function viewShortcuts() {
 				  
 				
 	return val;	
-	}	
+}	
+
 	/**@todo	
 	 * Stores the coordinates given by the user.	
 	 * They can be given in these formats:	
@@ -3565,7 +3776,7 @@ function viewShortcuts() {
 	 * @return myWP	
 	 * 	
 	 **/	
-	function giveMeWayPoint(mode){	
+function giveMeWayPoint(mode){	
 			var mapCrd = map.getCenter();	
 			var mapLat = mapCrd.lat;	
 			var mapLng = mapCrd.lng;	
@@ -3641,7 +3852,7 @@ function viewShortcuts() {
 		
 		
 			}	
-	}	
+}	
 	
 	
 	/**
@@ -3676,7 +3887,7 @@ function viewShortcuts() {
 	 *
 	 * 	
 	 **/			
-	function editWP(val){	
+function editWP(val){	
 	wpContainer.innerHTML=wpContainer.innerHTML.replace("|","");	
 		switch(val){	
 		  case 'END':	
@@ -3812,7 +4023,7 @@ function viewShortcuts() {
 			
 	wpContainer.innerHTML =wpContainer.innerHTML.slice(0,wpIndex)+"|"+wpContainer.innerHTML.slice(wpIndex);	
 		
-	}
+}
 
 
 function createWPcontainer(){
@@ -3891,15 +4102,6 @@ function createWPcontainer(){
 //....................End of Creating waypoint container
 
 }
-
-
-//This is not working
-//function ListCaches2(myLat,myLng) {	
-//	ListCaches(myLat,myLng);
-//	//createWPcontainer(arrayCache.length);
-//	CacheCount=arrayCache.length;
-//}
-
 
 	/** @todo It only works with the special "WAYPOINT" cache. Allow work with every cache_id.
 	 *  adds new waypoint to the cache description and changes default lat and lng, then navigate there.
@@ -4050,9 +4252,6 @@ function DeleteWaypoints () {
 	
 };
 
-
-
-
 function ZoomMap(in_out) {
 
 	var current_zoom_level = map.getZoom();
@@ -4148,7 +4347,6 @@ function MovemMap(direction) {
 	wpContainer.innerHTML = "&#x2295; "+myCoords;	
 }
 	
-
 function openURL(url) {
 	var external = url.includes('http');
 	if (external) {
@@ -4158,7 +4356,6 @@ function openURL(url) {
 	}
 	softkeyBar();
 }
-
 
 function roundToTwo(num) {    
   return +(Math.round(num + "e+2")  + "e-2");
@@ -4174,8 +4371,7 @@ function deg2rad(deg) {
 function round(x) {
 	return Math.round( x * 1000) / 1000;
 }	
-
-			
+		
 //function findDistance(cor2) {
 function findDistance(startLat,startLng,endLat,endLng) {	
 	var t1, n1, t2, n2, lat1, lon1, lat2, lon2, dlat, dlon, a, c, dm, dk, mi, km;
@@ -4230,7 +4426,6 @@ function bearing(startLat, startLng, destLat, destLng){
   destLat = deg2rad(destLat);
   destLng = deg2rad(destLng);
 
-
   //console.log('start bearing calc');
   y = Math.sin(destLng - startLng) * Math.cos(destLat);
   x = Math.cos(startLat) * Math.sin(destLat) -
@@ -4241,90 +4436,28 @@ function bearing(startLat, startLng, destLat, destLng){
   return (brng + 360) % 360;
 }
 
-
-
-
-
-
-
-
-
+function loadingOverlay(show) {
+  if (show==true) {
+	document.getElementById("loadingOverlay").style.display = "block";
+  } else {
+	document.getElementById("loadingOverlay").style.display = "none";
+  }
+}
 
 //==================================
-
-
-	
 //--------------------------------------------
 // OAuth stuff here 
 
-
-
-
-	
-
 function logout() {
 	// first we kill our current tokens to log out local to the app
-	//localStorage.clear();
-	console.log('starting logout');
+	// then we punt the user out of the application.  this effectively resets the app itself to new
+	// the user will be prompted to log in again, and will still have their login on the
+	// geocaching.com website - not sure how to change that from the app itself
 
-	// then try pushing a POST command to geocaching.com to force a logout there also
-	// 
-	// this is what the logout form looks like on the geocaching.com website:
-	//
-	//<form action="/account/logout" id="logout-form" method="post">
-	//<input name="returnUrl" type="hidden" value="https://staging.geocaching.com">
-	//<button data-event-action="Header Click" data-event-category="data" data-event-label="Sign Out" title="Sign out" type="submit">Sign out</button>
-	//</form>	
-	
-	var params = {
-		id: "logout-form",
-		returnURL: config.redirect_uri
-	};
-
-	var logoutURL = rootSiteURL + "/account/logout";	
-	var token = localStorage.getItem("access_token");
-	var request = new XMLHttpRequest({ mozSystem: true });
-	
 	localStorage.clear();
 	window.close();
-	
-	request.onreadystatechange = function() {
-		console.log(`state: ${this.readyState} | status: ${this.status}`);
-		if (this.readyState == 3) {	
-			console.log(`clearing storage`);
-			localStorage.clear();
-		}
-		if (this.readyState == 4)  { // && (this.status == 200 || this.status == 201))
-			body = JSON.parse(this.response);
-			// send up success message and punt the user back to previous screen
-			kaiosToaster({	
-			  message: 'Logged out successfully',	
-			  position: 'north',	
-			  type: 'success',	
-			  timeout: 3000	
-			});	
-			//goBack();
-			localStorage.clear();
-			window.close();
-		} else if(this.readyState == 4 && (this.status !== 200 || this.status !== 201)) {
-			// some issue
-			body = JSON.parse(this.response);
-			var responseError = "There was an error on the log submission: " + body.errorMessage;
-			showModal(responseError);
-		}
-	}		
-	request.open("POST", logoutURL, true);
-	
-	//request.setRequestHeader("Content-Type", "application/json;");
-	//request.setRequestHeader("Accept", "application/json;");
-	//request.setRequestHeader("Authorization", "bearer " + token);
-	
-	request.send(JSON.stringify(params));
+
 };
-
-
-
-
 
 function getToken(){
 	// Create and store a random "state" value
@@ -4345,17 +4478,14 @@ function getToken(){
 		+ "&state="+(state)
 		+ "&scope="+(config.requested_scopes)
 		+ "&redirect_uri="+(config.redirect_uri)
+		//+ "&signup=true"
 		//+ "&code_challenge="+encodeURIComponent(code_challenge)
 		//+ "&code_challenge_method=S256"
 		;
 
 	// Redirect to the authorization server
 	window.open(url);
-	
-	
 };
-
-
 
 function refreshToken(method,action) {
 
@@ -4380,6 +4510,9 @@ function refreshToken(method,action) {
 		localStorage.setItem("access_token",body.access_token);
 		localStorage.setItem("refresh_token",body.refresh_token);
 		
+		// update our stored user details for the now logged in user
+		updateUserDetails()
+		
 		// if a method and action has been specified, that means we should return the user
 		// back to the pullFromAPI function to try their action again
 		// as they had been sent here due to an expired token.
@@ -4391,21 +4524,22 @@ function refreshToken(method,action) {
 		// request failed such as if the OAuth server doesn't allow CORS requests
 		//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
 		//document.getElementById("error").classList = "";
+		console.log('refresh request error');
 	});
 };
 	
 	
-	// Parse a query string into an object
-	function parseQueryString(string) {
+// Parse a query string into an object
+function parseQueryString(string) {
 		if(string == "") { return {}; }
 		var segments = string.split("&").map(s => s.split("=") );
 		var queryString = {};
 		segments.forEach(s => queryString[s[0]] = s[1]);
 		return queryString;
-	};
+};
 	
-	// Make a POST request and parse the response as JSON
-	function sendPostRequest(url, params, success, error) {
+// Make a POST request and parse the response as JSON
+function sendPostRequest(url, params, success, error) {
 		var request = new XMLHttpRequest();
 		request.open('POST', url, true);
 		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
@@ -4427,13 +4561,13 @@ function refreshToken(method,action) {
 		};
 		var body = Object.keys(params).map(key => key + '=' + params[key]).join('&');
 		request.send(body);
-	};	
+};	
 	
 	
 	// Handle the redirect back from the authorization server and
 	// get an access token from the token endpoint
 
-	if(localStorage.getItem("access_token")==null) {;
+	if(localStorage.getItem("access_token")==null) {
 	var q = parseQueryString(window.location.search.substring(1));
 
 	// Check if the server returned an error string
@@ -4448,12 +4582,13 @@ function refreshToken(method,action) {
 
 		// Verify state matches what we set at the beginning
 		if(localStorage.getItem("pkce_state") != q.state) {
-			console.log(`q.state: ${q.state}`);
-			console.log(`stored state: ${localStorage.getItem("pkce_state")}`);
+			//console.log(`q.state: ${q.state}`);
+			//console.log(`stored state: ${localStorage.getItem("pkce_state")}`);
 			//alert("Invalid state");
 		} else {
 
 			// Exchange the authorization code for an access token
+			console.log('line 4575, trying to exchange auth code for access token');
 			sendPostRequest(config.token_endpoint, {
 				grant_type: "authorization_code",
 				code: q.code,
@@ -4486,6 +4621,7 @@ function refreshToken(method,action) {
 				
 				window.close();
 
+
 			}, function(request, error) {
 				// This could be an error response from the OAuth server, or an error because the 
 				// request failed such as if the OAuth server doesn't allow CORS requests
@@ -4506,9 +4642,10 @@ function refreshToken(method,action) {
 		//console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
 		//console.log(`Token Expires: ${localStorage.getItem("token_expires")}`);	
 
-		console.log(`Seconds till expiration: ${time_till_expire}`);
+		//console.log(`Seconds till expiration: ${time_till_expire}`);
+
 		if(time_till_expire < 3400) {refreshToken();};
-	};
+};
 	
 	
 
@@ -4568,7 +4705,7 @@ function pullFromAPI(method,action,myLat,myLng, cacheGC) {
 	var token = localStorage.getItem("access_token"); // pull my access token from storage
 	
 	if (token !== null) { // a null token means we're not logged in - will deal with that below
-		console.log('we have a token');
+		//console.log('we have a token');
 		xhr.open(geomethod, geourl, true);
 		
 		// put our token in the header to authenticate with the API
