@@ -1,4 +1,5 @@
 (function (app) {
+
 	//input mapping
 	document.addEventListener('keydown', handleKeydown);
 	document.addEventListener('keyup', handleKeyup);
@@ -6,17 +7,15 @@
 	var keyOverlay = document.getElementById('keyOverlay');
 	var overlayTimeout;
 
-	function handleKeydown(e) {
-
-
+	function handleKeyup(e) {
 		switch (e.key) {
 			case 'Backspace':
-				e.preventDefault(); // prevent the app from closing
+				app.keyCallback.back();
 				break;			
 		}
 	}
 
-	function handleKeyup(e) {
+	function handleKeydown(e) {
 		//console.log(`${e.key}`);
 		switch (e.key) {
 			case 'ArrowUp':
@@ -48,7 +47,8 @@
 				app.keyCallback.menu();
 				break;
 			case 'Backspace':
-				app.keyCallback.back();
+				e.preventDefault(); // prevent the app from closing
+				
 				break;
 			case 'EndCall':
 				app.keyCallback.quit();

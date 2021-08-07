@@ -167,6 +167,10 @@ div#content {
 	position:relative;
 }
 
+#logHeader {
+	position:relative;
+}
+
 #CacheActions{
   margin: auto;
   width: 80%;

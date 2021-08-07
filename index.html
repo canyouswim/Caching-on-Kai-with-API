@@ -8,14 +8,15 @@
     />
     <meta name="theme-color" content="#02874D" />
     <title>C:Kai</title>
-    <link rel="stylesheet" type="text/css" href="src/css/header.css" />
-    <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />
+	<link rel="stylesheet" type="text/css" href="src/css/header.css" />
+
     <link rel="stylesheet" type="text/css" href="src/css/root.css" />
-    <link rel="stylesheet" type="text/css" href="src/css/main.css" />	
+    <link rel="stylesheet" type="text/css" href="src/css/main.css" />
     <link rel="stylesheet" href="src/leaflet/leaflet.css" />	
+    <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />	
 	<link rel="stylesheet" type="text/css" href="src/css/kaios-toaster.css" />
 	<link rel="stylesheet" type="text/css" href="src/css/kaiui.css" />	
-
+	<link rel="stylesheet" type="text/css" href="src/css/normalize.css" />	
 
 	
 	
@@ -27,6 +28,7 @@
     <script src="src/kaios-toaster.js" defer></script>
     <script src="src/someInputs.js" defer></script>
     <script src="src/helperFunctions.js" defer></script>	
+   <!-- uncomment below to turn ads back on... -->
    <!-- <script src="src/kaiads.v4.min.js" defer></script>-->
 
 
@@ -140,34 +142,27 @@
 			
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
-			  <select id="initialCacheLoad">
+			  <select id="select1">
 				<option value="YesLoadCaches">Yes - load immediately based on my position</option>
 				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
 			  </select>
 			</fieldset>			
 			<fieldset>
 			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
-			  <select id="displayUnits">
+			  <select id="select2">
 				<option value="mi" selected>feet/miles</option>
 				<option value="km">meters/kilometers</option>
 			  </select>
 			</fieldset>
 				<fieldset>
 			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
-			  <select id="coorRep">
+			  <select id="select3">
 				<option value="DDD" selected>ND.dº WD.dº</option>
 				<option value="DMM">NDºM.m' WDºM.m'</option>
 				<option value="DMS">NDºM'S.s" WDºM'S.s"</option>
 			  </select>
 			</fieldset>
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="30">Max # of caches to store</legend>
-			  <select id="maxNumCaches">
-				<option value="50" selected>50</option>
-				<option value="100">100</option>
-				<option value="150">150</option>				
-			  </select>	
-			</fieldset>-->		
+	
 			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
 			<button class="navItem" tabIndex="40" data-function="About">About</button>
 			<button class="navItem" tabIndex="50" data-function="Logout">Logout</button>				
@@ -245,6 +240,7 @@
 
 		<div class="view" id="logCache">  <!-- view 14 -->
 			<div id="logHeader">Log this geocache</div>
+			<br>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Log Type</legend>
 			  <select id="logType">
@@ -252,10 +248,10 @@
 				<option value="3">Didn't Find It</option>
 				<option value="4">Write note</option>				
 			  </select>
-			</fieldset>	
+			</fieldset>
 			<fieldset>
 			  <legend class="navItem" tabIndex="10">Log Details</legend>
-			  <textarea id="logText" value="" rows="5" columns="30"></textarea>
+			  <textarea id="logText" rows="5" columns="50"></textarea>
 			</fieldset>
 			<fieldset>
 			  <legend class="navItem" tabIndex="20">Date Found</legend>

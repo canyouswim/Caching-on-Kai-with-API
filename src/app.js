@@ -265,6 +265,8 @@ app.keyCallback = {
     	dLeft: function () {
 				if(app.editWPmode==2){
 					editWP("LEFT");
+				}else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
+				switchCacheView(false);		
 				}else{
 				navHorizontal(false);
 				} 
@@ -272,6 +274,8 @@ app.keyCallback = {
 	    dRight: function () { 
 				if(app.editWPmode==2){
 					editWP("RIGHT");
+				} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
+				switchCacheView(true);
 				}else{
 				navHorizontal(true);
 				} 
@@ -463,7 +467,7 @@ app.newKeyCallback={
 			if(app.editWPmode==2){	
 				editWP("1");	
 			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
-				switchCacheView(false);					
+				navHorizontal(false);				
 			}else{	
 				app.keyCallback.ZoomOut();	
 			}	
@@ -487,7 +491,7 @@ app.newKeyCallback={
 			if(app.editWPmode==2){	
 				editWP("3");	
 			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
-				switchCacheView(true);					
+				navHorizontal(true);					
 			}	
 			else{	
 				app.keyCallback.ZoomIn();	
@@ -1030,13 +1034,16 @@ function switchCacheView(forward) {
 
 app.isInputFocused = function () {
 	var activeTag = document.activeElement.tagName.toLowerCase();
-	//console.log(`Active tag is ${activeTag}`);
+	console.log(`Active tag is ${activeTag}.  inputs=input, select, text, textarea, body, html`);
 	var isInput = false;
 	// the focus switches to the 'body' element for system ui overlays
-	//if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' || activeTag == 'body' || activeTag == 'html') {
-	if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea' ) {		
+	if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea') {
+		//|| activeTag == 'body' || activeTag == 'html') {
+
+	  console.log('this is an input field');
 	  isInput = true;
 	}
+	console.log(`isInput=${isInput}`);
 	return isInput;
 };
 
@@ -1135,7 +1142,12 @@ function initView() {
 		windowOpen = "Settings";
 		app.leftSoftButton = "Back";
 		app.optionEnabled = false;
+	} else if (app.currentViewName == 'logCache') {
+		windowOpen = "logCache";
+		app.leftSoftButton = "Back";
+		app.optionEnabled = true;
 	}
+	
 	// focus first menu entry
 	var forward=true;
 	if (app.currentView.querySelector(".navItem")) {
@@ -1192,12 +1204,14 @@ function logThisCache() {
 		  if (navGeoCode == arrayCache[i].cacheCode) {
 			CacheID = i;
 			cacheFound = arrayCache[i].cacheFound;
-			console.log(`found? ${cacheFound}, array: ${arrayCache[i].cacheFound}`);
+			//console.log(`found? ${cacheFound}, array: ${arrayCache[i].cacheFound}`);
 		  }
 		}	
 		
-		document.getElementById("logHeader").innerHTML = "<b>Enter a log for:</b> " + navGeoCode + "<br>";
-		document.getElementById("logHeader").innerHTML += arrayCache[CacheID].cacheName;
+		var BadgeContent;
+		BadgeContent = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;		
+		
+		document.getElementById("logHeader").innerHTML = BadgeContent;
 		
 		var logTypeSelect = document.getElementById("logType");
 		//hide the Found It log option if the user has already found this cache and logged if previously
@@ -1234,6 +1248,8 @@ function showModal(displayText){
 }
 
 function submitLog() {
+	loadingOverlay(true);
+	
 	var cacheLogImage = document.getElementById('logImage');
 	var cacheLogDate = document.getElementById('logDate');
 		var cacheLogDateRaw = cacheLogDate.value;
@@ -1307,6 +1323,7 @@ function submitLog() {
 		//console.log(`error text: ${logErrors}`);
 
 		if(logHasError) {
+			loadingOverlay(false);			
 			showModal(logErrors);
 		} else {
 		
@@ -1335,6 +1352,7 @@ function submitLog() {
 
 					} else {
 						console.log('no log image attached');
+						loadingOverlay(false);							
 						// send up success message and punt the user back to previous screen
 						kaiosToaster({	
 						  message: 'Log submitted successfully',	
@@ -1349,7 +1367,9 @@ function submitLog() {
 					// some issue
 					body = JSON.parse(this.response);
 					var responseError = "There was an error on the log submission: " + body.errorMessage;
-					showModal(responseError);
+					loadingOverlay(false);						
+					//showModal(responseError);
+					alert(responseError);
 				}
 			}		
 			request.open("POST", logURL, true);
@@ -1382,6 +1402,7 @@ function submitLogImage(logCode,logImage) {
 			if (this.readyState == 4 && (this.status == 200 || this.status == 201)) {
 				body = JSON.parse(this.response);
 				//console.log(`logCode: ${body.url}`);
+				loadingOverlay(false);					
 				kaiosToaster({	
 				  message: 'Log submitted successfully',	
 				  position: 'north',	
@@ -1626,8 +1647,10 @@ function execute() {
 			  console.log('nothing to execute');
 			}
 		} else { /* in some input field */
+				console.log(`hit enter, app.currentViewName=${app.currentViewName}`);
 				if (app.currentViewName == 'Settings') { /* do this in the inputs view */
-				  app.updateInputs();
+					console.log('trying to now to update inputs from settings screen');
+					app.updateInputs();
 				}
 				// return to legend when input confirmed to avoid triggering the input again
 				app.activeNavItem.focus();
@@ -1654,6 +1677,8 @@ function executeOption() {
 	  windowOpen = "viewCacheOptions";
 	  showView(10,false);
 	  initView();
+  } else if (app.optionButtonAction == 'doneInTextArea') {
+	document.getElementById("logText").blur();
   }
 };
 
@@ -1687,11 +1712,16 @@ function softkeyBar() {
 			app.actionButton.innerHTML = "SELECT";
 			app.optionsButton.innerHTML = "";
 			app.optionButtonAction = '';
-		} else {
+		} else if(app.currentViewName == "logCache")  {
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "SELECT";
 			app.optionsButton.innerHTML = "";
 			app.optionButtonAction = '';
+		} else {
+			app.backButton.innerHTML = "Back";
+			app.actionButton.innerHTML = "SELECT";
+			app.optionsButton.innerHTML = "";
+			app.optionButtonAction = 'doneInTextArea';
 		}
 		
 		// check to see if we're in WayPoint creating/editing mode.  if so, we need to take over the buttons / softkeys until we're done
@@ -2643,6 +2673,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 				// we need to real-time calculate the distance to each cache, based on our current location
 				var tripDistance = findDistance(my_current_lat,my_current_lng,geoCacheDetails[i].postedCoordinates.latitude,geoCacheDetails[i].postedCoordinates.longitude);
 
+				console.log(`creating list of caches - myUnits=${myUnits}`);
 				if(myUnits == "mi") {
 					if(tripDistance < .5) {
 						Distance = `${roundToTwo(tripDistance * 5280)}ft`;
