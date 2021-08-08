@@ -337,10 +337,15 @@ button::-moz-focus-inner {
 }
 
 .view select:focus, .view input:focus, .navItem:focus {
-  background-color: purple;
-  border-color: purple;
-  color: white;
+  background-color: #B3E6FF;
+  color: black;
 }
+
+.cacheFullyLoaded{
+	border-color: #02874D;
+	border-style: solid;
+	border-width: 2px;
+}	
 
 .list div, .grid div {
   padding: 2%;
