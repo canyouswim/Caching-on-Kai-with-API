@@ -170,6 +170,11 @@ var arrayCacheObject;
 var arrayCache = [];
 var arrayCacheMarker = [];
 
+var arrayCacheDetails = [];
+var arrayCacheDetailsObject;
+
+var cacheNameNavigating;
+
 var showingAllCaches="no";
 var FullCacheListDetails;
 //var myUnits;
@@ -320,11 +325,8 @@ app.keyCallback = {
 		} else if (app.currentViewName == "viewCache") {
 		  //navGeoCode = app.activeNavItem.getAttribute('navCode');
 			//console.log(`pressed goNav, navGeoCode:${navGeoCode}`);
-		  windowOpen = "viewMap";
-		  showView(0,false);
-		  initView();	
-		  ShowCacheOnMap(navGeoCode);
-		  focusActionLocation = "focusOnMe";				  
+		  navToCache(navGeoCode,true);
+			  
 		} else {
 			execute(); 
 		}
@@ -1434,6 +1436,9 @@ function execute() {
 				case 'deleteAllWaypoints':
 					DeleteWaypoints();
 				 break;
+				case 'stopNavToCache':
+					navToCache(0,false);		
+				 break;
 				case 'cancel':
 					//console.log(`you selected Cancel`);
 					goBack();
@@ -1778,11 +1783,9 @@ function success(pos) {
 		} else {
 			// this is if we don't want to pull the list of live cacheSize
 			// and instead pull them from local storage
-			if(userMembershipLevelId==1){
-				// basic members don't get to save caches in storage between sessions.
-			} else {
+			// minimally always load up what we last had, due to the inconsistencies with KaiOS keeping the app open
 				ListCaches(0,0,"yes");	
-			}
+
 		};
 
 		if(MapHasBeenDrawn == false) {
@@ -1998,7 +2001,17 @@ function success(pos) {
 		current_lng = crd.longitude;		
 
 		myStatus="running";
-		softkeyBar();		
+		softkeyBar();	
+
+		// and our very last action is to see if we were previously navigating to a cache when we 
+		// quit the app - if so, continue that nav selection
+		
+		var navToCacheGeoCode = localStorage.getItem("navToCacheGeoCode");	
+		if (navToCacheGeoCode !== null) {
+			// resume navigation
+				navToCache(navToCacheGeoCode,true);
+		};
+		
 
 	} else {
 		myMarker.remove();
@@ -2025,18 +2038,18 @@ function success(pos) {
 
 		if(myUnits == "mi") {
 			if(tripDistance < .5) {
-				mapContent = mapContent + `${roundToTwo(tripDistance * 5280)}ft`;
+				mapContent = mapContent + `${roundToTwo(tripDistance * 5280)}ft to ` + cacheNameNavigating;
 				distToCache.innerHTML = `<b>Distance</b></br>${roundToTwo(tripDistance * 5280)}ft`;
 			} else {
-				mapContent = mapContent + `${roundToTwo(tripDistance)}mi`;
+				mapContent = mapContent + `${roundToTwo(tripDistance)}mi to ` + cacheNameNavigating;
 				distToCache.innerHTML = `<b>Distance</b></br>${roundToTwo(tripDistance)}mi`;			
 			};
 		} else {
 			if(tripDistance < .5) {
-				mapContent = mapContent + `${roundToTwo(tripDistance * 1000)}m`;
+				mapContent = mapContent + `${roundToTwo(tripDistance * 1000)}m to ` + cacheNameNavigating;
 				distToCache.innerHTML = `<b>Distance</b></br>${roundToTwo(tripDistance * 1000)}m`;
 			} else {
-				mapContent = mapContent + `${roundToTwo(tripDistance)}km`;
+				mapContent = mapContent + `${roundToTwo(tripDistance)}km to ` + cacheNameNavigating;
 				distToCache.innerHTML = `<b>Distance</b></br>${roundToTwo(tripDistance)}km`;
 			};
 		};
@@ -2583,6 +2596,77 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 						
 					}				
 
+					//================================
+					// finally we need to go see if we have any of these cache details already loaded in localstorage
+					// and if so, load those up as well and mark those caches as fully loaded
+					
+					
+					// first pull the current list of stored caches
+					var arrayCacheDetailsStr = localStorage.getItem("arrayCacheDetails");
+					
+					if(arrayCacheDetailsStr !== null) {
+						arrayCacheDetails = JSON.parse(localStorage.getItem("arrayCacheDetails"));
+						// now parse through these and see if any match what we have already
+						
+						var rightNowMilliseconds = Date.now();
+						
+						var rightNow = new Date(rightNowMilliseconds);
+						var rightNowLocal = rightNow.toLocaleString();	
+						
+						for (let i = 0; i < (arrayCacheDetails.length); i++) {
+							// very first thing we need to do before we even check
+							// is see if the full details we've loaded have expired 
+							if(arrayCacheDetails[i].expires < rightNowLocal){
+								// if expired, remove that item from the array 
+								arrayCacheDetails.splice(i,1);
+							};
+							// now pull the navCode and see if it maches one we already have in our array 
+							for (let j = 0; j < (arrayCache.length); j++){
+								if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
+									// update our stored cache array with these full details
+									//===============================================
+									// note: this code below should match what is in the LoadCacheDetails function
+									//===============================================================
+									// now parse the returned JSON out and do stuff with it
+									var CacheID = j;
+									var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
+									var imageCount = cacheDetails.images.length;
+									var logCount = cacheDetails.geocacheLogs.length;
+									//var logImageCount
+										
+									var lastVisitedRaw = cacheDetails.lastVisitedDate;								
+									var lastVisited = lastVisitedRaw.slice(0,10);		
+									
+									//update the cache array entry with the rest of the live details 
+									arrayCache[CacheID].cacheName = cacheDetails.name;
+									arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
+									//arrayCache[CacheID].cacheHiddenDate = Placed;
+									//arrayCache[CacheID].cacheDifficulty = Difficulty;
+									//arrayCache[CacheID].cacheTerrain = Terrain;
+									//arrayCache[CacheID].cacheSize = ContainerSize;
+									arrayCache[CacheID].cacheHint = cacheDetails.hints;
+									arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
+									arrayCache[CacheID].cacheFullyLoaded = true;	
+									arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
+									arrayCache[CacheID].cacheStatus = cacheDetails.status;
+									arrayCache[CacheID].cacheLastVisited = lastVisited;
+									arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
+									arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
+									arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+									arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+									arrayCache[CacheID].cacheImages = cacheDetails.images;					
+									
+									// and now update the cache list to show that cache is fully loaded
+									updateCacheListWithLoaded(CacheID);
+								};
+							};
+							
+						};
+						// once we're done processing the array, we need to push it back to localstorage 
+						// so that we commit any removed / expired cacheShortDescription
+						localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
+					};
+
 					// let the user know we're done processing data
 					kaiosToaster({	
 					  message: 'Caches loaded',	
@@ -2616,21 +2700,20 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 		} else {
 			getToken();
 		};	
+		
+	//=================================================================
+	// load caches from storage, here
+	//
+	//===================================================================
 	} else if(loadFromStorage =="yes") {
-		// pull in from last cache list
-		// only if premium members
+		// pull in from last cache list when we were last using the app
 		var siteText = localStorage.getItem('geocachingResponse');
 		if(siteText == null) {
 			console.log('no previous list of caches available to load');
 		} else {
 			//Loading up caches...
-			updateUserDetails()				
-			kaiosToaster({
-			  message: 'Loading up caches from storage...',
-			  position: 'north',
-			  type: 'warning',
-			  timeout: 3000
-			});	
+			updateUserDetails()	
+
 			// turn on the loading spinner
 			loadingOverlay(true);	
 			
@@ -2842,16 +2925,82 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 				
 		}				
 		
+		//================================
+		// finally we need to go see if we have any of these cache details already loaded in localstorage
+		// and if so, load those up as well and mark those caches as fully loaded
+		
+		
+		// first pull the current list of stored caches
+		var arrayCacheDetailsStr = localStorage.getItem("arrayCacheDetails");
+		
+		if(arrayCacheDetailsStr !== null) {
+			arrayCacheDetails = JSON.parse(localStorage.getItem("arrayCacheDetails"));
+			// now parse through these and see if any match what we have already
+			
+			var rightNowMilliseconds = Date.now();
+			
+			var rightNow = new Date(rightNowMilliseconds);
+			var rightNowLocal = rightNow.toLocaleString();	
+			
+			for (let i = 0; i < (arrayCacheDetails.length); i++) {
+				// very first thing we need to do before we even check
+				// is see if the full details we've loaded have expired 
+				if(arrayCacheDetails[i].expires < rightNowLocal){
+					// if expired, remove that item from the array 
+					arrayCacheDetails.splice(i,1);
+				};
+				// now pull the navCode and see if it maches one we already have in our array 
+				for (let j = 0; j < (arrayCache.length); j++){
+					if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
+						// update our stored cache array with these full details
+						//===============================================
+						// note: this code below should match what is in the LoadCacheDetails function
+						//===============================================================
+						// now parse the returned JSON out and do stuff with it
+						var CacheID = j;
+						var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
+						var imageCount = cacheDetails.images.length;
+						var logCount = cacheDetails.geocacheLogs.length;
+						//var logImageCount
+							
+						var lastVisitedRaw = cacheDetails.lastVisitedDate;								
+						var lastVisited = lastVisitedRaw.slice(0,10);		
+						
+						//update the cache array entry with the rest of the live details 
+						arrayCache[CacheID].cacheName = cacheDetails.name;
+						arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
+						//arrayCache[CacheID].cacheHiddenDate = Placed;
+						//arrayCache[CacheID].cacheDifficulty = Difficulty;
+						//arrayCache[CacheID].cacheTerrain = Terrain;
+						//arrayCache[CacheID].cacheSize = ContainerSize;
+						arrayCache[CacheID].cacheHint = cacheDetails.hints;
+						arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
+						arrayCache[CacheID].cacheFullyLoaded = true;	
+						arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
+						arrayCache[CacheID].cacheStatus = cacheDetails.status;
+						arrayCache[CacheID].cacheLastVisited = lastVisited;
+						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
+						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
+						arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+						arrayCache[CacheID].cacheImages = cacheDetails.images;					
+						
+						// and now update the cache list to show that cache is fully loaded
+						updateCacheListWithLoaded(CacheID);
+					};
+				};
+				
+			};
+			// once we're done processing the array, we need to push it back to localstorage 
+			// so that we commit any removed / expired cacheShortDescription
+			localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
+		};
+
+
+
 		// turn off the loading spinner
 		loadingOverlay(false);
-		// let the user know we're done processing data
-		kaiosToaster({	
-		  message: 'Caches loaded from storage',	
-		  position: 'north',	
-		  type: 'success',	
-		  timeout: 3000	
-		});			
-		
+
 		}	
 		
 		
@@ -3062,6 +3211,33 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 					  var siteText = xhr.response;				
 						//console.log(`response: ${siteText}`);
 
+						//===========================================================
+						// first drop the cache details response into our array of loaded cache details
+						// and update our localstore with those detailsl so we can pull them later
+						
+						// first pull the current list of stored caches
+						var arrayCacheDetailsStr = localStorage.getItem("arrayCacheDetails");
+						
+						if(arrayCacheDetailsStr !== null) {
+							arrayCacheDetails = JSON.parse(localStorage.getItem("arrayCacheDetails"));
+							
+						};
+						
+						var cacheExpires = localStorage.getItem("fullCallsReset");
+						
+						// then construct the newly loaded cache detail
+						arrayCacheDetailsObject = {
+							navCode: CacheCode,
+							expires: cacheExpires,
+							cacheDetails: siteText
+						};
+						
+						// drop that new cache detail into the list of loaded caches
+						arrayCacheDetails[arrayCacheDetails.length] = arrayCacheDetailsObject;
+
+						// finally update our localstore of fully loaded caches 
+						localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));
+
 						//===============================================================
 						// now parse the returned JSON out and do stuff with it
 						var cacheDetails = JSON.parse(siteText);
@@ -3135,7 +3311,7 @@ function updateCacheListWithLoaded(CacheID) {
 	// for easy reference when returning to the list
 	// we'll use the navcode class which is the geocache code to find the item we want
 	var cacheListEntry = document.getElementsByClassName("navItem");
-	cacheListEntry[CacheID].style.backgroundColor = "#00cd66";
+	cacheListEntry[CacheID].classList.add("cacheFullyLoaded");
 	
 }
 
@@ -3175,7 +3351,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 	var CacheHeader = document.getElementById('CacheHeaderDetail');		
 	if (CacheID !== -1) {
 		//show cache name on the big compass view	
-		CompassCacheName.innerHTML = "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+		//CompassCacheName.innerHTML = "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
 				
 		//================
 		// find our current distance from this cache
@@ -3508,8 +3684,12 @@ function ShowCacheOnMap(CacheCode) {
 	  // search for cache in array
 	  if (CacheCode == arrayCache[i].cacheCode) {
 		CacheID = i;
+		var CompassCacheName = document.getElementById("cacheName");
+		CompassCacheName.innerHTML = "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+		cacheNameNavigating = arrayCache[CacheID].cacheCode;
 	  }
 	}	
+	
 	console.log(`CacheID: ${CacheID}, isDefined: ${CacheHasBeenDefined}`);
 	if(CacheHasBeenDefined == false) {
 		if(CacheCode!== 0) {
@@ -3536,6 +3716,48 @@ function ShowCacheOnMap(CacheCode) {
 	}
 	//LoadCacheDetails(CacheCode,false);
 }
+
+function navToCache(navGeoCode,startNav) {
+	if(startNav) {
+		windowOpen = "viewMap";
+		showView(0,false);
+		initView();	
+		ShowCacheOnMap(navGeoCode);
+		focusActionLocation = "focusOnMe";
+		localStorage.setItem("navToCacheGeoCode",navGeoCode);
+	} else {
+		console.log('stop navigation to cache');
+		CacheLat = 0;
+		CacheLng = 0;
+		cacheNameNavigating = "";
+		container.innerHTML = "";
+		var mapCompassContainer = document.getElementById('compassContainer');
+		var compassIMG = document.getElementById('compass');
+		var LargeCompassIMG = document.getElementById('largeCompass');
+		var LargeCompassContainer = document.getElementById('NorthCompassContainer');
+		var LargeCompassNorthIMG = document.getElementById('NorthCompass');
+		document.getElementById('distanceToCache').innerHTML = "<b>Distance</b>";
+		document.getElementById('gpsAccuracy').innerHTML = "<b>Accuracy</b>";
+
+		document.getElementById('bearingToCache').innerHTML = "";
+		document.getElementById('cacheName').innerHTML = "<b>Name</b>";
+
+		compassIMG.style.transform  = 'rotate(0deg)';
+		mapCompassContainer.style.backgroundColor = '';
+		mapCompassContainer.style.color = '';
+		
+		LargeCompassNorthIMG.style.transform = 'rotate(-0deg)';
+		LargeCompassIMG.style.transform = 'rotate(0deg)';
+
+		
+		navCacheName = "";
+		CacheHasBeenDefined = false;	
+		focusActionLocation = "focusOnMe";		
+		Cache.remove();		
+		localStorage.setItem("navToCacheGeoCode",null);
+		goBack();
+	}
+}		  
 
 function FindClosestCache(sourceLat,sourceLng){
 	var closestCache;
