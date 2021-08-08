@@ -44,7 +44,7 @@ div#content2 {
 }
 
 div#map-container {
-    height: 226px;
+    height: 230px;
     width: 100%;
 }
 
@@ -54,7 +54,7 @@ div#viewList {
 }
 
 div#content {
-	height: 100px;
+	height: 37px;
 	width: 208px;
 }
 
@@ -64,6 +64,14 @@ div#content {
 
 #mapViewCompass{
 	float: left;
+}
+
+#appLogo{
+	float: left;
+}
+
+#appName{
+	
 }
 
 #viewCompass{
@@ -104,6 +112,9 @@ div#content {
 	z-index: 10;		
 }	
 
+#aboutHeader{
+	position: relative;
+}
 
 
 
@@ -155,6 +166,10 @@ div#content {
 	overflow-y: scroll;	 	
 }
 
+#message{
+	position:relative;
+}	
+
 #CacheHeaderDetail{
 	position:relative;
 }
@@ -169,6 +184,10 @@ div#content {
 
 #logHeader {
 	position:relative;
+}
+
+ul.bullets {
+  list-style-type: square;
 }
 
 #CacheActions{
@@ -279,8 +298,16 @@ button::-moz-focus-inner {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  padding: 3%;
+  padding: 3% 3% 3% 3%;
   height: 100%;
+}
+
+.viewPaddingOverride {
+  padding: 0 3% 3% 3%;
+}
+
+.homeOverride {
+  padding: 0;
 }
 
 .view * {
@@ -378,6 +405,13 @@ fieldset {
   display: block;
 }
 
+.CacheTopLine {
+   position: sticky;	
+	top: 0;
+	z-index: 2500;
+	background-color: #EEEEEE;
+	padding: 3% 0 3% 0;
+}
 
 /* Style the tab */
 .tab {

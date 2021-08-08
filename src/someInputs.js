@@ -13,13 +13,15 @@
     var input1_value;	
 
     window.addEventListener("load", function () {
-		console.log('trying to set the right settings values now - listening on load in someInputs');
-        select1 = document.getElementById('select1');
-        select2 = document.getElementById('select2');
-		select3 = document.getElementById('select3');
 		
-        loadStorage();
-        app.updateInputs();
+		//no defined inputs for now...
+		
+        //select1 = document.getElementById('select1');
+        //select2 = document.getElementById('select2');
+		//select3 = document.getElementById('select3');
+		
+        //loadStorage();
+        //app.updateInputs();
     })
 
     app.updateInputs = function () {
@@ -32,13 +34,14 @@
     }
 
     function loadStorage() {
+		console.log('pulling settings values from localstorage');
         select1_value = setSelectByValue(select1, localStorage.getItem('initialCacheLoad'));
         select2_value = setSelectByValue(select2, localStorage.getItem('units'));
         select3_value = setSelectByValue(select3, localStorage.getItem('coorRep'));				
     }
 
     function updateStorage() {
-		
+		console.log('updating settings values in localstorage');
         localStorage.setItem('initialCacheLoad', select1_value);
         localStorage.setItem('units', select2_value);
 		localStorage.setItem('coorRep', select3_value);

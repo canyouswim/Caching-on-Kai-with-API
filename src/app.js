@@ -88,7 +88,7 @@ var navGeoCode = "";
 var myMembershipLevel;
 
 var ShowCachesOnLoad = localStorage.getItem('initialCacheLoad');
-console.log(`showCachesOnLoad? ${ShowCachesOnLoad}`);
+//console.log(`showCachesOnLoad? ${ShowCachesOnLoad}`);
 
 var storedCacheDetails = "";
 
@@ -509,7 +509,7 @@ app.newKeyCallback={
 		}
 	},	
 	push5: function(){	
-		var testing = true;
+		var testing = false;
 		
 		if (testing) {
 			getToken();
@@ -591,10 +591,10 @@ app.newKeyCallback={
 			else { 
 					if(app.editWPmode==1){
 						giveMeWayPoint("EditWP");
-					}
-					if(app.editWPmode==0){updateUserDetails();}
-						
-				
+					}else if(app.editWPmode==0){
+						//updateUserDetails();
+						app.keyCallback.LogCache();
+					} 
 			}
 		}
 	}	
@@ -606,7 +606,7 @@ app.newKeyCallback={
 // startup activities here
 
 window.addEventListener("load", function () {
-	console.log(`checking what the currently set units are`);
+	//console.log(`checking what the currently set units are`);
 	
 	//localStorage.clear();
 	
@@ -626,12 +626,20 @@ window.addEventListener("load", function () {
 	}
 	
 	myUnits = localStorage.getItem('units');
-	console.log(`myUnits = ${myUnits}`);
-	if (myUnits == null) {
+	//console.log(`at startup, myUnits = ${myUnits}`);
+	if (myUnits === null) {
 		console.log(`this is the first time this app has been run, setting units`);
 		localStorage.setItem('units',"mi");
 		myUnits = "mi";
 	};
+	var displayUnits = document.getElementById("unitsDisplay");					
+
+	if (myUnits == "mi") {
+		displayUnits.innerHTML = "Toggle " + myUnits + " to km";	
+	} else {
+		displayUnits.innerHTML = "Toggle " + myUnits + " to mi";			
+	}
+	
 	
 	cacheIconDisplay = document.getElementById("cacheIconDisplay");
 	cacheIconDisplay.innerHTML = "Show all cache icons on map";
@@ -653,63 +661,8 @@ window.addEventListener("load", function () {
 	var token = localStorage.getItem("access_token");
 	
 	if (token !== null) {
-		//console.log('we have a token');
-		xhr.open(geomethod, geourl, true);
-		
-		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
-
-		xhr.onreadystatechange = function () {
-		  var geoloadstate = xhr.readyState;
-		  //console.log(`Load state: ${geoloadstate}`);
-		  if (geoloadstate == 1) {
-			  //console.log('request opened');
-		  } else if (geoloadstate == 2) {
-			//console.log('headers received'); 
-		  } else if (geoloadstate == 3) {
-			 // console.log('loading data');
-		  } else if (geoloadstate == 4) {
-			var geostatus = xhr.status;
-				//console.log(`status: ${geostatus}`);
-			if (geostatus >= 200 && geostatus < 400) {
-			  var siteText = xhr.response;				
-				console.log(`response: ${siteText}`);
-
-				//===============================================================
-				// now parse the returned JSON out and do stuff with it
-				
-				var userDetails = JSON.parse(siteText);
-				myUserAlias = userDetails.username;
-				document.getElementById("username").innerHTML = myUserAlias;
-				document.getElementById("userCode").innerHTML = userDetails.referenceCode;
-				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
-				document.getElementById("cacheViewsRemaining").innerHTML = "Remaining views: " + userDetails.geocacheLimits.fullCallsRemaining;	
-				if(userDetails.membershipLevelId == 1) {
-					document.getElementById("membershipType").innerHTML = "BASIC";
-				} else if (userDetails.membershipLevelId == 2) {
-					document.getElementById("membershipType").innerHTML = "Charter";					
-				}  else if (userDetails.membershipLevelId == 3) {
-					document.getElementById("membershipType").innerHTML = "Premium";					
-				} else {
-					document.getElementById("membershipType").innerHTML = "Unknown";	
-				};
-				userMembershipLevelId = userDetails.membershipLevelId;
-				localStorage.setItem('membershipLevelId',userMembershipLevelId);
-				localStorage.setItem('fullCallsRemaining',userDetails.geocacheLimits.fullCallsRemaining);					
-				
-			
-				
-			}  else if (geostatus == 401) {
-				// token has expired, refresh and tell caller to retry
-				console.log('refreshing token');
-				refreshToken();
-			}
-		  }  else {
-			// Oh no! There has been an error with the request!
-			console.log("some problem...");
-		  }
-		}; 
-		
-		xhr.send();	
+		console.log('we have a token at app start, so requesting updated user details');
+		updateUserDetails();
 	} else {
 		// this is the first time running the app, and we have not logged in yet - uncomment below to force login on the first run of the app
 		//console.log('We do not have a token at first log in, so trying to get one now');
@@ -847,7 +800,7 @@ function navVertical(forward) {
 		} else {
 			MovemMap('up');
 		}
-	} else if (windowOpen == "viewCache") {
+	} else if (windowOpen == "viewCache"  || windowOpen == "showModal") {
 
 		if(forward == true) {
 			app.currentView.scrollBy(0, 50);
@@ -870,6 +823,7 @@ function navVertical(forward) {
 		next += forward ? 10 : -10;		
 		
 		var jumpToNextTab = true;
+		var disableScroll = false;
 		
 		//console.log(`navID = ${navID}`);
 		//console.log(`next: ${next}`);		
@@ -878,31 +832,46 @@ function navVertical(forward) {
 			var myElement = document.getElementsByClassName("listGalleryView")[0];				
 		} else if (windowOpen == "viewCacheLogs") {
 			var myElement = document.getElementsByClassName("listLogsView")[0];				
+		} else if (windowOpen == "About") {
+			var myElement = document.getElementsByClassName("listAttributions")[0];				
+		} else if (windowOpen == "Help") {
+			var myElement = document.getElementsByClassName("listHelpSections")[0];				
 		} else {
 			var myElement = document.getElementsByClassName("list")[0];	
+			disableScroll = true;
 		}
 		
-		
-		
-		//var bounding = myElement.getBoundingClientRect();
+		if (disableScroll == false) {
+			// only allow scrolling without jumping to next tab when we're in the cache details areas
+			
+			//var bounding = myElement.getBoundingClientRect();
 
-		var bounding = myElement.getElementsByClassName("navItem")[navID].getBoundingClientRect();
-		
-		//console.log(`bound right: ${bounding.right}, bottom: ${bounding.bottom}`);
+			var bounding = myElement.getElementsByClassName("navItem")[navID].getBoundingClientRect();
+			
+			//console.log(`bound right: ${bounding.right}, bottom: ${bounding.bottom}`);
 
-		if ((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) || (bounding.top > ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) ) {
-			jumpToNextTab = true;
-			//console.log('Element is in the viewport!');
-		} else {
-			jumpToNextTab = false;
-			//console.log('Element is NOT in the viewport!');
+			if (((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == true) || ((bounding.top >= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == false) ) {
+				jumpToNextTab = true;
+				//console.log('Element is in the viewport!');
+			} else {
+				jumpToNextTab = false;
+				//console.log('Element is NOT in the viewport!');
+			}
+			
+			//console.log(`jumpToTab=${jumpToNextTab} - post bounding check`);
+			// at the top of the list - force to allow to wrap to bottom
+			if (navID==0 && forward==false) { jumpToNextTab=true };
+			
+			//check to see if we're at the bottom of the list and not able to jump to the very last
+			//tab selection
+			//console.log(`navID=${navID} and length=${app.navItems.length}`);
+			if (((navID==app.navItems.length-2)||(navID==app.navItems.length-1)) && (bounding.bottom < window.innerHeight)) {
+				console.log('force to jump to last item in the list');
+				jumpToNextTab=true;
+			}
+
+			//console.log(`jumpToTab=${jumpToNextTab} - post top of list check`);
 		}
-		
-		//console.log(`jumpToTab=${jumpToNextTab} - post bounding check`);
-		// at the top of the list - force to scroll now if not at the top of the pageX
-		if (navID==0 && forward==false) { jumpToNextTab=false };
-
-		//console.log(`jumpToTab=${jumpToNextTab} - post top of list check`);
 
 		if(jumpToNextTab){
 
@@ -952,9 +921,9 @@ function navVertical(forward) {
 			}
 		} else {
 			if(forward == true) {
-				app.currentView.scrollBy(0, 50);
+				app.currentView.scrollBy(0, 40);
 			} else {
-				app.currentView.scrollBy(0, -50);
+				app.currentView.scrollBy(0, -40);
 			}			
 		}
     }		
@@ -969,7 +938,7 @@ function navHorizontal(forward) {
 		} else {
 			MovemMap('left');
 		}
-	} else if (windowOpen=="viewCache") {
+	} else if (windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery") {
 		// move to the next or previous cache details and set the position in the overall cache list
 		var gotoCacheID;
 		if (forward) {
@@ -1034,7 +1003,7 @@ function switchCacheView(forward) {
 
 app.isInputFocused = function () {
 	var activeTag = document.activeElement.tagName.toLowerCase();
-	console.log(`Active tag is ${activeTag}.  inputs=input, select, text, textarea, body, html`);
+	//console.log(`Active tag is ${activeTag}.  inputs=input, select, text, textarea, body, html`);
 	var isInput = false;
 	// the focus switches to the 'body' element for system ui overlays
 	if (activeTag == 'input' || activeTag == 'select' || activeTag == 'text' || activeTag == 'textarea') {
@@ -1043,16 +1012,21 @@ app.isInputFocused = function () {
 	  console.log('this is an input field');
 	  isInput = true;
 	}
-	console.log(`isInput=${isInput}`);
+	//console.log(`isInput=${isInput}`);
 	return isInput;
 };
 
-function goBack() {
-	if (app.backArray.length > 1) {
-		// first remove the current view from the array
-		app.backArray.pop();
+function goBack(count) {
+	if (typeof count === "undefined") {count=1};
+
+	if (app.backArray.length > count) {
+		// first remove the specified number of views from the array
+		// if count = 1, then that means we're just removing the current view that the user sees
+		for (let i = 0; i < count; i++) {		
+			app.backArray.pop();
+		}
 		//then pull the last value in the array, which is the one we want to nav to
-			
+		
 		var backArrayEnd = app.backArray.length - 1;
 		var prevID = app.backArray[backArrayEnd];
 		showView(prevID,true);
@@ -1241,7 +1215,7 @@ function showModal(displayText){
 	//windowOpen = "showModal";
 	document.getElementById("message").innerHTML = displayText;
 	showView(15,false);	
-	console.log(`text to show: ${displayText}`);
+	//console.log(`text to show: ${displayText}`);
 	// update the initView function to allow for different user response options to this modal:
 	// yes-no | confirm-cancel | just OK, etc
 	initView();
@@ -1261,9 +1235,9 @@ function submitLog() {
 		if(cacheLogFav.value!=="true") {cacheLogFav.value = "false"};
 		
 		
-	console.log(`LogDate: ${cacheLogDateValue}`);
-	console.log(`LogText: ${cacheLogText}`);
-	console.log(`LogType: ${cacheLogType.value}`);
+	//console.log(`LogDate: ${cacheLogDateValue}`);
+	//console.log(`LogText: ${cacheLogText}`);
+	//console.log(`LogType: ${cacheLogType.value}`);
 
 	var token = localStorage.getItem("access_token");
 	var params = {
@@ -1295,7 +1269,10 @@ function submitLog() {
 	
 	if (token !== null) {
 		// check for errors
-		var logErrors = "Your log has the following error(s):<br><ul>"
+		var BadgeContent;
+		BadgeContent = arrayCache[currentCacheID].cacheBadge + "<b>" + arrayCache[currentCacheID].cacheName + "</b><br>" + arrayCache[currentCacheID].cacheCode;				
+		
+		var logErrors = BadgeContent + "<br><br>Your log submission has the following error(s)</b>:<br><ul class='bullets'>"
 		var logHasError = false;
 		
 		if(cacheLogFav.value == "true" && cacheLogType.value !== "2"){
@@ -1323,7 +1300,7 @@ function submitLog() {
 		//console.log(`error text: ${logErrors}`);
 
 		if(logHasError) {
-			loadingOverlay(false);			
+			loadingOverlay(false);	
 			showModal(logErrors);
 		} else {
 		
@@ -1440,6 +1417,7 @@ function refreshListofCaches() {
 // decide, what the enter button does, based on the active element
 function execute() {  
 	if (!app.fullAdVisible) {
+		//console.log(`in execute - hit enter, app.currentViewName=${app.currentViewName}, InputFocused? ${app.isInputFocused()}, tagName=${app.activeNavItem.tagName.toLowerCase()}`);
 		if (!app.isInputFocused()) { /* NOT in some input field */
 			if (app.activeNavItem.getAttribute('data-gotToViewId')) {
 			  showView(app.activeNavItem.getAttribute('data-gotToViewId'),false);
@@ -1519,8 +1497,9 @@ function execute() {
 				case 'showHint':
 					console.log('clicked showHint');
 					showHint();
-					showView(3,false);
-					initView();		
+					goBack();
+					//showView(3,false);
+					//initView();		
 					document.getElementById("CacheHintWrapper").scrollIntoView();					
 				 break;
 				case 'viewLogs':
@@ -1621,10 +1600,16 @@ function execute() {
 				//  softkeyBar();	
 				  break;	
 				case 'About':
-				  openURL('https://github.com/canyouswim/Caching-on-Kai/wiki/About#caching-on-kai');
+				  windowOpen = "viewAbout";
+				  showView(7,false);
+				  initView();				  
+				  //openURL('https://github.com/canyouswim/Caching-on-Kai/wiki/About#caching-on-kai');
 				  break;	
 				case 'Help':
-				  openURL('https://github.com/canyouswim/Caching-on-Kai/wiki/');
+				  windowOpen = "viewHelp";
+				  showView(5,false);
+				  initView();				  
+				  //openURL('https://github.com/canyouswim/Caching-on-Kai/wiki/');
 				  break;				  
 				case 'mailto':
 				  location.href = 'mailto:' + app.activeNavItem.innerHTML;
@@ -1642,14 +1627,16 @@ function execute() {
 			  }
 			} else if (app.activeNavItem.tagName.toLowerCase() == 'legend') {
 			  // select input field next to the legend
-			  app.activeNavItem.nextElementSibling.focus();
+				//console.log('our tag=legend, try to switch to next element, which should be select');
+				app.activeNavItem.nextElementSibling.focus();
+				//console.log(`changed focus, now tagName=${app.activeNavItem.tagName.toLowerCase()}`);				
 			} else {
 			  console.log('nothing to execute');
 			}
 		} else { /* in some input field */
-				console.log(`hit enter, app.currentViewName=${app.currentViewName}`);
+				//console.log(`in execute, now check to see if our selection is an input field and if our current view is settings ?=? ${app.currentViewName}`);
 				if (app.currentViewName == 'Settings') { /* do this in the inputs view */
-					console.log('trying to now to update inputs from settings screen');
+					//console.log('trying to now to update inputs from settings screen');
 					app.updateInputs();
 				}
 				// return to legend when input confirmed to avoid triggering the input again
@@ -1684,7 +1671,7 @@ function executeOption() {
 
 // set soft keys
 function softkeyBar() {
-	
+	//console.log(`currentViewName=${app.currentViewName}`);
 	if(myStatus!=="First Run") {
 		if (app.currentViewName == "viewMap") {
 			app.backButton.innerHTML = "Caches";
@@ -1696,10 +1683,16 @@ function softkeyBar() {
 			app.actionButton.innerHTML = "SELECT";	
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewOptions';
-		} else if(app.currentViewName == "viewCache" || app.currentViewName == "viewCacheLogs" || app.currentViewName == "viewCacheGallery") {
+		} else if(app.currentViewName == "viewCache") {
 			app.backButton.innerHTML = "Caches";
 			
 			app.actionButton.innerHTML = "GoNav";
+			app.optionsButton.innerHTML = "Options";
+			app.optionButtonAction = 'viewCacheOptions';
+		} else if(app.currentViewName == "viewCacheLogs" || app.currentViewName == "viewCacheGallery") {
+			app.backButton.innerHTML = "Caches";
+			
+			app.actionButton.innerHTML = "SELECT";
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewCacheOptions';
 		} else if(app.currentViewName == "viewCompass")  {
@@ -1717,10 +1710,20 @@ function softkeyBar() {
 			app.actionButton.innerHTML = "SELECT";
 			app.optionsButton.innerHTML = "";
 			app.optionButtonAction = '';
+		} else if(app.currentViewName == "viewAllShortcuts" || app.currentViewName == "showModal")  {
+			app.backButton.innerHTML = "Back";
+			app.actionButton.innerHTML = "";
+			app.optionsButton.innerHTML = "";
+			app.optionButtonAction = '';
 		} else {
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "SELECT";
-			app.optionsButton.innerHTML = "";
+			if (app.isInputFocused()) {
+			  app.optionsButton.innerHTML = "Clear";
+			  app.optionButtonAction = 'clear';
+			} else {
+				app.optionsButton.innerHTML = "";
+			}
 			app.optionButtonAction = 'doneInTextArea';
 		}
 		
@@ -1769,7 +1772,7 @@ function success(pos) {
 	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
 		// Pull list of caches near me and plot them on the map (but only if this is set to Yes in settings)
-		console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
+		//console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
 		if (ShowCachesOnLoad == "YesLoadCaches") {
 			ListCaches(my_current_lat,my_current_lng,"no");	
 		} else {
@@ -2217,6 +2220,7 @@ function error(err) {
 }
 
 function updateUserDetails() {
+	console.log('updating user details');
 	//----------------------------
 	// update our stored user details / stats
 	
@@ -2255,22 +2259,36 @@ function updateUserDetails() {
 				
 				var userDetails = JSON.parse(siteText);
 				myUserAlias = userDetails.username;
-				document.getElementById("username").innerHTML = myUserAlias;
-				document.getElementById("userCode").innerHTML = userDetails.referenceCode;
-				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
-				document.getElementById("cacheViewsRemaining").innerHTML = "Remaining views: " + userDetails.geocacheLimits.fullCallsRemaining;	
+				
+				var fullCallsSecondsToLive = userDetails.geocacheLimits.fullCallsSecondsToLive;
+				var fullCallsMillisecondsToLive = (fullCallsSecondsToLive * 1000);
+				var rightNow = Date.now();
+				var fullCallsReset = new Date(rightNow + fullCallsMillisecondsToLive);	
+				var fullCallsResetLocal = fullCallsReset.toLocaleString()
+				console.log(`User cache limit resets in ${fullCallsSecondsToLive} seconds`);
+				console.log(`User cache limit resets on ${fullCallsResetLocal}`);
+				localStorage.setItem('fullCallsReset',fullCallsResetLocal);				
+				
+				document.getElementById("username").innerHTML = "<b>Username</b>: " + myUserAlias;
+				//document.getElementById("userCode").innerHTML = userDetails.referenceCode;
+				//document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
+	
 				if(userDetails.membershipLevelId == 1) {
-					document.getElementById("membershipType").innerHTML = "BASIC";
+					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: BASIC";
+					
+					document.getElementById("cacheViewsRemaining").innerHTML = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + userDetails.geocacheLimits.fullCallsRemaining + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";		
 				} else if (userDetails.membershipLevelId == 2) {
-					document.getElementById("membershipType").innerHTML = "Charter";					
+					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: Charter";					
 				}  else if (userDetails.membershipLevelId == 3) {
-					document.getElementById("membershipType").innerHTML = "Premium";					
+					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: Premium";					
 				} else {
-					document.getElementById("membershipType").innerHTML = "Unknown";	
+					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: Unknown";	
 				};
 				userMembershipLevelId = userDetails.membershipLevelId;
 				localStorage.setItem('membershipLevelId',userMembershipLevelId);
-				localStorage.setItem('fullCallsRemaining',userDetails.geocacheLimits.fullCallsRemaining);					
+				localStorage.setItem('fullCallsRemaining',userDetails.geocacheLimits.fullCallsRemaining);
+
+				
 			}  else if (geostatus == 401) {
 				// token has expired, refresh and tell caller to retry
 				console.log('refreshing token');
@@ -2622,7 +2640,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			
 			var geoCacheDetails = JSON.parse(siteText);
 			CacheCount = geoCacheDetails.length;
-			console.log(`CacheCount: ${CacheCount}`);
+			//console.log(`CacheCount: ${CacheCount}`);
 				
 
 			//================================================================================
@@ -2673,7 +2691,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 				// we need to real-time calculate the distance to each cache, based on our current location
 				var tripDistance = findDistance(my_current_lat,my_current_lng,geoCacheDetails[i].postedCoordinates.latitude,geoCacheDetails[i].postedCoordinates.longitude);
 
-				console.log(`creating list of caches - myUnits=${myUnits}`);
+				//console.log(`creating list of caches - myUnits=${myUnits}`);
 				if(myUnits == "mi") {
 					if(tripDistance < .5) {
 						Distance = `${roundToTwo(tripDistance * 5280)}ft`;
@@ -3248,21 +3266,14 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			// reset cache option menu back to default
 			var cacheMenuOptions = document.getElementById('viewCacheOptions');
 			
-			var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='showCacheDetails'>";
-			newCacheOptions = newCacheOptions + "<div id='showCacheDetailsText'>View Cache Details</div></button>";
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='showCacheLogs'>";
-			newCacheOptions = newCacheOptions + "<div id='showCacheLogsText'>View Cache Logs</div></button>";
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='showCacheGallery'>";
-			newCacheOptions = newCacheOptions + "<div id='showCacheGalleryText'>View Image Gallery</div></button>";				
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='showHint'>";
+			var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='showHint'>";
 			newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Decrypt Hint</div></button>";	
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='takePhoto'>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 			
 			newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='LogCache'>";
-			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
-			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-function='refreshCacheDetails'>";
-			newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
+			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";	
+			
 			cacheMenuOptions.innerHTML = newCacheOptions;
 
 			// set the background color of the fully loaded cache in the cache listing page
@@ -3282,10 +3293,14 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			
 			var promptToLoad = document.getElementById('promptToLoadFullDetails');
 
-			if (remainingFullCaches == 15998) {
+			if (remainingFullCaches == 0) {
 				// the user has no more available full cache loads for the day
 				// message to show to basic users when they look to download the full details of a particular cache
-				basicUserMessageForCacheDownload = "Hello " + myUserAlias + " - As a basic geocaching.com user, you are allowed to download the full details of up to <u>3</u> unique geocaches per day. You currently have <b>" + localStorage.getItem('fullCallsRemaining') + "</b> available downloads remaining for the day.";
+				
+				var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
+
+				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";					
+
 				basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + "<br><br>Upgrade to Geocaching.com Premium Membership today for as little at $2.50 per month to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade.";				
 
 				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
@@ -3296,15 +3311,17 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='refreshCacheDetails'>";
-				newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";						
 				cacheMenuOptions.innerHTML = newCacheOptions;
 				
 			} else {
 				// message to show to basic users when they look to download the full details of a particular cache
-				basicUserMessageForCacheDownload = "Hello " + myUserAlias + " - As a basic geocaching.com user, you are allowed to download the full details of up to <u>3</u> unique geocaches per day. You currently have <b>" + localStorage.getItem('fullCallsRemaining') + "</b> available downloads remaining for the day";	
+				
+				
+				var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
 
+				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+				
 				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
 				
 				// we also need to adjust the cache options menu to hide non-available options
@@ -3360,38 +3377,7 @@ function viewCacheLogs(CacheID) {
 		var BadgeContent = document.createElement("span");
 		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
 	CacheHeader.appendChild(BadgeContent);	
-
-	var TempCacheLat = arrayCache[CacheID].cacheLat;
-	var TempCacheLng = arrayCache[CacheID].cacheLng;
-	var strTripDistance;
 	
-	if (TempCacheLat !== 0 && TempCacheLng !== 0) {
-		var tripDistance = findDistance(my_current_lat,my_current_lng,TempCacheLat,TempCacheLng);
-		//console.log(`Cache distance is ${tripDistance}`);
-		//console.log(`showing cache distance, myUnits are ${myUnits}`);
-		if(myUnits == "mi") {
-			if(tripDistance < .5) {
-				strTripDistance = `${roundToTwo(tripDistance * 5280)}ft`;
-			} else {
-				strTripDistance = `${roundToTwo(tripDistance)}mi`;		
-			};
-		} else {
-			if(tripDistance < .5) {
-				strTripDistance = `${roundToTwo(tripDistance * 1000)}m`;
-			} else {
-				strTripDistance = `${roundToTwo(tripDistance)}km`;
-			};
-		};
-	} else {
-		strTripDistance = "";
-	}
-
-
-	var CacheLevels = document.getElementById('CacheLogDetails');
-	CacheLevels.innerHTML = '';	
-		var CacheLevelsDetail = document.createElement("span");
-		CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
-	CacheLevels.appendChild(CacheLevelsDetail);		
 	//================================================================================
 	//
 	// Display list of logs
@@ -3428,8 +3414,6 @@ function viewCacheLogs(CacheID) {
 		var myIndex = i*10;				
 		entry.tabIndex = myIndex;
 
-
-
 		var headline = document.createElement("span");
 		headline.innerHTML = "<b>" + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
 		
@@ -3437,6 +3421,24 @@ function viewCacheLogs(CacheID) {
 		entry.appendChild(headline);	
 		
 		listContainer.appendChild(entry);
+	}
+	if (logCount > 0) {
+		//show option to load more logs
+		var entry = document.createElement("div");
+		entry.className = 'navItem';
+		var myIndex = logCount*10;				
+		entry.tabIndex = myIndex;
+		entry.setAttribute('data-function', 'loadMoreLogs');
+		entry.setAttribute('CacheID',CacheID);
+		entry.setAttribute('CurrentLogsLoaded',logCount);		
+
+		var headline = document.createElement("span");
+		headline.innerHTML = "<center><b>Load more logs...</b></center>";
+		
+		// take that structured HTML and drop it into the page:
+		entry.appendChild(headline);	
+		
+		listContainer.appendChild(entry);		
 	}
 	initView();	
 };
@@ -3451,39 +3453,6 @@ function viewCacheGallery(CacheID) {
 		var BadgeContent = document.createElement("span");
 		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
 	CacheHeader.appendChild(BadgeContent);	
-
-	var TempCacheLat = arrayCache[CacheID].cacheLat;
-	var TempCacheLng = arrayCache[CacheID].cacheLng;
-	var strTripDistance;
-	
-	if (TempCacheLat !== 0 && TempCacheLng !== 0) {
-		var tripDistance = findDistance(my_current_lat,my_current_lng,TempCacheLat,TempCacheLng);
-		//console.log(`Cache distance is ${tripDistance}`);
-		//console.log(`showing cache distance, myUnits are ${myUnits}`);
-		if(myUnits == "mi") {
-			if(tripDistance < .5) {
-				strTripDistance = `${roundToTwo(tripDistance * 5280)}ft`;
-			} else {
-				strTripDistance = `${roundToTwo(tripDistance)}mi`;		
-			};
-		} else {
-			if(tripDistance < .5) {
-				strTripDistance = `${roundToTwo(tripDistance * 1000)}m`;
-			} else {
-				strTripDistance = `${roundToTwo(tripDistance)}km`;
-			};
-		};
-	} else {
-		strTripDistance = "";
-	}
-
-
-	var CacheLevels = document.getElementById('CacheGalleryDetails');
-	CacheLevels.innerHTML = '';	
-		var CacheLevelsDetail = document.createElement("span");
-		CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
-	CacheLevels.appendChild(CacheLevelsDetail);		
-	
 
 	//================================================================================
 	//
@@ -4555,7 +4524,9 @@ function refreshToken(method,action) {
 		// request failed such as if the OAuth server doesn't allow CORS requests
 		//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
 		//document.getElementById("error").classList = "";
-		console.log('refresh request error');
+		console.log(`refresh request error - ${error.error}: ${error.error_description}`);
+		loadingOverlay(false);
+		//showModal("There is an error in getting you logged in to geocaching.com: <br>" + error.error+"\n\n"+error.error_description);
 	});
 };
 	

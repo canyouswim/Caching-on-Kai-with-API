@@ -4,14 +4,14 @@
 	document.addEventListener('keydown', handleKeydown);
 	document.addEventListener('keyup', handleKeyup);
 
-	var keyOverlay = document.getElementById('keyOverlay');
-	var overlayTimeout;
+	//var keyOverlay = document.getElementById('keyOverlay');
+	//var overlayTimeout;
 
 	function handleKeyup(e) {
 		switch (e.key) {
 			case 'Backspace':
 				app.keyCallback.back();
-				break;			
+				break;				
 		}
 	}
 
