@@ -8,14 +8,15 @@
     />
     <meta name="theme-color" content="#02874D" />
     <title>C:Kai</title>
-    <link rel="stylesheet" type="text/css" href="src/css/header.css" />
-    <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />
+	<link rel="stylesheet" type="text/css" href="src/css/header.css" />
+
     <link rel="stylesheet" type="text/css" href="src/css/root.css" />
-    <link rel="stylesheet" type="text/css" href="src/css/main.css" />	
+    <link rel="stylesheet" type="text/css" href="src/css/main.css" />
     <link rel="stylesheet" href="src/leaflet/leaflet.css" />	
+    <link rel="stylesheet" type="text/css" href="src/css/softkey.css" />	
 	<link rel="stylesheet" type="text/css" href="src/css/kaios-toaster.css" />
 	<link rel="stylesheet" type="text/css" href="src/css/kaiui.css" />	
-
+	<link rel="stylesheet" type="text/css" href="src/css/normalize.css" />	
 
 	
 	
@@ -27,6 +28,7 @@
     <script src="src/kaios-toaster.js" defer></script>
     <script src="src/someInputs.js" defer></script>
     <script src="src/helperFunctions.js" defer></script>	
+   <!-- uncomment below to turn ads back on... -->
    <!-- <script src="src/kaiads.v4.min.js" defer></script>-->
 
 
@@ -44,7 +46,7 @@
 	
     <div id="views">
 
-		<div class="view" id="viewMap")>  <!-- view 0 -->
+		<div class="view homeOverride" id="viewMap">  <!-- view 0 -->
 			<div id="ad-container"></div>	
 			<div id="map-container">
 			<div id="content2"> </div>	
@@ -86,19 +88,23 @@
 
 		</div>
 		
-		<div class="view" id="viewCache">  <!-- view 3 -->
+		<div class="view viewPaddingOverride" id="viewCache">  <!-- view 3 -->
 			<div class="viewCacheDetails">
-				<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
+				<div class="CacheTopLine">
+					<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
+					<div class="kui-separator"><b>Details</b> | Logs | Gallery</div>	
+				</div>
 				<div id="CacheDetails"></div>
-				<div class="kui-separator"></div>				
+			
 				<div id="PromptForFullDetails" style="display:block">
-					<div id="promptToLoadFullDetails"></div>		
+					<div class="kui-separator"><b>Load full cache details?</b></div>					
+					<div class="navItem" id="promptToLoadFullDetails"></div>		
 				</div>
 				
 				<div id="CacheFullDetails" style="display:none">
+					<div class="kui-separator"><b>Description</b></div>					
 					<div id="CacheDescription"></div>
-					<div class="kui-separator"></div>		
-					<b>Additional Hints</b>
+					<div class="kui-separator"><b>Additional Hints</b></div>		
 					<div id="CacheHintWrapper">
 						<div id="CacheHint" style="display:block">Hint here</div>
 						<div id="CacheHintShown" style="display:none">hint displayed here</div>
@@ -109,14 +115,36 @@
 		
 		<div class="view" id="LogCacheOLD"></div>	  <!-- view 4 -->	
 		
-		<div class="view" id="Help">  <!-- view5 -->
-		  Help goes here
+		<div class="view viewPaddingOverride" id="Help">  <!-- view5 -->
+			<div class="CacheTopLine">
+				<div id="appLogo"><img src="/assets/appLogo/Logo_caching-on-kai_56x56.png"></div>				
+			</div>
+			<div id="helpSections" class="listHelpSections">
+				<div class="navItem" tabIndex="0" id="loginInstructions">	
+					Before you get started, you'll need to log into your geocaching.com account. Come back here after you've logged in for hints on different areas of the app!
+				</div>
+				<div class="navItem" tabIndex="10" data-function="loginNew" id="loginNewAccount">	
+					I need to create an account on geocaching.com
+				</div>
+				<div class="navItem" tabIndex="20" data-function="loginExisting" id="loginExisting">	
+					I already have an account!
+				</div>
+				<div class="navItem" tabIndex="30" id="findACache">	
+					Finding your first cache! (insert screencap for quick compass and the full compass). Talk about how you'll need to walk around to get the direction indicator to work properly.
+					
+					also note about when the quick compass line turns yellow - you've stopped moving, so don't rely on the compass bearing until the line turns green again.
+					
+				</div>
+				<div class="navItem" tabIndex="40" id="nokiaSpecialNote">	
+					A special note if you're using a Nokia device (8110, 6300, 8000, 2720) - if you're on 4G, your GPS will not work correctly. The only way around this at this time (as of Aug 2021) is to disable 4G.
+				</div>				
+			</div>
 		</div>
 
 		<div class="view" id="viewOptions">  <!-- view 6 -->
 				<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
 				<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
-				<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache Details</div></button>	
+				<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>	
 				<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
 				<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
 				<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
@@ -126,51 +154,73 @@
 				<button class="navItem" tabIndex="90" data-function="quit">Quit</button>	
 		</div>	
 
-		<div class="view" id="About">  <!-- view 7 -->
-	
+		<div class="view viewPaddingOverride" id="About">  <!-- view 7 -->
+			<div class="CacheTopLine">	
+				<div id="aboutHeader">
+					<div id="appLogo"><img src="/assets/appLogo/Logo_caching-on-kai_56x56.png"></div>
+					<div id="appName"><b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v3.0.0</b></div>
+				</div>
+			</div>
+			<div  id="attributions" class="listAttributions">			
+				<div class="navItem" tabIndex="0" id="developerDetails">
+					Caching-on-Kai has been a labor of love, created by geocaching.com community user <b>canyouswim</b>. You can find me on geocaching.com or by emailing below:
+				</div>
+				<div class="navItem" tabIndex="10" data-function="mailto" id="developerEmail">
+					chris@caching-on-kai.com
+				</div>			
+
+				<div class="navItem" tabIndex="20" data-href="https://www.geocaching.com/" id="attribution-geocaching">
+					<center><img src="assets/Geocaching_Authorized_Developer_vFINAL_100517_192.png"></center><br>
+					Powered by the Geocaching API. Made possible through the support of Geocaching Premium Memberships, the API program gives third-party developers the opportunity to work with Geocaching HQ on a full suite of integrated products and services for the community. API developer applications are designed to work with the core services of geocaching.com and provide additional features to the geocaching community.
+				</div>		
+				<div class="navItem" tabIndex="30" data-href="https://leafletjs.com" id="attribution-leaflet">
+					Map functionality from leafletjs.com
+				</div>
+				<div class="navItem"tabIndex="40" data-href="https://www.openstreetmap.org/" id="attribution-openstreetmap">
+					Map data © OpenStreetMap contributors, from openstreetmap.org
+				</div>
+				<div class="navItem"tabIndex="50" data-href="https://loading.io/" id="attribution-loadingio">
+					Bouncing Ball and other loading icons from loading.io
+				</div>
+				<div class="navItem"tabIndex="60" id="attribution-appLogo">
+					Special thanks to contributor <b>david-p-s</b> for his work in creating this app's logo and contributing to early code development!
+				</div>
+			</div>
 		</div>
 		
 		<div class="view" id="Settings">  <!-- view 8 -->
-			<div><b>Settings</b> app v3.0.0</div>
+			<div><center><b>App Settings</b></center></div>
 			<div id="username"></div>
-			<div id="userCode"></div>
 			<div id="membershipType"></div>
-			<div id="homeLocation"></div>
 			<div id="cacheViewsRemaining"></div>
 			
-			<fieldset>
+			<!--<fieldset>
 			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
-			  <select id="initialCacheLoad">
+			  <select id="select1">
 				<option value="YesLoadCaches">Yes - load immediately based on my position</option>
 				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
 			  </select>
-			</fieldset>			
-			<fieldset>
+			</fieldset>	-->		
+			<button class="navItem" tabIndex="0" data-function="toggleUnits" id="unitsDisplay">Toggle display units</button>				
+			<!--<fieldset>
 			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
-			  <select id="displayUnits">
+			  <select id="select2">
 				<option value="mi" selected>feet/miles</option>
 				<option value="km">meters/kilometers</option>
 			  </select>
-			</fieldset>
-				<fieldset>
+			</fieldset>-->
+			<!--<fieldset>
 			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
-			  <select id="coorRep">
+			  <select id="select3">
 				<option value="DDD" selected>ND.dº WD.dº</option>
 				<option value="DMM">NDºM.m' WDºM.m'</option>
 				<option value="DMS">NDºM'S.s" WDºM'S.s"</option>
 			  </select>
-			</fieldset>
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="30">Max # of caches to store</legend>
-			  <select id="maxNumCaches">
-				<option value="50" selected>50</option>
-				<option value="100">100</option>
-				<option value="150">150</option>				
-			  </select>	
-			</fieldset>-->		
-			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
-			<button class="navItem" tabIndex="40" data-function="About">About</button>
-			<button class="navItem" tabIndex="50" data-function="Logout">Logout</button>				
+			</fieldset>-->
+	
+			<button class="navItem" tabIndex="10" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="20" data-function="About">About</button>
+			<button class="navItem" tabIndex="30" data-function="Logout">Logout</button>				
 		</div>
 	
 		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
@@ -184,27 +234,19 @@
 				7: Cache Details<br>
 				8: Toggle Cache Icons on Map<br>
 				9: View Compass<br>
-				*: View Cache Logs<br>
-				0: View Cache Gallery<br>
-				#: Log Cache
+				*: Log Cache
 		</div>
 
 		<div class="view" id="viewCacheOptions">  <!-- view 10 -->
-			<button class="navItem" tabIndex="0" data-function="showCacheDetails">
-				<div id="showCacheDetailsText">View Cache Details</div></button>	
-			<button class="navItem" tabIndex="10" data-function="showCacheLogs">
-				<div id="showCacheLogsText">View Cache Logs</div></button>	
-			<button class="navItem" tabIndex="20" data-function="showCacheGallery">
-				<div id="showCacheGalleryText">View Image Gallery</div></button>				
-			<button class="navItem" tabIndex="30" data-function="showHint">
+		
+			<button class="navItem" tabIndex="0" data-function="showHint">
 				<div id="showCacheHint">Decrypt Hint</div></button>	
-			<button class="navItem" tabIndex="40" data-function="takePhoto">
+			<button class="navItem" tabIndex="10" data-function="takePhoto">
 			
 				<div id="takePhotoText">2: Take a Photo</div></button>				
-			<button class="navItem" tabIndex="50" data-function="LogCache">
-				<div id="logCacheText">#: Log Cache</div></button>				
-			<button class="navItem" tabIndex="60" data-function="refreshCacheDetails">
-				<div id="refreshCache">Refresh Cache Details</div></button>
+			<button class="navItem" tabIndex="20" data-function="LogCache">
+				<div id="logCacheText">Log Cache</div></button>				
+
 		
 		</div>	
 		
@@ -245,6 +287,7 @@
 
 		<div class="view" id="logCache">  <!-- view 14 -->
 			<div id="logHeader">Log this geocache</div>
+			<br>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Log Type</legend>
 			  <select id="logType">
@@ -252,10 +295,10 @@
 				<option value="3">Didn't Find It</option>
 				<option value="4">Write note</option>				
 			  </select>
-			</fieldset>	
+			</fieldset>
 			<fieldset>
 			  <legend class="navItem" tabIndex="10">Log Details</legend>
-			  <textarea id="logText" value="" rows="5" columns="30"></textarea>
+			  <textarea id="logText" rows="5" columns="50"></textarea>
 			</fieldset>
 			<fieldset>
 			  <legend class="navItem" tabIndex="20">Date Found</legend>
@@ -281,20 +324,26 @@
 			<div id="message">no message set</div>
 		</div>
 		
-		<div class="view" id="viewCacheLogs">  <!-- view 16 -->
-			<div id="CacheLogHeaderDetail">Waiting on cache details...<br></div>
-			<div id="CacheLogDetails"></div>
-            <div class="kui-separator"></div>			
+		<div class="view viewPaddingOverride" id="viewCacheLogs">  <!-- view 16 -->
+			<div class="CacheTopLine">			
+				<div id="CacheLogHeaderDetail">Waiting on cache details...<br></div>
+				<div class="kui-separator">Details | <b>Logs</b> | Gallery</div>
+			</div>
+			<!--<div id="CacheLogDetails"></div>-->
+			
 			<div class="listLogsView" id="CacheLogsView"></div>
 		</div>		
 
-		<div class="view" id="viewCacheGallery">  <!-- view 17 -->
-			<div id="CacheGalleryHeaderDetail">Waiting on cache details...<br></div>
-			<div id="CacheGalleryDetails"></div>	
-            <div class="kui-separator"></div>				
+		<div class="view viewPaddingOverride" id="viewCacheGallery">  <!-- view 17 -->
+			<div class="CacheTopLine">
+				<div id="CacheGalleryHeaderDetail">Waiting on cache details...<br></div>
+				<div class="kui-separator">Details | Logs | <b>Gallery</b></div>	
+			</div>
+			<!--<div id="CacheGalleryDetails"></div>	-->
+			
 			<div class="listGalleryView" id="CacheGallery"> Image gallery here</div>			
 		</div>
-
+		
 	</div>	 	 
 
 	 

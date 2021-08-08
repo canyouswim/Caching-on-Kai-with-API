@@ -20,7 +20,7 @@
  */
 
 /* ============== Basic ============== */
-h1, h2, h3, h4, h5, ul, p {
+h1, h2, h3, h4, h5, p {
     margin: 0;
     padding: 0;
 }
@@ -150,11 +150,13 @@ h1, h2, h3, h4, h5, ul, p {
 
 /* ============== Separator ============== */
 .kui-separator {
-    color: #02874D;
-    height: 18px;
-    background-color: #02874D;
-    line-height: 18px;
+    color: #000000;
+    height: 30px;
+    background-color: #ffffff;
+    line-height: 8px;
     padding: 10px 10px;
+    margin: 2px 0 0 0; 	
+	z-index: 3000;
 }
 
 /* ============== Software key ============== */
@@ -258,8 +260,8 @@ h1, h2, h3, h4, h5, ul, p {
 }
 
 .kui-options li {
-   /* height: 50px;
-   /* line-height: 50px;*/
+   height: 50px;
+   line-height: 50px;
     padding-left: 10px;
     background-color: #fff;
 }
@@ -425,9 +427,7 @@ button.kui-btn:focus {
         height: 178px;
     }
 
-    .kui-options {
-        height: 150px;
-    }
+
 }
 
 /* KaiOS landscape devices (320x240) */
@@ -440,9 +440,7 @@ button.kui-btn:focus {
         height: 128px;
     }
 
-    .kui-options {
-        height: 100px;
-    }
+
 }
 
 /*** The End ******/
