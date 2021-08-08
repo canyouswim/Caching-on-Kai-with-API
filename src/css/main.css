@@ -398,6 +398,7 @@ fieldset {
 
 #ad-container {
   float: left;
+  z-index: 3000;
 }
 
 #ad-container>div {

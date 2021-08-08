@@ -121,7 +121,7 @@
 	// the escape key will dismiss the ad on the PC 
 	// on the device or simulator press left soft key
 	var fullscreenAd = true; /* switch between fullscreen and responsive ad */
-	var testMode = 1; /* set to 0 for real ads */
+	var testMode = 0; /* set to 0 for real ads */
 	var turnoffAds = false;
 
 
