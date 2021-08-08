@@ -29,7 +29,7 @@
     <script src="src/someInputs.js" defer></script>
     <script src="src/helperFunctions.js" defer></script>	
    <!-- uncomment below to turn ads back on... -->
-   <!-- <script src="src/kaiads.v4.min.js" defer></script>-->
+   <script src="src/kaiads.v4.min.js" defer></script>
 
 
 
@@ -92,7 +92,7 @@
 			<div class="viewCacheDetails">
 				<div class="CacheTopLine">
 					<div id="CacheHeaderDetail">Waiting on cache details...<br></div>	
-					<div class="kui-separator"><b>Details</b> | Logs | Gallery</div>	
+					<div class="kui-separator" id="cacheTabList" style="display:none"><b>Details</b> | Logs | Gallery</div>	
 				</div>
 				<div id="CacheDetails"></div>
 			
@@ -115,43 +115,52 @@
 		
 		<div class="view" id="LogCacheOLD"></div>	  <!-- view 4 -->	
 		
-		<div class="view viewPaddingOverride" id="Help">  <!-- view5 -->
-			<div class="CacheTopLine">
-				<div id="appLogo"><img src="/assets/appLogo/Logo_caching-on-kai_56x56.png"></div>				
-			</div>
+		<div class="view" id="Help">  <!-- view5 -->
 			<div id="helpSections" class="listHelpSections">
-				<div class="navItem" tabIndex="0" id="loginInstructions">	
-					Before you get started, you'll need to log into your geocaching.com account. Come back here after you've logged in for hints on different areas of the app!
+				<div class="navItem" tabIndex="0" id="introduction">	
+					<h2 id="steps-to-begin"><center>3 steps to begin your adventure</center></h2><br>					
+						<div class="iconLeft"><img src="/assets/help/section1/signal.svg" alt=""></div>
+						<div><h3>1. Create an account</h3>
+							<p>Create an account online or through this Geocaching® app to view a map of geocaches near you.</p>
+						</div>
+						<br>
+						<div class="iconLeft"><img src="/assets/help/section1/phoneandpin.svg" alt=""></div>
+						<div><h3>2. Find a geocache</h3>
+							<p>Use the app to navigate to a geocache nearby. Don&#8217;t forget to bring a pen!</p>
+						</div>
+						<br>
+						<div class="iconLeft"><img src="/assets/help/section1/notebookpencil.svg" alt=""></div>
+						<div><h3>3. Share your experience</h3>
+							<p>Once you find the geocache, sign and date the logbook. Place the geocache back where you found it and log your experience online.</p>
+						</div>
+				</div>		
+				<div class="navItem" tabIndex="10" data-href="https://youtu.be/vuFiLhhCNww" id="introVideo">
+					<div class="iconLeft"><img src="/assets/help/section1/icons8-youtube-play-button-40.png"></div>					
+					<div>View a short intro to Geocaching</div>
+				</div><br>
+				<h3><center>Let's Get Started!</center></h3>
+				<div class="navItem" tabIndex="20" data-function="loginNew" id="loginNewAccount">	
+					<div class="iconLeft"><img src="/assets/help/section1/icons8-test-account-40.png"></div>
+					<div>I need to create an account (it's free!).  </div>
 				</div>
-				<div class="navItem" tabIndex="10" data-function="loginNew" id="loginNewAccount">	
-					I need to create an account on geocaching.com
-				</div>
-				<div class="navItem" tabIndex="20" data-function="loginExisting" id="loginExisting">	
-					I already have an account!
-				</div>
-				<div class="navItem" tabIndex="30" id="findACache">	
-					Finding your first cache! (insert screencap for quick compass and the full compass). Talk about how you'll need to walk around to get the direction indicator to work properly.
-					
-					also note about when the quick compass line turns yellow - you've stopped moving, so don't rely on the compass bearing until the line turns green again.
-					
-				</div>
-				<div class="navItem" tabIndex="40" id="nokiaSpecialNote">	
-					A special note if you're using a Nokia device (8110, 6300, 8000, 2720) - if you're on 4G, your GPS will not work correctly. The only way around this at this time (as of Aug 2021) is to disable 4G.
-				</div>				
+				<div class="navItem" tabIndex="30" data-function="loginExisting" id="loginExisting">
+					<div class="iconRight"><img src="/assets/help/section1/icons8-signin-64.png"></div>				
+					<div>I already have an account! Let's get started.</div>
+				</div>			
 			</div>
 		</div>
 
 		<div class="view" id="viewOptions">  <!-- view 6 -->
-				<button class="navItem" tabIndex="0" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
-				<button class="navItem" tabIndex="10" data-function="refreshList">✆: Refresh Cache List</button>	
-				<button class="navItem" tabIndex="20" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>	
-				<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
-				<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
-				<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
-				<button class="navItem" tabIndex="60" data-function="stopNavToCache">Stop Navigation</button>				
-				<button class="navItem" tabIndex="70" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
-				<button class="navItem" tabIndex="80" data-function="viewShortcuts">View all Shortcuts</button>			
-				<button class="navItem" tabIndex="90" data-function="viewSettings">Settings</button>		
+				<button class="navItem" tabIndex="0" data-function="viewShortcuts">View all Shortcuts</button>	
+				<button class="navItem" tabIndex="10" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
+				<button class="navItem" tabIndex="20" data-function="refreshList">✆: Refresh Cache List</button>	
+				<button class="navItem" tabIndex="30" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>	
+				<button class="navItem" tabIndex="40" data-function="viewMap">6: View Map</button>	
+				<button class="navItem" tabIndex="50" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
+				<button class="navItem" tabIndex="60" data-function="viewCompass">9: View Compass</button>
+				<button class="navItem" tabIndex="70" data-function="stopNavToCache">Stop Navigation</button>				
+				<button class="navItem" tabIndex="80" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
+				<button class="navItem" tabIndex="90" data-function="viewSettings">Settings/Help/About</button>		
 				<button class="navItem" tabIndex="100" data-function="quit">Quit</button>	
 		</div>	
 
@@ -183,7 +192,10 @@
 				<div class="navItem"tabIndex="50" data-href="https://loading.io/" id="attribution-loadingio">
 					Bouncing Ball and other loading icons from loading.io
 				</div>
-				<div class="navItem"tabIndex="60" id="attribution-appLogo">
+				<div class="navItem"tabIndex="60" data-href="https://icons8.com" id="attribution-loadingio">
+					New Account, Sign-in, and other icons by Icons8
+				</div>				
+				<div class="navItem"tabIndex="70" id="attribution-appLogo">
 					Special thanks to contributor <b>david-p-s</b> for his work in creating this app's logo and contributing to early code development!
 				</div>
 			</div>
@@ -239,7 +251,7 @@
 		</div>
 
 		<div class="view" id="viewCacheOptions">  <!-- view 10 -->
-		
+
 			<button class="navItem" tabIndex="0" data-function="showHint">
 				<div id="showCacheHint">Decrypt Hint</div></button>	
 			<button class="navItem" tabIndex="10" data-function="takePhoto">
@@ -344,7 +356,23 @@
 			
 			<div class="listGalleryView" id="CacheGallery"> Image gallery here</div>			
 		</div>
-		
+	
+		<div class="view" id="compassHelp">  <!-- view 18 -->
+				<p><h2>Using the Compass View</h2></p>
+			<div class="compassGuide">			
+				<div class="navItem" tabIndex="0">
+					This phone does not have physical compass built in. This means that to determine the correct bearing/direction to the select geocache, you must physically move around for the phone to determine which direction the cache is relative to your position.<br><br>
+					
+					The recommendation is to walk in a straight line for several feet until you see that the compass starts to move. From there you can correct the direction you are walking to start walking in the direction that the compass is pointing.
+				</div>
+				<div class="navItem" tabIndex="10">
+					<div class="imageLeft"><img src="/assets/help/compass/NavToCache.png"></div>
+					<div>From the Map screen, you will see a small version of the compass that will also point you in the direction you need to travel, once the app has determined the correct bearing. The background will also change to green when the app is accurately determining your bearing, and change to yellow when there has not been enough movement to determine your bearing. When it is yellow, the compass is not likely pointing in the desired direction.
+					</div>
+				</div>
+			</div>
+		</div>
+
 	</div>	 	 
 
 	 

@@ -186,9 +186,29 @@ div#content {
 	position:relative;
 }
 
+#firstLoginIcon {
+	float: left;
+}
+
+#LoginIcon {
+	float: left;
+}
+
+
+.iconLeft{
+	float:left;
+	margin: 3px;
+}
+
+.iconRight{
+	float:right;
+	margin: 3px;
+}
+
 ul.bullets {
   list-style-type: square;
 }
+
 
 #CacheActions{
   margin: auto;
