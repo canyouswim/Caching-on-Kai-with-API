@@ -1,7 +1,8 @@
 {
-  "version": "3.0.0",
-  "name": "v3 Caching on Kai",
-  "description": "Geocaching for the rest of us",
+  "version": "3.0.2",
+  "name": "Cache-on-Kai",
+  "subtitle": "Geocaching for the rest of us",
+  "description": "Go geocaching on KaiOS - developed by a geocaching community member and officially sanctioned by geocaching.com.",
   "type": "privileged",
   "origin": "app://caching-on-kai.com",
   "launch_path": "/index.html",
@@ -13,11 +14,15 @@
     "name": "canyouswim",
     "url": "https://caching-on-kai.com"
   },
+"categories": [
+  "social",
+  "games"
+],
   "locales": {
     "en-US": {
-      "name": "v3 Caching on Kai",
+      "name": "Cache-on-Kai",
       "subtitle": "Geocaching for the rest of us",
-      "description": "Geocaching"
+      "description": "Go geocaching on KaiOS - developed by a geocaching community member and officially sanctioned by geocaching.com."
     }
   },
   
@@ -26,22 +31,20 @@
 		"ads-sdk": "1.4.1"
 	},
  
-  
 	"redirects": [
 	  {
-		"from": "https://caching-on-kai.com",
+		"from": "https://caching-on-kai.com/",
 		"to": "/index.html"
 	  }
-	],  
+	  ],
+	  
   
   "default_locale": "en-US",
   "permissions": {
+  	"mobiledata":{},
+ 	 "wifidata":{},
 	"geolocation": {
 	"description": "Required to show user's location on map"
-	},
-	"device-storage:sdcard": {
-	"description": "Read from sd-card",
-	"access": "readwrite"
 	},
 	  "camera": {
 		"description": "Required for accessing cameras on the device."
@@ -56,7 +59,7 @@
 	},
 
 	"systemXHR": {
-	"description": "Required to load remote content"
+	"description": "Required to load remote content from geocaching.com"
 	}
   }
 

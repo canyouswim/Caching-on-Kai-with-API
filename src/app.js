@@ -272,7 +272,7 @@ app.keyCallback = {
 					editWP("LEFT");
 				}else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
 				switchCacheView(false);		
-				}else{
+				}else if (windowOpen!=="viewCache"){
 				navHorizontal(false);
 				} 
 			},
@@ -281,7 +281,7 @@ app.keyCallback = {
 					editWP("RIGHT");
 				} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
 				switchCacheView(true);
-				}else{
+				}else if (windowOpen!=="viewCache"){
 				navHorizontal(true);
 				} 
 			
@@ -327,6 +327,10 @@ app.keyCallback = {
 			//console.log(`pressed goNav, navGeoCode:${navGeoCode}`);
 		  navToCache(navGeoCode,true);
 			  
+		} else if (app.currentViewName == "viewCompass") {
+			// show help screen for using the compass
+			showView(18,false);
+			initView();	
 		} else {
 			execute(); 
 		}
@@ -468,7 +472,7 @@ app.newKeyCallback={
 		if(myStatus!=="First Run"){
 			if(app.editWPmode==2){	
 				editWP("1");	
-			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
+			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")) {
 				navHorizontal(false);				
 			}else{	
 				app.keyCallback.ZoomOut();	
@@ -492,7 +496,7 @@ app.newKeyCallback={
 		if(myStatus!=="First Run"){		
 			if(app.editWPmode==2){	
 				editWP("3");	
-			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
+			} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")) {
 				navHorizontal(true);					
 			}	
 			else{	
@@ -668,8 +672,7 @@ window.addEventListener("load", function () {
 	} else {
 		// this is the first time running the app, and we have not logged in yet - uncomment below to force login on the first run of the app
 		//console.log('We do not have a token at first log in, so trying to get one now');
-		//getToken();
-
+		//getToken();		
 	};	
 
 
@@ -838,6 +841,8 @@ function navVertical(forward) {
 			var myElement = document.getElementsByClassName("listAttributions")[0];				
 		} else if (windowOpen == "Help") {
 			var myElement = document.getElementsByClassName("listHelpSections")[0];				
+		} else if (windowOpen == "compassHelp") {
+			var myElement = document.getElementsByClassName("compassGuide")[0];				
 		} else {
 			var myElement = document.getElementsByClassName("list")[0];	
 			disableScroll = true;
@@ -862,12 +867,12 @@ function navVertical(forward) {
 			
 			//console.log(`jumpToTab=${jumpToNextTab} - post bounding check`);
 			// at the top of the list - force to allow to wrap to bottom
-			if (navID==0 && forward==false) { jumpToNextTab=true };
+			//if (navID==0 && forward==false) { jumpToNextTab=true };
 			
 			//check to see if we're at the bottom of the list and not able to jump to the very last
 			//tab selection
 			//console.log(`navID=${navID} and length=${app.navItems.length}`);
-			if (((navID==app.navItems.length-2)||(navID==app.navItems.length-1)) && (bounding.bottom < window.innerHeight)) {
+			if (((navID==app.navItems.length-2)||(navID==app.navItems.length-1)) && (bounding.bottom < window.innerHeight) && forward==true) {
 				console.log('force to jump to last item in the list');
 				jumpToNextTab=true;
 			}
@@ -1092,7 +1097,7 @@ function showViewByName(name) {
 }
 
 function initView() {
-	//console.log(`from initView, currentView: ${app.currentViewName}`);
+	console.log(`from initView, currentView: ${app.currentViewName}`);
 	  
 	screenYscroll = 0;
 	app.currentView.scrollTo(0, 0);
@@ -1120,6 +1125,10 @@ function initView() {
 		app.optionEnabled = false;
 	} else if (app.currentViewName == 'logCache') {
 		windowOpen = "logCache";
+		app.leftSoftButton = "Back";
+		app.optionEnabled = true;
+	} else if (app.currentViewName == 'viewCompass') {
+		windowOpen = "viewCompass";
 		app.leftSoftButton = "Back";
 		app.optionEnabled = true;
 	}
@@ -1477,6 +1486,10 @@ function execute() {
 					showView(3,false);
 					initView();
 				 break;
+				case 'viewCacheList':
+					showView(1,false);	
+					initView();		
+				 break;
 				case 'showCacheDetails':
 					ShowCacheDetails(currentCacheID,false);				
 				 break;
@@ -1615,7 +1628,17 @@ function execute() {
 				  showView(5,false);
 				  initView();				  
 				  //openURL('https://github.com/canyouswim/Caching-on-Kai/wiki/');
-				  break;				  
+				  break;
+				case 'loginNew':
+					if(confirm("After you have created your account, close the pop up window to come back here and then click the next box down to finish logging in.")){
+						getToken(true);
+					};
+				 break;
+				case 'loginExisting':
+					if(confirm("You will return to this screen after authenticating. Click the Back button to get started in the app")){
+						getToken();
+					}
+				 break;
 				case 'mailto':
 				  location.href = 'mailto:' + app.activeNavItem.innerHTML;
 				  break;
@@ -1702,7 +1725,7 @@ function softkeyBar() {
 			app.optionButtonAction = 'viewCacheOptions';
 		} else if(app.currentViewName == "viewCompass")  {
 			app.backButton.innerHTML = "Back";
-			app.actionButton.innerHTML = "";
+			app.actionButton.innerHTML = "HELP";
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewOptions';
 		} else if(app.currentViewName == "viewOptions")  {
@@ -2012,6 +2035,14 @@ function success(pos) {
 				navToCache(navToCacheGeoCode,true);
 		};
 		
+		// if we have never logged in before, push the user to the Help screen to get them started and route them to log in for the first time
+		var token = localStorage.getItem("access_token");
+		
+		if (token == null) {		
+			  windowOpen = "viewHelp";
+			  showView(5,false);
+			  initView();	
+		}
 
 	} else {
 		myMarker.remove();
@@ -3415,9 +3446,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			// first turn on visibility of the tabs and details/logs/images tabs
 			var showCacheFullDetails = document.getElementById('CacheFullDetails');
 			var hidePromptForLoad = document.getElementById('PromptForFullDetails');
+			var cacheTabList = document.getElementById('cacheTabList');				
 			
 			showCacheFullDetails.style.display = "block";
 			hidePromptForLoad.style.display = "none";
+			cacheTabList.style.display="block";
 			
 			var CacheDescStr = document.getElementById('CacheDescription');
 			CacheDescStr.innerHTML = '';	
@@ -3442,13 +3475,19 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			// reset cache option menu back to default
 			var cacheMenuOptions = document.getElementById('viewCacheOptions');
 			
-			var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='showHint'>";
+			var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='showHint'>";
 			newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Decrypt Hint</div></button>";	
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 			
 			newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
 			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";	
+			
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";		
+			
 			
 			cacheMenuOptions.innerHTML = newCacheOptions;
 
@@ -3461,9 +3500,12 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			// for this cache - construct that message now
 			var showCacheFullDetails = document.getElementById('CacheFullDetails');
 			var hidePromptForLoad = document.getElementById('PromptForFullDetails');
+			var cacheTabList = document.getElementById('cacheTabList');			
+			
 			
 			showCacheFullDetails.style.display = "none";
-			hidePromptForLoad.style.display = "block";			
+			hidePromptForLoad.style.display = "block";	
+			cacheTabList.style.display="none";
 			
 			var remainingFullCaches = localStorage.getItem('fullCallsRemaining');
 			
@@ -3484,10 +3526,16 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				// we also need to adjust the cache options menu to hide non-available options
 				var cacheMenuOptions = document.getElementById('viewCacheOptions');
 			
-				var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
+				var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";						
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";
+				
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCompass'>9: View Compass</button>";					
+						
 				cacheMenuOptions.innerHTML = newCacheOptions;
 				
 			} else {
@@ -3503,15 +3551,19 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				// we also need to adjust the cache options menu to hide non-available options
 				var cacheMenuOptions = document.getElementById('viewCacheOptions');
 			
-				var newCacheOptions = "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
+				var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";			
+				newCacheOptions =newCacheOptions +  "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
 				newCacheOptions = newCacheOptions + "<div id='loadFullCacheDetailsText'>Load full cache details</div></button>";
 				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
 				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='refreshCacheDetails'>";
-				newCacheOptions = newCacheOptions + "<div id='refreshCache'>Refresh Cache Details</div></button>";			
+
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
+			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
+	
 				cacheMenuOptions.innerHTML = newCacheOptions;
 			}
 			initView();	
@@ -4681,7 +4733,7 @@ function logout() {
 
 };
 
-function getToken(){
+function getToken(signup){
 	// Create and store a random "state" value
 	var state = "aselkjg123";
 	localStorage.setItem("pkce_state", state);
@@ -4699,8 +4751,13 @@ function getToken(){
 		+ "&client_id="+(config.client_id)
 		+ "&state="+(state)
 		+ "&scope="+(config.requested_scopes)
-		+ "&redirect_uri="+(config.redirect_uri)
-		//+ "&signup=true"
+		+ "&redirect_uri="+(config.redirect_uri);
+		
+	if(signup==true) {
+		// specifically force the user to the signup page rather than the sign-in pageX
+		url = url + "&signup=true";
+	};
+
 		//+ "&code_challenge="+encodeURIComponent(code_challenge)
 		//+ "&code_challenge_method=S256"
 		;
@@ -4841,9 +4898,11 @@ function sendPostRequest(url, params, success, error) {
 				localStorage.setItem("token_expires", token_expires);
 				localStorage.setItem("access_token",body.access_token);
 				localStorage.setItem("refresh_token",body.refresh_token);
-				
+				console.log('just before closing the pop up window from auth');
 				
 				window.close();
+
+			
 
 
 			}, function(request, error) {
