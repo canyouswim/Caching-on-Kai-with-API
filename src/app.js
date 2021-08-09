@@ -4735,12 +4735,37 @@ function logout() {
 
 function getToken(signup){
 	// Create and store a random "state" value
-	var state = "aselkjg123";
+	//var state = "aselkjg123";
+
+	
+	//const state = Math.random().toString(16).substr(2, 8); // 6de5ccda	
+
+	var state;
+	for(let i = 0; i< 5; i++) {
+		if(i==0) {
+			state = Math.random().toString(16).substr(2, 8); // 6de5ccda
+		} else {
+			state = state + Math.random().toString(16).substr(2, 8); // 6de5ccda
+		};
+	};
+
 	localStorage.setItem("pkce_state", state);
 
 	// Create and store a new PKCE code_verifier (the plaintext random secret)
 	//var code_verifier = generateRandomString();
-	//localStorage.setItem("pkce_code_verifier", code_verifier);
+	
+	var code_verifier;
+	for(let i = 0; i< 5; i++) {
+		if(i==0) {
+			code_verifier = Math.random().toString(16).substr(2, 8); // 6de5ccda
+		} else {
+			code_verifier = code_verifier + Math.random().toString(16).substr(2, 8); // 6de5ccda
+		};
+	};
+	
+
+	
+	localStorage.setItem("pkce_code_verifier", code_verifier);
 
 	// Hash and base64-urlencode the secret to use as the challenge
 	//var code_challenge = await pkceChallengeFromVerifier(code_verifier);
@@ -4751,10 +4776,12 @@ function getToken(signup){
 		+ "&client_id="+(config.client_id)
 		+ "&state="+(state)
 		+ "&scope="+(config.requested_scopes)
-		+ "&redirect_uri="+(config.redirect_uri);
+		+ "&redirect_uri="+(config.redirect_uri)
+		+ "&code_challenge="+(code_verifier)
+		+ "&code_challenge_method=plain";	
 		
 	if(signup==true) {
-		// specifically force the user to the signup page rather than the sign-in pageX
+		// specifically force the user to the signup page rather than the sign-in page
 		url = url + "&signup=true";
 	};
 
@@ -4863,9 +4890,9 @@ function sendPostRequest(url, params, success, error) {
 
 		// Verify state matches what we set at the beginning
 		if(localStorage.getItem("pkce_state") != q.state) {
-			//console.log(`q.state: ${q.state}`);
-			//console.log(`stored state: ${localStorage.getItem("pkce_state")}`);
-			//alert("Invalid state");
+			var returnedState = "q.state: " + q.state;
+			var storedState = "stored state: " + localStorage.getItem("pkce_state");
+			alert("Invalid state\n\n" + returnedState + "\n\n" + storedState);
 		} else {
 
 			// Exchange the authorization code for an access token
@@ -4875,8 +4902,8 @@ function sendPostRequest(url, params, success, error) {
 				code: q.code,
 				client_id: config.client_id,
 				client_secret: config.client_secret,
-				redirect_uri: config.redirect_uri
-				//code_verifier: localStorage.getItem("pkce_code_verifier")
+				redirect_uri: config.redirect_uri,
+				code_verifier: localStorage.getItem("pkce_code_verifier")
 			}, function(request, body) {
 
 				// Initialize your application now that you have an access token.
@@ -4908,6 +4935,7 @@ function sendPostRequest(url, params, success, error) {
 			}, function(request, error) {
 				// This could be an error response from the OAuth server, or an error because the 
 				// request failed such as if the OAuth server doesn't allow CORS requests
+				alert(error.error+"\n\n"+error.error_description);
 				//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
 				//document.getElementById("error").classList = "";
 			});
