@@ -21,7 +21,7 @@ var basicUserMessageForCacheDownload;
 var config = {
 	client_id: "11BA3E15-D061-4AC7-A39A-F0BF8A8FBEC3",
 	client_secret: "2B6726F6-5B9B-4FF8-A01D-4C877BD30C2A",
-	redirect_uri: "https://caching-on-kai.com",
+	redirect_uri: "https://caching-on-kai.com/",
 	authorization_endpoint: "https://staging.geocaching.com/oauth/authorize.aspx",
 	token_endpoint: "https://oauth-staging.geocaching.com/token",
 	requested_scopes: "*"
