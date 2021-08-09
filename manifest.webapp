@@ -1,5 +1,5 @@
 {
-  "version": "3.0.2",
+  "version": "3.0.4",
   "name": "Cache-on-Kai",
   "subtitle": "Geocaching for the rest of us",
   "description": "Go geocaching on KaiOS - developed by a geocaching community member and officially sanctioned by geocaching.com.",
@@ -33,7 +33,7 @@
  
 	"redirects": [
 	  {
-		"from": "https://caching-on-kai.com/",
+		"from": "https://caching-on-kai.com",
 		"to": "/index.html"
 	  }
 	  ],
@@ -41,8 +41,6 @@
   
   "default_locale": "en-US",
   "permissions": {
-  	"mobiledata":{},
- 	 "wifidata":{},
 	"geolocation": {
 	"description": "Required to show user's location on map"
 	},
