@@ -1,6 +1,7 @@
 {
-  "version": "3.0.0",
-  "name": "Caching on Kai",
+  "version": "3.0.2",
+  "name": "Cache-on-Kai",
+  "subtitle": "Geocaching for the rest of us",
   "description": "Go geocaching on KaiOS - developed by a geocaching community member and officially sanctioned by geocaching.com.",
   "type": "privileged",
   "origin": "app://caching-on-kai.com",
@@ -19,7 +20,7 @@
 ],
   "locales": {
     "en-US": {
-      "name": "Caching on Kai",
+      "name": "Cache-on-Kai",
       "subtitle": "Geocaching for the rest of us",
       "description": "Go geocaching on KaiOS - developed by a geocaching community member and officially sanctioned by geocaching.com."
     }
@@ -30,13 +31,13 @@
 		"ads-sdk": "1.4.1"
 	},
  
-  
 	"redirects": [
 	  {
-		"from": "https://caching-on-kai.com",
+		"from": "https://caching-on-kai.com/",
 		"to": "/index.html"
 	  }
-	],  
+	  ],
+	  
   
   "default_locale": "en-US",
   "permissions": {
