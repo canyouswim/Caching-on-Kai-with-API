@@ -383,9 +383,9 @@ app.keyCallback = {
 		PanLeft: function () { MovemMap('left'); },	
 		PanRight: function () { MovemMap('right'); },	
 		ScrollTop: function () { navScreenTop(); },	
-		ShowLogs: function () { viewCacheLogs(); }, //pushAsterisk	
-		ShowGallery: function () { viewCacheGallery(); }, // push0	
-		LogCache: function () { logThisCache(); }, //pushSharp	
+		ShowLogs: function () { viewCacheLogs(); }, //	
+		ShowGallery: function () { viewCacheGallery(); }, // 	
+		LogCache: function () { logThisCache(); }, //	
 		refreshCacheList: function () { refreshListofCaches(); },	
 		ClosestCache: function () {
 			var mapCrd = map.getCenter();	
@@ -464,7 +464,8 @@ app.newKeyCallback={
 			}	
 			else{	
 				//viewCacheGallery();	
-				loadingOverlay(false);
+				//loadingOverlay(false);
+				app.keyCallback.LogCache();				
 			}	
 		}
 	},	
@@ -599,7 +600,7 @@ app.newKeyCallback={
 						giveMeWayPoint("EditWP");
 					}else if(app.editWPmode==0){
 						//updateUserDetails();
-						app.keyCallback.LogCache();
+						//app.keyCallback.LogCache();
 					} 
 			}
 		}
@@ -1635,9 +1636,7 @@ function execute() {
 					};
 				 break;
 				case 'loginExisting':
-					if(confirm("You will return to this screen after authenticating. Click the Back button to get started in the app")){
-						getToken();
-					}
+					getToken();
 				 break;
 				case 'mailto':
 				  location.href = 'mailto:' + app.activeNavItem.innerHTML;
@@ -1779,6 +1778,7 @@ function success(pos) {
 	//console.log(`time_till_expire=${time_till_expire}`);
 	if(time_till_expire < 60 && time_till_expire > 0) {refreshToken();};
 	//================================================
+
 
   crd = pos.coords;
   radius = crd.accuracy;
@@ -2320,7 +2320,13 @@ function updateUserDetails() {
 				if(userDetails.membershipLevelId == 1) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: BASIC";
 					
-					document.getElementById("cacheViewsRemaining").innerHTML = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + userDetails.geocacheLimits.fullCallsRemaining + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";		
+					var userText = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + userDetails.geocacheLimits.fullCallsRemaining + " caches remaining";
+
+					if(fullCallsResetLocal != "Invalid Date") {
+						userText = userText + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+					};
+					document.getElementById("cacheViewsRemaining").innerHTML = userText;
+	
 				} else if (userDetails.membershipLevelId == 2) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: Charter";					
 				}  else if (userDetails.membershipLevelId == 3) {
@@ -3482,7 +3488,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			
 			newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
-			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";	
+			newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";	
 			
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
@@ -3530,7 +3536,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";
 				
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
@@ -3544,7 +3550,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				
 				var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
 
-				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining";
+
+				if(fullCallsResetLocal != "Invalid Date") {
+					basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+				};
 				
 				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
 				
@@ -3558,7 +3568,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";				
 
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
@@ -4789,6 +4799,28 @@ function getToken(signup){
 		//+ "&code_challenge_method=S256"
 		;
 
+	// start a function to check to see if the auth is complete.  once complete we will push the user to the map screen
+	// also includes a timeout function in case we get stuck somewhere
+	
+	var loginCheck = setInterval(myTimer, 500);
+	var loginCheckCounter = 0;
+	function myTimer() {
+		loginCheckCounter = loginCheckCounter + 1;
+		if(loginCheckCounter > 600 || (localStorage.getItem("access_token")!==null && localStorage.getItem("firstLoginComplete") == false)) {
+			// stop the timer
+			  clearInterval(loginCheck);
+		};
+		// check to see if we are just returning from our first login and auth against geocaching.com
+		if (localStorage.getItem("access_token")!==null && localStorage.getItem("firstLoginComplete") == "true") {
+			//bounce the user over to the map screen
+			clearInterval(loginCheck);
+			localStorage.setItem("firstLoginComplete",false);
+			updateUserDetails();			
+			app.keyCallback.ShowMap();
+		};
+	}
+
+
 	// Redirect to the authorization server
 	window.open(url);
 };
@@ -4926,6 +4958,11 @@ function sendPostRequest(url, params, success, error) {
 				localStorage.setItem("access_token",body.access_token);
 				localStorage.setItem("refresh_token",body.refresh_token);
 				console.log('just before closing the pop up window from auth');
+				
+				// set a flag that lets us know that the user has just finished logging in and should be pushed to the map screen
+				// this value, in conjuntion with an access_token value is what will trigger that event
+				
+				localStorage.setItem("firstLoginComplete",true);
 				
 				window.close();
 
