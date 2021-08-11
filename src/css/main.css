@@ -74,6 +74,10 @@ div#content {
 	
 }
 
+#CacheLogCounts{
+	padding: 10px 0 0 9px;
+}
+
 #viewCompass{
 	background-color: white;
 }
