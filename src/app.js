@@ -7,7 +7,7 @@ var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000
 var userMembershipLevelId;
 var myUserAlias;
 var numCachesToLoad = 50; // how many caches should i load at one time?
-var numLogsToLoad = 10; // how many logs should i load at one time?
+var numLogsToLoad = 15; // how many logs should i load at one time?
 var useAPI = true;
 var rootAPIurl = "https://staging.api.groundspeak.com/v1/"; // staging
 //var rootAPIurl = //production
@@ -138,6 +138,7 @@ var debug = "false";
 var CacheListID = 0;
 var currentCacheID;
 var currentCacheFullLoaded=false;
+var currentCacheCode;
 
 var tilesLayer;
 var tileLayer;
@@ -383,9 +384,9 @@ app.keyCallback = {
 		PanLeft: function () { MovemMap('left'); },	
 		PanRight: function () { MovemMap('right'); },	
 		ScrollTop: function () { navScreenTop(); },	
-		ShowLogs: function () { viewCacheLogs(); }, //pushAsterisk	
-		ShowGallery: function () { viewCacheGallery(); }, // push0	
-		LogCache: function () { logThisCache(); }, //pushSharp	
+		ShowLogs: function () { viewCacheLogs(); }, //	
+		ShowGallery: function () { viewCacheGallery(); }, // 	
+		LogCache: function () { logThisCache(); }, //	
 		refreshCacheList: function () { refreshListofCaches(); },	
 		ClosestCache: function () {
 			var mapCrd = map.getCenter();	
@@ -410,8 +411,11 @@ app.keyCallback = {
 			initView();	
 		},	
 		ShowDetails: function () {//push7	
-			showView(3,false);	
-			initView();	
+		
+			ShowCacheDetails(currentCacheID)
+
+			//showView(3,false);	
+			//initView();	
 		},	
 		ShowCompass: function () { //push9	
 			showView(2,false); 	
@@ -464,7 +468,8 @@ app.newKeyCallback={
 			}	
 			else{	
 				//viewCacheGallery();	
-				loadingOverlay(false);
+				//loadingOverlay(false);
+				app.keyCallback.LogCache();				
 			}	
 		}
 	},	
@@ -599,7 +604,7 @@ app.newKeyCallback={
 						giveMeWayPoint("EditWP");
 					}else if(app.editWPmode==0){
 						//updateUserDetails();
-						app.keyCallback.LogCache();
+						//app.keyCallback.LogCache();
 					} 
 			}
 		}
@@ -612,8 +617,7 @@ app.newKeyCallback={
 // startup activities here
 
 window.addEventListener("load", function () {
-	//console.log(`checking what the currently set units are`);
-	
+
 	//localStorage.clear();
 	
 	if(app.gpsCoordRepresentation == null) {
@@ -857,7 +861,7 @@ function navVertical(forward) {
 			
 			//console.log(`bound right: ${bounding.right}, bottom: ${bounding.bottom}`);
 
-			if (((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == true) || ((bounding.top >= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == false) ) {
+			if (((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == true) || ((bounding.top >= (((window.innerHeight/2)-30) || ((document.documentElement.clientHeight/2)-30))) && forward == false) ) {
 				jumpToNextTab = true;
 				//console.log('Element is in the viewport!');
 			} else {
@@ -1520,8 +1524,8 @@ function execute() {
 					//initView();		
 					document.getElementById("CacheHintWrapper").scrollIntoView();					
 				 break;
-				case 'viewLogs':
-					
+				case 'loadMoreLogs':
+					loadMoreCacheLogs(arrayCache[currentCacheID].cacheCode);
 				 break;
 				case 'viewGallery':
 					
@@ -1571,6 +1575,7 @@ function execute() {
 					windowOpen="CacheSettings";
 					showView(10,true);
 					initView();
+				 break;
 				case 'toggleUnits':
 					//set the options list appropriately
 					var displayUnits = document.getElementById("unitsDisplay");					
@@ -1635,9 +1640,7 @@ function execute() {
 					};
 				 break;
 				case 'loginExisting':
-					if(confirm("You will return to this screen after authenticating. Click the Back button to get started in the app")){
-						getToken();
-					}
+					getToken();
 				 break;
 				case 'mailto':
 				  location.href = 'mailto:' + app.activeNavItem.innerHTML;
@@ -1779,6 +1782,7 @@ function success(pos) {
 	//console.log(`time_till_expire=${time_till_expire}`);
 	if(time_till_expire < 60 && time_till_expire > 0) {refreshToken();};
 	//================================================
+
 
   crd = pos.coords;
   radius = crd.accuracy;
@@ -2087,7 +2091,7 @@ function success(pos) {
 
 		//calculate the bearing to the cache, relative to North
 		var cacheBearing = bearing(my_current_lat,my_current_lng,CacheLat,CacheLng);
-			console.log(`cacheBearing: ${cacheBearing}`);
+			//console.log(`cacheBearing: ${cacheBearing}`);
 		//calculate the bearing of my movement
 		var travelBearing = 0;
 		
@@ -2320,7 +2324,13 @@ function updateUserDetails() {
 				if(userDetails.membershipLevelId == 1) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: BASIC";
 					
-					document.getElementById("cacheViewsRemaining").innerHTML = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + userDetails.geocacheLimits.fullCallsRemaining + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";		
+					var userText = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + userDetails.geocacheLimits.fullCallsRemaining + " caches remaining";
+
+					if(fullCallsResetLocal != "Invalid Date") {
+						userText = userText + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+					};
+					document.getElementById("cacheViewsRemaining").innerHTML = userText;
+	
 				} else if (userDetails.membershipLevelId == 2) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: Charter";					
 				}  else if (userDetails.membershipLevelId == 3) {
@@ -2373,7 +2383,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 		values = values + "&lite=true";			
 
 		values = values + "&take=" + numCachesToLoad; //how many caches to return?
-		values = values + "&fields=referenceCode,name,difficulty,terrain,geocacheType,status,postedCoordinates,isPremiumOnly,userData,ownerAlias,placedDate,geocacheSize";			
+		values = values + "&fields=referenceCode,name,difficulty,terrain,geocacheType,status,postedCoordinates,isPremiumOnly,userData,ownerAlias,placedDate,geocacheSize,favoritePoints,findCount,dnfcount,lastVisitedDate,ownerCode,ownerAlias";	
 
 		var xhr = new XMLHttpRequest({ mozSystem: true });
 		var geomethod = "GET";	
@@ -2574,7 +2584,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 						var PlacedRaw = geoCacheDetails[i].placedDate;								
 						var Placed = PlacedRaw.slice(0,10);	
 
-						
+						var lastVisitedDateRaw = geoCacheDetails[i].lastVisitedDate;	
+						var lastVisitedDate = lastVisitedDateRaw.slice(0,10);
 
 						// now work on loading those details into the cache listing page 
 						var entry = document.createElement("div");
@@ -2595,6 +2606,12 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 
 						listContainer.appendChild(entry);	
 
+//  "favoritePoints": 0,
+//  "findCount": 0,
+//  "dnfCount": 0,
+//  "lastVisitedDate": "2021-08-10T15:48:16.897Z",
+//  "ownerCode": "string",
+//  "ownerAlias": "string",  
 
 						// load up the cache array for use in other areas of the app
 						arrayCacheObject = {
@@ -2620,8 +2637,13 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 							cacheLastVisited: "", //19
 							cacheShortDescription: "", //20
 							cacheAttributes: "", //21
-							cacheFindCount: "", //22
-							cacheUserData: "" //23
+							cacheFindCount: geoCacheDetails[i].findCount, //22
+							cacheUserData: "", //23
+							cacheFavoritePoints: geoCacheDetails[i].favoritePoints,
+							cacheDNFCount: geoCacheDetails[i].dnfCount,
+							cacheLastVisited: lastVisitedDate,
+							cacheOwner: geoCacheDetails[i].ownerAlias,
+							cacheOwnerCode: geoCacheDetails[i].ownerCode
 						};
 						arrayCache[i] = arrayCacheObject;	
 						
@@ -2903,6 +2925,8 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 						var PlacedRaw = geoCacheDetails[i].placedDate;								
 						var Placed = PlacedRaw.slice(0,10);	
 
+						var lastVisitedDateRaw = geoCacheDetails[i].lastVisitedDate;	
+						var lastVisitedDate = lastVisitedDateRaw.slice(0,10);
 
 
 				// now work on loading those details into the cache listing page 
@@ -2948,9 +2972,13 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					cacheLastVisited: "", //19
 					cacheShortDescription: "", //20
 					cacheAttributes: "", //21
-					cacheFindCount: "", //22
+					cacheFindCount: geoCacheDetails[i].findCount, //22
 					cacheUserData: "", //23
-					cacheImages: "" //24
+					cacheFavoritePoints: geoCacheDetails[i].favoritePoints,
+					cacheDNFCount: geoCacheDetails[i].dnfCount,
+					cacheLastVisited: lastVisitedDate,
+					cacheOwner: geoCacheDetails[i].ownerAlias,
+					cacheOwnerCode: geoCacheDetails[i].ownerCode
 				};
 				arrayCache[i] = arrayCacheObject;		
 				
@@ -2963,7 +2991,7 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 		
 		// first pull the current list of stored caches
 		var arrayCacheDetailsStr = localStorage.getItem("arrayCacheDetails");
-		
+
 		if(arrayCacheDetailsStr !== null) {
 			arrayCacheDetails = JSON.parse(localStorage.getItem("arrayCacheDetails"));
 			// now parse through these and see if any match what we have already
@@ -3012,12 +3040,14 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 						arrayCache[CacheID].cacheLastVisited = lastVisited;
 						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
 						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
-						arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+						//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
 						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
 						arrayCache[CacheID].cacheImages = cacheDetails.images;					
 						
 						// and now update the cache list to show that cache is fully loaded
 						updateCacheListWithLoaded(CacheID);
+						
+						currentCacheID = CacheID;						
 					};
 				};
 				
@@ -3026,7 +3056,6 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			// so that we commit any removed / expired cacheShortDescription
 			localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
 		};
-
 
 
 		// turn off the loading spinner
@@ -3209,8 +3238,11 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 			values = values + "&expand=geocachelogs:" + numLogsToLoad;
 			values = values + ",geocachelog.images:" + numLogsToLoad;
 			values = values + ",images:" + numLogsToLoad;
-			values = values + "&fields=referenceCode,name,difficulty,terrain,trackableCount,placedDate,geocacheType,geocacheSize,status,postedCoordinates,lastVisitedDate,ownerAlias,isPremiumOnly,shortDescription,longDescription,hints,attributes,findCount,userData";
+			values = values + "&fields=referenceCode,name,difficulty,terrain,trackableCount,placedDate,geocacheType,geocacheSize,status,postedCoordinates,lastVisitedDate,ownerAlias,isPremiumOnly,shortDescription,longDescription,hints,attributes,userData";
 			
+
+  
+
 
 			var xhr = new XMLHttpRequest({ mozSystem: true });
 			var geomethod = "GET";	
@@ -3295,9 +3327,10 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						arrayCache[CacheID].cacheLastVisited = lastVisited;
 						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
 						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
-						arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+						//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
 						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
 						arrayCache[CacheID].cacheImages = cacheDetails.images;
+						arrayCache[CacheID].cacheLogLoadCount = cacheDetails.geocacheLogs.length;
 							
 						// our array is now updated - go show the cache details
 						//viewCacheLogs(CacheID);
@@ -3416,7 +3449,13 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 		//
 		// Display Cache Details
 		//
+		
+							//cacheFindCount: geoCacheDetails[i].findCount, //22
+							//cacheDNFCount: geoCacheDetails[i].dnfCount,
+							
 
+		currentCacheCode = arrayCache[CacheID].cacheCode;
+		
 		CacheHeader.innerHTML = '';	
 			var BadgeContent = document.createElement("span");
 			BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
@@ -3425,7 +3464,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 		var CacheLevels = document.getElementById('CacheDetails');
 		CacheLevels.innerHTML = '';	
 			var CacheLevelsDetail = document.createElement("span");
-			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize+"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
+			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
 		if(arrayCache[CacheID].cacheType == "WAYPOINT"){
 			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>" + arrayCache[CacheID].cacheHiddenDate;
 		}
@@ -3482,7 +3521,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			
 			newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
-			newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";	
+			newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";	
 			
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
@@ -3530,7 +3569,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";
 				
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
@@ -3544,7 +3583,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				
 				var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
 
-				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+				basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining";
+
+				if(fullCallsResetLocal != "Invalid Date") {
+					basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+				};
 				
 				promptToLoad.innerHTML = basicUserMessageForCacheDownload;
 				
@@ -3558,7 +3601,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
-				newCacheOptions = newCacheOptions + "<div id='logCacheText'>#: Log Cache</div></button>";				
+				newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";				
 
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 			newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
@@ -3598,13 +3641,20 @@ function viewCacheLogs(CacheID) {
 	windowOpen="viewCacheLogs";
 	showView(16,true);	
 
-
+	var findCount = arrayCache[CacheID].cacheFindCount;
+	var dnfCount = arrayCache[CacheID].cacheDNFCount;
 	
-	var CacheHeader = document.getElementById('CacheLogHeaderDetail');		
+	if (findCount == "undefined") {findCount = 0};
+	if (dnfCount == "undefined") {dnfCount = 0};	
+	
+	var CacheHeader = document.getElementById('CacheLogHeaderDetail');	
+	var CacheLogCounts = document.getElementById('CacheLogCounts');
 	CacheHeader.innerHTML = '';	
 		var BadgeContent = document.createElement("span");
 		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
 	CacheHeader.appendChild(BadgeContent);	
+	
+	CacheLogCounts.innerHTML = "Finds: <img src='/images/icons/2.png'> " + findCount + "&nbsp;&nbsp;&nbsp;<img src='/images/icons/3.png'> " + dnfCount;
 	
 	//================================================================================
 	//
@@ -3634,6 +3684,8 @@ function viewCacheLogs(CacheID) {
 		var logTypeImg = "<img src='" + arrayCache[CacheID].cacheLogs[i].geocacheLogType.imageUrl + "'>";
 		var logType = arrayCache[CacheID].cacheLogs[i].geocacheLogType.name;
 
+
+
 							
 		// now work on loading those details into the cache details page 
 		
@@ -3651,25 +3703,216 @@ function viewCacheLogs(CacheID) {
 		listContainer.appendChild(entry);
 	}
 	if (logCount > 0) {
+		// disabling loading of extra logs for now in favor of just increasing the number of logs we _do_ load at first - up to 50?
+		
 		//show option to load more logs
-		var entry = document.createElement("div");
-		entry.className = 'navItem';
-		var myIndex = logCount*10;				
-		entry.tabIndex = myIndex;
-		entry.setAttribute('data-function', 'loadMoreLogs');
-		entry.setAttribute('CacheID',CacheID);
-		entry.setAttribute('CurrentLogsLoaded',logCount);		
+		//var entry = document.createElement("div");
+		//entry.className = 'navItem';
+		//var myIndex = logCount*10;				
+		//entry.tabIndex = myIndex;
+		//entry.setAttribute('data-function', 'loadMoreLogs');
+		//entry.setAttribute('CacheCode',arrayCache[CacheID].cacheCode);
+		//entry.setAttribute('CurrentLogsLoaded',logCount);		
 
-		var headline = document.createElement("span");
-		headline.innerHTML = "<center><b>Load more logs...</b></center>";
+		//var headline = document.createElement("span");
+		//headline.innerHTML = "<center><b>Load more logs...</b></center>";
 		
 		// take that structured HTML and drop it into the page:
-		entry.appendChild(headline);	
+		//entry.appendChild(headline);	
 		
-		listContainer.appendChild(entry);		
+		//listContainer.appendChild(entry);		
 	}
 	initView();	
 };
+
+function loadMoreCacheLogs(CacheCode) {
+	loadingOverlay(true);
+	var cacheLogLoadCount=0;
+	// first figure out how many logs we have so far for this cache 
+	var CacheID = -1;
+	for (let i = 0; i < arrayCache.length; i++) {
+	  // search for cache in array
+	  if (CacheCode == arrayCache[i].cacheCode) {
+		CacheID = i;
+		cacheLogLoadCount = arrayCache[CacheID].cacheLogs.length;
+	  }
+	}	
+	// at the end of this particular log load, need to increment the cacheLogLoadCount number by however many logs we load here
+	// need to also store this site result into a logs array in localstore
+	
+	
+	var values = "geocaches/" + CacheCode + "/geocachelogs?";
+	values = values + "take=" + numLogsToLoad;
+	values = values + ",skip=" + cacheLogLoadCount;
+	values = values + ",sort=newest";
+	values = values + ",images:" + numLogsToLoad;
+	values = values + "&fields=owner,images,loggedDate,text,geocacheLogType,usedFavoritePoint,referenceCode";
+	
+
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var geomethod = "GET";	
+	var geourl = rootAPIurl + values;
+	
+	var token = localStorage.getItem("access_token");
+	
+	if (token !== null) {
+		console.log('we have a token');
+		xhr.open(geomethod, geourl, true);
+		
+		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  //console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  //console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			//console.log('headers received'); 
+					
+		  } else if (geoloadstate == 3) {
+			 // console.log('loading data');
+				  
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				console.log(`status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+				//console.log(`response: ${siteText}`);
+
+				//===========================================================
+				// first drop the cache log details response into our array of loaded cache log details
+				// and update our localstore with those details so we can pull them later
+				
+				// first pull the current list of stored caches
+				var arrayCacheLogDetailsStr = localStorage.getItem("arrayCacheLogDetails");
+				var arrayCacheLogDetails=[];
+				
+				if(arrayCacheLogDetailsStr !== null) {
+					arrayCacheLogDetails = JSON.parse(localStorage.getItem("arrayCacheLogDetails"));
+					
+				};
+				
+				var cacheExpires = localStorage.getItem("fullCallsReset");
+				
+				// then construct the newly loaded cache detail
+				arrayCacheLogDetailsObject = {
+					navCode: CacheCode,
+					expires: cacheExpires,
+					cacheLogDetails: siteText
+				};
+				
+				// drop that new cache detail into the list of loaded caches
+				arrayCacheLogDetails[arrayCacheLogDetails.length] = arrayCacheLogDetailsObject;
+
+				// finally update our localstore of fully loaded caches 
+				localStorage.setItem("arrayCacheLogDetails", JSON.stringify(arrayCacheLogDetails));
+
+				//===============================================================
+				// now parse the returned JSON out and do stuff with it
+				var cacheLogDetails = JSON.parse(siteText);
+				
+				//=============================
+				//
+				// first we need to remove the old "load more logs" button
+				var lastLog = document.getElementById("CacheLogsView").lastChild;
+				lastLog.remove();				
+				
+				//var listOfLogs = document.getElementsByClassName("listLogsView")[0];
+				//var listOfLogsLength = listOfLogs.length();
+				
+				//listOfLogs.removeChild(listOfLogs.childNodes[listOfLogsLength-1]);   
+				
+			
+				
+				//================================================================================
+				//
+				// Display list of logs
+				//
+				//
+				var listContainer = document.getElementById('CacheLogsView');
+				//listContainer.innerHTML = '';
+				var logCount = cacheLogDetails.length;		
+
+				//
+				// cycle through all the returned logs and 
+				//	load them into the cache listing page for display / selection by the user 
+				//
+				for (let i = 0; i < logCount; i++) {
+
+					// parse out the returned response 
+					
+					var logText = cacheLogDetails[i].text;
+					var logFavorite = cacheLogDetails[i].usedFavoritePoint;
+					var logOwnerName = cacheLogDetails[i].owner.username;
+					var logDateRaw = cacheLogDetails[i].loggedDate;
+					var logDate = logDateRaw.slice(0,10);		
+					var logTypeImg = "<img src='" + cacheLogDetails[i].geocacheLogType.imageUrl + "'>";
+					var logType = cacheLogDetails[i].geocacheLogType.name;
+										
+					// now work on loading those details into the cache details page 
+					
+					var entry = document.createElement("div");
+					entry.className = 'navItem';
+					var myIndex = (i+cacheLogLoadCount)*10;		
+					if(i==0) {
+						// label this spot in the list to make it easy to find again
+						entry.id = 'topOfNewLogs';
+					}
+					entry.tabIndex = myIndex;
+
+					var headline = document.createElement("span");
+					headline.innerHTML = "<b>" + logTypeImg + " " + logType + " " + logDate + "<br>" + logOwnerName + "</b><br><br>" + logText;
+					
+					// take that structured HTML and drop it into the page:
+					entry.appendChild(headline);	
+					
+					listContainer.appendChild(entry);
+				}
+
+				//show option to load more logs
+				var entry = document.createElement("div");
+				entry.className = 'navItem';
+				var myIndex = (logCount+cacheLogLoadCount)*10;				
+				entry.tabIndex = myIndex;
+				entry.setAttribute('data-function', 'loadMoreLogs');
+				entry.setAttribute('CacheID',CacheID);
+				entry.setAttribute('CurrentLogsLoaded',(logCount+cacheLogLoadCount));		
+
+				var headline = document.createElement("span");
+				headline.innerHTML = "<center><b>Load more logs...</b></center>";
+				
+				// take that structured HTML and drop it into the page:
+				entry.appendChild(headline);					
+				
+				listContainer.appendChild(entry);	
+
+				// now focus us on the top of the newly loaded list of logs
+				
+				var startLogForFocus = document.getElementById("topOfNewLogs");
+				startLogForFocus.focus();				
+				//startLogForFocus.scrollIntoView({ behavior: "smooth" });				
+				
+				loadingOverlay(false);
+				
+			}  else if (geostatus == 401) {
+				// token has expired, refresh and tell caller to retry
+				console.log('refreshing token');
+				refreshToken();
+				loadingOverlay(false);				
+			}  else {
+			// Oh no! There has been an error with the request!
+			console.log("some problem...");
+			loadingOverlay(false);
+			}
+		  }; 
+		};
+		xhr.send();	
+	} else {
+		getToken();
+
+	};	
+	
+}
 
 function viewCacheGallery(CacheID) {
 	windowOpen="viewCacheGallery";	
@@ -4735,12 +4978,37 @@ function logout() {
 
 function getToken(signup){
 	// Create and store a random "state" value
-	var state = "aselkjg123";
+	//var state = "aselkjg123";
+
+	
+	//const state = Math.random().toString(16).substr(2, 8); // 6de5ccda	
+
+	var state;
+	for(let i = 0; i< 5; i++) {
+		if(i==0) {
+			state = Math.random().toString(16).substr(2, 8); // 6de5ccda
+		} else {
+			state = state + Math.random().toString(16).substr(2, 8); // 6de5ccda
+		};
+	};
+
 	localStorage.setItem("pkce_state", state);
 
 	// Create and store a new PKCE code_verifier (the plaintext random secret)
 	//var code_verifier = generateRandomString();
-	//localStorage.setItem("pkce_code_verifier", code_verifier);
+	
+	var code_verifier;
+	for(let i = 0; i< 5; i++) {
+		if(i==0) {
+			code_verifier = Math.random().toString(16).substr(2, 8); // 6de5ccda
+		} else {
+			code_verifier = code_verifier + Math.random().toString(16).substr(2, 8); // 6de5ccda
+		};
+	};
+	
+
+	
+	localStorage.setItem("pkce_code_verifier", code_verifier);
 
 	// Hash and base64-urlencode the secret to use as the challenge
 	//var code_challenge = await pkceChallengeFromVerifier(code_verifier);
@@ -4751,16 +5019,40 @@ function getToken(signup){
 		+ "&client_id="+(config.client_id)
 		+ "&state="+(state)
 		+ "&scope="+(config.requested_scopes)
-		+ "&redirect_uri="+(config.redirect_uri);
+		+ "&redirect_uri="+(config.redirect_uri)
+		+ "&code_challenge="+(code_verifier)
+		+ "&code_challenge_method=plain";	
 		
 	if(signup==true) {
-		// specifically force the user to the signup page rather than the sign-in pageX
+		// specifically force the user to the signup page rather than the sign-in page
 		url = url + "&signup=true";
 	};
 
 		//+ "&code_challenge="+encodeURIComponent(code_challenge)
 		//+ "&code_challenge_method=S256"
 		;
+
+	// start a function to check to see if the auth is complete.  once complete we will push the user to the map screen
+	// also includes a timeout function in case we get stuck somewhere
+	
+	var loginCheck = setInterval(myTimer, 500);
+	var loginCheckCounter = 0;
+	function myTimer() {
+		loginCheckCounter = loginCheckCounter + 1;
+		if(loginCheckCounter > 600 || (localStorage.getItem("access_token")!==null && localStorage.getItem("firstLoginComplete") == false)) {
+			// stop the timer
+			  clearInterval(loginCheck);
+		};
+		// check to see if we are just returning from our first login and auth against geocaching.com
+		if (localStorage.getItem("access_token")!==null && localStorage.getItem("firstLoginComplete") == "true") {
+			//bounce the user over to the map screen
+			clearInterval(loginCheck);
+			localStorage.setItem("firstLoginComplete",false);
+			updateUserDetails();			
+			app.keyCallback.ShowMap();
+		};
+	}
+
 
 	// Redirect to the authorization server
 	window.open(url);
@@ -4863,9 +5155,9 @@ function sendPostRequest(url, params, success, error) {
 
 		// Verify state matches what we set at the beginning
 		if(localStorage.getItem("pkce_state") != q.state) {
-			//console.log(`q.state: ${q.state}`);
-			//console.log(`stored state: ${localStorage.getItem("pkce_state")}`);
-			//alert("Invalid state");
+			var returnedState = "q.state: " + q.state;
+			var storedState = "stored state: " + localStorage.getItem("pkce_state");
+			alert("Invalid state\n\n" + returnedState + "\n\n" + storedState);
 		} else {
 
 			// Exchange the authorization code for an access token
@@ -4875,8 +5167,8 @@ function sendPostRequest(url, params, success, error) {
 				code: q.code,
 				client_id: config.client_id,
 				client_secret: config.client_secret,
-				redirect_uri: config.redirect_uri
-				//code_verifier: localStorage.getItem("pkce_code_verifier")
+				redirect_uri: config.redirect_uri,
+				code_verifier: localStorage.getItem("pkce_code_verifier")
 			}, function(request, body) {
 
 				// Initialize your application now that you have an access token.
@@ -4900,6 +5192,11 @@ function sendPostRequest(url, params, success, error) {
 				localStorage.setItem("refresh_token",body.refresh_token);
 				console.log('just before closing the pop up window from auth');
 				
+				// set a flag that lets us know that the user has just finished logging in and should be pushed to the map screen
+				// this value, in conjuntion with an access_token value is what will trigger that event
+				
+				localStorage.setItem("firstLoginComplete",true);
+				
 				window.close();
 
 			
@@ -4908,6 +5205,7 @@ function sendPostRequest(url, params, success, error) {
 			}, function(request, error) {
 				// This could be an error response from the OAuth server, or an error because the 
 				// request failed such as if the OAuth server doesn't allow CORS requests
+				alert(error.error+"\n\n"+error.error_description);
 				//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
 				//document.getElementById("error").classList = "";
 			});

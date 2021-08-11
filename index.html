@@ -56,7 +56,7 @@
 					<br><img src="/assets/appLogo/Logo_caching-on-kai_FullName.png"/><br><br>
 					<b>Caching-on-Kai</b><br>
 					Geocaching for everyone else<br>
-					v3.0.4
+					v3.0.6
 				</center>
 			</div>		  
 			<div id="compassContainer">
@@ -168,7 +168,7 @@
 			<div class="CacheTopLine">	
 				<div id="aboutHeader">
 					<div id="appLogo"><img src="/assets/appLogo/Logo_caching-on-kai_56x56.png"></div>
-					<div id="appName"><b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v3.0.4</b></div>
+					<div id="appName"><b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v3.0.6</b></div>
 				</div>
 			</div>
 			<div  id="attributions" class="listAttributions">			
@@ -183,19 +183,22 @@
 					<center><img src="assets/Geocaching_Authorized_Developer_vFINAL_100517_192.png"></center><br>
 					Powered by the Geocaching API. Made possible through the support of Geocaching Premium Memberships, the API program gives third-party developers the opportunity to work with Geocaching HQ on a full suite of integrated products and services for the community. API developer applications are designed to work with the core services of geocaching.com and provide additional features to the geocaching community.
 				</div>		
-				<div class="navItem" tabIndex="30" data-href="https://leafletjs.com" id="attribution-leaflet">
+				<div class="navItem" tabIndex="30" id="attribution-CacheIcons">
+					Geocaching.com cache icons © Groundspeak, Inc.  Used with permission.
+				</div>				
+				<div class="navItem" tabIndex="40" data-href="https://leafletjs.com" id="attribution-leaflet">
 					Map functionality from leafletjs.com
 				</div>
-				<div class="navItem"tabIndex="40" data-href="https://www.openstreetmap.org/" id="attribution-openstreetmap">
+				<div class="navItem"tabIndex="50" data-href="https://www.openstreetmap.org/" id="attribution-openstreetmap">
 					Map data © OpenStreetMap contributors, from openstreetmap.org
 				</div>
-				<div class="navItem"tabIndex="50" data-href="https://loading.io/" id="attribution-loadingio">
+				<div class="navItem"tabIndex="60" data-href="https://loading.io/" id="attribution-loadingio">
 					Bouncing Ball and other loading icons from loading.io
 				</div>
-				<div class="navItem"tabIndex="60" data-href="https://icons8.com" id="attribution-loadingio">
+				<div class="navItem"tabIndex="70" data-href="https://icons8.com" id="attribution-loadingio">
 					New Account, Sign-in, and other icons by Icons8
 				</div>				
-				<div class="navItem"tabIndex="70" id="attribution-appLogo">
+				<div class="navItem"tabIndex="80" id="attribution-appLogo">
 					Special thanks to contributor <b>david-p-s</b> for his work in creating this app's logo and contributing to early code development!
 				</div>
 			</div>
@@ -206,7 +209,7 @@
 			<div id="username"></div>
 			<div id="membershipType"></div>
 			<div id="cacheViewsRemaining"></div>
-			
+			<br>
 			<!--<fieldset>
 			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
 			  <select id="select1">
@@ -247,7 +250,7 @@
 				7: Cache Details<br>
 				8: Toggle Cache Icons on Map<br>
 				9: View Compass<br>
-				*: Log Cache
+				0: Log Cache
 		</div>
 
 		<div class="view" id="viewCacheOptions">  <!-- view 10 -->
@@ -341,6 +344,7 @@
 			<div class="CacheTopLine">			
 				<div id="CacheLogHeaderDetail">Waiting on cache details...<br></div>
 				<div class="kui-separator">Details | <b>Logs</b> | Gallery</div>
+				<div id="CacheLogCounts"></div>				
 			</div>
 			<!--<div id="CacheLogDetails"></div>-->
 			
