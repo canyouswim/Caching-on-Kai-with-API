@@ -3004,52 +3004,59 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			for (let i = 0; i < (arrayCacheDetails.length); i++) {
 				// very first thing we need to do before we even check
 				// is see if the full details we've loaded have expired 
-				if(arrayCacheDetails[i].expires < rightNowLocal){
+				var breakTest = false;
+				console.log(`expires:${arrayCacheDetails[i].expires} ?<? rightNowLocal:${rightNowLocal}`);
+				if(arrayCacheDetails[i].expires < rightNowLocal || breakTest){
 					// if expired, remove that item from the array 
+					console.log(`we think the cache should expire: ${arrayCacheDetails[i].expires}`);
 					arrayCacheDetails.splice(i,1);
-				};
-				// now pull the navCode and see if it maches one we already have in our array 
-				for (let j = 0; j < (arrayCache.length); j++){
-					if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
-						// update our stored cache array with these full details
-						//===============================================
-						// note: this code below should match what is in the LoadCacheDetails function
-						//===============================================================
-						// now parse the returned JSON out and do stuff with it
-						var CacheID = j;
-						var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
-						var imageCount = cacheDetails.images.length;
-						var logCount = cacheDetails.geocacheLogs.length;
-						//var logImageCount
+				} else {
+					console.log(`we think the cache should NOT expire: ${arrayCacheDetails[i].expires}`);
+					// the cache is not expired, so find it in our array and load the details up
+					// now pull the navCode and see if it maches one we already have in our array 
+					for (let j = 0; j < (arrayCache.length); j++){
+						if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
+							// update our stored cache array with these full details
+							//===============================================
+							// note: this code below should match what is in the LoadCacheDetails function
+							//===============================================================
+							// now parse the returned JSON out and do stuff with it
+							var CacheID = j;
+							var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
+							var imageCount = cacheDetails.images.length;
+							var logCount = cacheDetails.geocacheLogs.length;
+							//var logImageCount
+								
+							var lastVisitedRaw = cacheDetails.lastVisitedDate;								
+							var lastVisited = lastVisitedRaw.slice(0,10);		
 							
-						var lastVisitedRaw = cacheDetails.lastVisitedDate;								
-						var lastVisited = lastVisitedRaw.slice(0,10);		
-						
-						//update the cache array entry with the rest of the live details 
-						arrayCache[CacheID].cacheName = cacheDetails.name;
-						arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
-						//arrayCache[CacheID].cacheHiddenDate = Placed;
-						//arrayCache[CacheID].cacheDifficulty = Difficulty;
-						//arrayCache[CacheID].cacheTerrain = Terrain;
-						//arrayCache[CacheID].cacheSize = ContainerSize;
-						arrayCache[CacheID].cacheHint = cacheDetails.hints;
-						arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
-						arrayCache[CacheID].cacheFullyLoaded = true;	
-						arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
-						arrayCache[CacheID].cacheStatus = cacheDetails.status;
-						arrayCache[CacheID].cacheLastVisited = lastVisited;
-						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
-						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
-						//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
-						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
-						arrayCache[CacheID].cacheImages = cacheDetails.images;					
-						
-						// and now update the cache list to show that cache is fully loaded
-						updateCacheListWithLoaded(CacheID);
-						
-						currentCacheID = CacheID;						
-					};
+							//update the cache array entry with the rest of the live details 
+							arrayCache[CacheID].cacheName = cacheDetails.name;
+							arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
+							//arrayCache[CacheID].cacheHiddenDate = Placed;
+							//arrayCache[CacheID].cacheDifficulty = Difficulty;
+							//arrayCache[CacheID].cacheTerrain = Terrain;
+							//arrayCache[CacheID].cacheSize = ContainerSize;
+							arrayCache[CacheID].cacheHint = cacheDetails.hints;
+							arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
+							arrayCache[CacheID].cacheFullyLoaded = true;	
+							arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
+							arrayCache[CacheID].cacheStatus = cacheDetails.status;
+							arrayCache[CacheID].cacheLastVisited = lastVisited;
+							arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
+							arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
+							//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+							arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+							arrayCache[CacheID].cacheImages = cacheDetails.images;					
+							
+							// and now update the cache list to show that cache is fully loaded
+							updateCacheListWithLoaded(CacheID);
+							
+							currentCacheID = CacheID;						
+						};
+					};					
 				};
+
 				
 			};
 			// once we're done processing the array, we need to push it back to localstorage 
@@ -3239,10 +3246,6 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 			values = values + ",geocachelog.images:" + numLogsToLoad;
 			values = values + ",images:" + numLogsToLoad;
 			values = values + "&fields=referenceCode,name,difficulty,terrain,trackableCount,placedDate,geocacheType,geocacheSize,status,postedCoordinates,lastVisitedDate,ownerAlias,isPremiumOnly,shortDescription,longDescription,hints,attributes,userData";
-			
-
-  
-
 
 			var xhr = new XMLHttpRequest({ mozSystem: true });
 			var geomethod = "GET";	
@@ -3287,6 +3290,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						};
 						
 						var cacheExpires = localStorage.getItem("fullCallsReset");
+						
 						
 						// then construct the newly loaded cache detail
 						arrayCacheDetailsObject = {
