@@ -196,36 +196,33 @@ var pauseClicks = false; // used to not allow buttons to fire until a modal is c
 //
 
 const mozactivity = (() => {
-  const share_position = function () {
-    message_body =
+  let share_position = function () {
+    let a =
       "https://www.openstreetmap.org/?mlat=" +
-      current_lat +
+      mainmarker.current_lat +
       "&mlon=" +
-      current_lng +
+      mainmarker.current_lng +
       "#map=13/" +
-      current_lat +
+      mainmarker.current_lat +
       "/" +
-      current_lng +
+      mainmarker.current_lng +
       "&layers=T";
-
-    share(message_body);
-  };
-
-  function share(url) {
     let activity = new MozActivity({
       name: "share",
       data: {
         type: "url",
-        url: url,
+        url: a,
       },
     });
 
-    activity.onsuccess = function () {};
+    activity.onsuccess = function () {
+      console.log("successfully shared");
+    };
 
     activity.onerror = function () {
       console.log("The activity encounter en error: " + this.error);
     };
-  }
+  };
 
   const photo = function () {
     let activity = new MozActivity({
@@ -236,7 +233,25 @@ const mozactivity = (() => {
     });
 
     activity.onsuccess = function () {
-      //toaster("back", 2000);
+      console.log("successfully");
+    };
+
+    activity.onerror = function () {
+      console.log("The activity encounter en error: " + this.error);
+    };
+  };
+
+  const openSettings = function () {
+    let activity = new MozActivity({
+      name: "configure",
+      data: {
+        target: "device",
+        section: "connectivity-settings",
+      },
+    });
+
+    activity.onsuccess = function () {
+      console.log("successfully");
     };
 
     activity.onerror = function () {
@@ -247,6 +262,7 @@ const mozactivity = (() => {
   return {
     photo,
     share_position,
+    openSettings,
   };
 })();
 
@@ -1101,7 +1117,7 @@ function showViewByName(name) {
 }
 
 function initView() {
-	console.log(`from initView, currentView: ${app.currentViewName}`);
+	//console.log(`from initView, currentView: ${app.currentViewName}`);
 	  
 	screenYscroll = 0;
 	app.currentView.scrollTo(0, 0);
@@ -1457,6 +1473,10 @@ function execute() {
 					goBack();
 					//showView(0,false);
 					//initView();
+				 break;
+				case 'showMozSettings':
+					alert("You will be taken to your phone's settings screen. Use the back button to return to this app");
+					mozactivity.openSettings(); // open up the phone's settings screen - mostly used for Nokia phone to turn off 4G
 				 break;
 				case 'submitLog':
 					//console.log(`you selected SubmitLog`);
