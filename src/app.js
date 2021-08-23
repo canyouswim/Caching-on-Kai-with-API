@@ -189,6 +189,10 @@ var storedLng = null;
 
 var pauseClicks = false; // used to not allow buttons to fire until a modal is cleared
 
+
+
+
+
 /////////////////////////////////////////////////////////
 //
 //	for handling photos and sharing in SMS
@@ -635,6 +639,33 @@ app.newKeyCallback={
 window.addEventListener("load", function () {
 
 	//localStorage.clear();
+	
+	// set the correct version number in various places within the app
+	
+	const helper = (() => {
+	  let getVersion = function () {
+		fetch("/manifest.webapp")
+		  .then(function (response) {
+			return response.json();
+		  })
+		  .then(function (data) {
+				document.getElementById("aboutVersion").innerHTML = "<b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v" + data.version + "</b>";
+				document.getElementById("loadingVersion").innerText = "v" + data.version;			  
+		  })
+		  .catch(function (err) {
+			console.log(err);
+		  });
+	  };
+
+	  return {
+		getVersion,
+	  };
+	})();	
+	
+	helper.getVersion();
+
+
+	
 	
 	if(app.gpsCoordRepresentation == null) {
 		//meaning this is the first time the app has been run
