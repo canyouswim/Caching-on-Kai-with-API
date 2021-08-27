@@ -1908,98 +1908,98 @@ function firstRunSetup() {
 		}); 	
 		
 		Traditional_cache = L.icon({
-			iconUrl: '/assets/icons/type_traditional.png',
+			iconUrl: '/assets/icons/cache_icon_type_traditional.png',
 			//iconURL: '/play/app/ui-icons/sprites/cache-types.svg#icon-2',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 		
 		Multi_cache = L.icon({
-			iconUrl: '/assets/icons/type_multi.png',
+			iconUrl: '/assets/icons/cache_icon_type_multi.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 
 		Virtual_cache = L.icon({
-			iconUrl: '/assets/icons/type_virtual.png',
+			iconUrl: '/assets/icons/cache_icon_type_virtual.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 		
 		Letterbox_cache = L.icon({
-			iconUrl: '/assets/icons/type_virtual.png',
+			iconUrl: '/assets/icons/cache_icon_type_letterbox.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 			
 
 		Event_cache = L.icon({
-			iconUrl: '/assets/icons/type_virtual.png',
+			iconUrl: '/assets/icons/cache_icon_type_event.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 
 		Mystery_cache = L.icon({
-			iconUrl: '/assets/icons/type_mystery.png',
+			iconUrl: '/assets/icons/cache_icon_type_mystery.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 		
 		ProjectAPE_cache = L.icon({
-			iconUrl: '/assets/icons/type_virtual.png',
+			iconUrl: '/assets/icons/cache_icon_type_ape.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
 		
 		Webcam_cache = L.icon({
-			iconUrl: '/assets/icons/type_virtual.png',
+			iconUrl: '/assets/icons/cache_icon_type_webcam.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 			
 
 		Locationless_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_locationless.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
 		
 		CITO_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_cito.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 				
 		
 		Earth_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_earth.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
 		
 		MegaEvent_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_mega.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
@@ -2007,15 +2007,15 @@ function firstRunSetup() {
 		Adventures_cache = L.icon({
 			iconUrl: '/assets/icons/type_earth.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
 		
 		Wherigo_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_wherigo.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
@@ -2023,39 +2023,39 @@ function firstRunSetup() {
 		CommunityCelebration_cache = L.icon({
 			iconUrl: '/assets/icons/type_earth.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 				
 		
 		GeocachingHQ_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_hq.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 				
 		
 		GeocachingHQCelebration_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_hq.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 
 
 		GeocachingHQBlockParty_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_blockparty.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 	
 
 		GigaEvent_cache = L.icon({
-			iconUrl: '/assets/icons/type_earth.png',
+			iconUrl: '/assets/icons/cache_icon_type_event.png',
 
-			iconSize:     [40, 40], // size of the icon
+			iconSize:     [32, 32], // size of the icon
 			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 		}); 				
