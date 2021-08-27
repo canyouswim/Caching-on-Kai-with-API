@@ -29,7 +29,7 @@
     <script src="src/someInputs.js" defer></script>
     <script src="src/helperFunctions.js" defer></script>	
    <!-- uncomment below to turn ads back on... -->
-   <script src="src/kaiads.v4.min.js" defer></script>
+   <script src="src/kaiads.v5.min.js" defer></script>
 
 
 
@@ -56,7 +56,7 @@
 					<br><img src="/assets/appLogo/Logo_caching-on-kai_FullName.png"/><br><br>
 					<b>Caching-on-Kai</b><br>
 					Geocaching for everyone else<br>
-					v3.0.6
+					<div id="loadingVersion"></div>
 				</center>
 			</div>		  
 			<div id="compassContainer">
@@ -168,7 +168,7 @@
 			<div class="CacheTopLine">	
 				<div id="aboutHeader">
 					<div id="appLogo"><img src="/assets/appLogo/Logo_caching-on-kai_56x56.png"></div>
-					<div id="appName"><b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v3.0.6</b></div>
+					<div id="aboutVersion"></div>
 				</div>
 			</div>
 			<div  id="attributions" class="listAttributions">			
@@ -218,6 +218,7 @@
 			  </select>
 			</fieldset>	-->		
 			<button class="navItem" tabIndex="0" data-function="toggleUnits" id="unitsDisplay">Toggle display units</button>				
+			<button class="navItem" tabIndex="10" data-function="showMozSettings" id="showMozSettings">Phone Settings</button>			
 			<!--<fieldset>
 			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
 			  <select id="select2">
@@ -234,9 +235,9 @@
 			  </select>
 			</fieldset>-->
 	
-			<button class="navItem" tabIndex="10" data-function="Help">Help</button>		
-			<button class="navItem" tabIndex="20" data-function="About">About</button>
-			<button class="navItem" tabIndex="30" data-function="Logout">Logout</button>				
+			<button class="navItem" tabIndex="20" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="30" data-function="About">About</button>
+			<button class="navItem" tabIndex="40" data-function="Logout">Logout</button>				
 		</div>
 	
 		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
@@ -374,6 +375,15 @@
 					<div>From the Map screen, you will see a small version of the compass that will also point you in the direction you need to travel, once the app has determined the correct bearing. The background will also change to green when the app is accurately determining your bearing, and change to yellow when there has not been enough movement to determine your bearing. When it is yellow, the compass is not likely pointing in the desired direction.
 					</div>
 				</div>
+				<div class="navItem" tabIndex="20">
+					<div><h2>Nokia Phone Users</h2></div>
+					<div class="imageLeft"><img src="/images/Nokia 8110.png"></div>
+					<div class="imageLeft"><img src="/images/Nokia 2720.png"></div>
+					<div class="imageLeft"><img src="/images/nokia_6300_4G-DTC-connectivity-desktop.png"></div>
+					<div class="imageLeft"><img src="/images/nokia_8000_4G-DTC-design.png"></div>					
+					<div>A special note if you use any of the Nokia phones (8110, 6300, 8000, probably 2720): the 4G antenna interfers with the A-GPS ability to obtain an accurate lock on your location. Use the "Phone Settings" button under the "Settings" screen to jump over to the phone's settings and turn off 4G when you require an accurate GPS lock. 
+					</div>
+				</div>				
 			</div>
 		</div>
 

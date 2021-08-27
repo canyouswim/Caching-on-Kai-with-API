@@ -189,6 +189,12 @@ var storedLng = null;
 
 var pauseClicks = false; // used to not allow buttons to fire until a modal is cleared
 
+var stopGPSWarning = false;
+
+
+
+
+
 /////////////////////////////////////////////////////////
 //
 //	for handling photos and sharing in SMS
@@ -196,36 +202,33 @@ var pauseClicks = false; // used to not allow buttons to fire until a modal is c
 //
 
 const mozactivity = (() => {
-  const share_position = function () {
-    message_body =
+  let share_position = function () {
+    let a =
       "https://www.openstreetmap.org/?mlat=" +
-      current_lat +
+      mainmarker.current_lat +
       "&mlon=" +
-      current_lng +
+      mainmarker.current_lng +
       "#map=13/" +
-      current_lat +
+      mainmarker.current_lat +
       "/" +
-      current_lng +
+      mainmarker.current_lng +
       "&layers=T";
-
-    share(message_body);
-  };
-
-  function share(url) {
     let activity = new MozActivity({
       name: "share",
       data: {
         type: "url",
-        url: url,
+        url: a,
       },
     });
 
-    activity.onsuccess = function () {};
+    activity.onsuccess = function () {
+      console.log("successfully shared");
+    };
 
     activity.onerror = function () {
       console.log("The activity encounter en error: " + this.error);
     };
-  }
+  };
 
   const photo = function () {
     let activity = new MozActivity({
@@ -236,7 +239,7 @@ const mozactivity = (() => {
     });
 
     activity.onsuccess = function () {
-      //toaster("back", 2000);
+      console.log("successfully");
     };
 
     activity.onerror = function () {
@@ -244,9 +247,49 @@ const mozactivity = (() => {
     };
   };
 
+  const openSettings = function () {
+    let activity = new MozActivity({
+      name: "configure",
+      data: {
+        target: "device",
+        section: "connectivity-settings",
+		//section: "geolocation",
+      },
+    });
+
+    activity.onsuccess = function () {
+      console.log("successfully");
+    };
+
+    activity.onerror = function () {
+      console.log("The activity encounter en error: " + this.error);
+    };
+  };
+  
+  const openGPS = function () {
+    let activity = new MozActivity({
+      name: "configure",
+      data: {
+        target: "device",
+        //section: "connectivity-settings",
+		section: "geolocation",
+      },
+    });
+
+    activity.onsuccess = function () {
+      console.log("successfully");
+    };
+
+    activity.onerror = function () {
+      console.log("The activity encounter en error: " + this.error);
+    };
+  };  
+
   return {
     photo,
     share_position,
+    openSettings,
+	openGPS,
   };
 })();
 
@@ -619,6 +662,33 @@ app.newKeyCallback={
 window.addEventListener("load", function () {
 
 	//localStorage.clear();
+	
+	// set the correct version number in various places within the app
+	
+	const helper = (() => {
+	  let getVersion = function () {
+		fetch("/manifest.webapp")
+		  .then(function (response) {
+			return response.json();
+		  })
+		  .then(function (data) {
+				document.getElementById("aboutVersion").innerHTML = "<b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v" + data.version + "</b>";
+				document.getElementById("loadingVersion").innerText = "v" + data.version;			  
+		  })
+		  .catch(function (err) {
+			console.log(err);
+		  });
+	  };
+
+	  return {
+		getVersion,
+	  };
+	})();	
+	
+	helper.getVersion();
+
+
+	
 	
 	if(app.gpsCoordRepresentation == null) {
 		//meaning this is the first time the app has been run
@@ -1101,7 +1171,7 @@ function showViewByName(name) {
 }
 
 function initView() {
-	console.log(`from initView, currentView: ${app.currentViewName}`);
+	//console.log(`from initView, currentView: ${app.currentViewName}`);
 	  
 	screenYscroll = 0;
 	app.currentView.scrollTo(0, 0);
@@ -1423,7 +1493,7 @@ function refreshListofCaches() {
 		var mapLng = mapCrd.lng;
 		
 		//console.log(`mapLat/Lng: ${mapLat}/${mapLng}`);
-		ListCaches(mapLat,mapLng,"no");				
+		ListCaches(mapLat,mapLng,"no","yes");				
 
 	  showView(0,false);
 	  initView();	
@@ -1457,6 +1527,10 @@ function execute() {
 					goBack();
 					//showView(0,false);
 					//initView();
+				 break;
+				case 'showMozSettings':
+					alert("You will be taken to your phone's settings screen. Use the back button to return to this app");
+					mozactivity.openSettings(); // open up the phone's settings screen - mostly used for Nokia phone to turn off 4G
 				 break;
 				case 'submitLog':
 					//console.log(`you selected SubmitLog`);
@@ -1774,6 +1848,255 @@ function softkeyBar() {
 	}
 };
 
+function firstRunSetup() {
+	// Pull list of caches near me and plot them on the map (but only if this is set to Yes in settings)
+	//console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
+	if (ShowCachesOnLoad == "YesLoadCaches") {
+		ListCaches(my_current_lat,my_current_lng,"no");	
+	} else {
+		// this is if we don't want to pull the list of live cacheSize
+		// and instead pull them from local storage
+		// minimally always load up what we last had, due to the inconsistencies with KaiOS keeping the app open
+			ListCaches(0,0,"yes");	
+
+	};
+
+	if(MapHasBeenDrawn == false) {
+		//Draw the map
+		//leafvar add basic map
+		map = L.map('map-container', {
+			zoomControl: false,
+			dragging: false,
+			keyboard: true
+		}).fitWorld();
+		tilesUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+		tilesLayer = L.tileLayer(tilesUrl, {
+			//attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			//    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		});
+
+		map.addLayer(tilesLayer);
+		
+		MapHasBeenDrawn = true;
+
+		// Setup, but don't pin, the cache marker
+		
+
+		
+		Waypoint_cache = L.icon({
+			iconUrl: '/assets/icons/icons8-waypoint-map-48.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 			
+		
+		NavTo_cache = L.icon({
+			iconUrl: '/assets/icons/icons8-cache-marker-40.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 40], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 			
+		
+		Found_cache = L.icon({
+			iconUrl: '/assets/icons/marker_found.png',
+
+			iconSize:     [20, 20], // size of the icon
+			iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+		
+		Traditional_cache = L.icon({
+			iconUrl: '/assets/icons/type_traditional.png',
+			//iconURL: '/play/app/ui-icons/sprites/cache-types.svg#icon-2',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+		
+		Multi_cache = L.icon({
+			iconUrl: '/assets/icons/type_multi.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+
+		Virtual_cache = L.icon({
+			iconUrl: '/assets/icons/type_virtual.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+		
+		Letterbox_cache = L.icon({
+			iconUrl: '/assets/icons/type_virtual.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 			
+
+		Event_cache = L.icon({
+			iconUrl: '/assets/icons/type_virtual.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+
+		Mystery_cache = L.icon({
+			iconUrl: '/assets/icons/type_mystery.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+		
+		ProjectAPE_cache = L.icon({
+			iconUrl: '/assets/icons/type_virtual.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+		
+		Webcam_cache = L.icon({
+			iconUrl: '/assets/icons/type_virtual.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 			
+
+		Locationless_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+		
+		CITO_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 				
+		
+		Earth_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+		
+		MegaEvent_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+
+		Adventures_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+		
+		Wherigo_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+
+		CommunityCelebration_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 				
+		
+		GeocachingHQ_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 				
+		
+		GeocachingHQCelebration_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
+
+		GeocachingHQBlockParty_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 	
+
+		GigaEvent_cache = L.icon({
+			iconUrl: '/assets/icons/type_earth.png',
+
+			iconSize:     [40, 40], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 				
+		
+	}				
+
+	myMarker = L.marker([crd.latitude,crd.longitude]).addTo(map);
+	myAccuracy = L.circle([crd.latitude,crd.longitude], radius).addTo(map);
+	
+	map.setView([crd.latitude,crd.longitude], zoom_level);
+	
+	isFocusedonMe = "yes";	
+
+	map.panTo(new L.LatLng(crd.latitude,crd.longitude));
+	current_lat = crd.latitude;
+	current_lng = crd.longitude;		
+
+	myStatus="running";
+	softkeyBar();	
+
+	// and our very last action is to see if we were previously navigating to a cache when we 
+	// quit the app - if so, continue that nav selection
+	
+	var navToCacheGeoCode = localStorage.getItem("navToCacheGeoCode");	
+	if (navToCacheGeoCode !== null) {
+		// resume navigation
+			navToCache(navToCacheGeoCode,true);
+	};
+	
+	// if we have never logged in before, push the user to the Help screen to get them started and route them to log in for the first time
+	var token = localStorage.getItem("access_token");
+	
+	if (token == null) {		
+		  windowOpen = "viewHelp";
+		  showView(5,false);
+		  initView();	
+	}	
+	
+	
+}
+
 function success(pos) {
 	// this is a decent spot to check to see if our token has expired
 	time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
@@ -1803,250 +2126,7 @@ function success(pos) {
 
 	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
-		// Pull list of caches near me and plot them on the map (but only if this is set to Yes in settings)
-		//console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
-		if (ShowCachesOnLoad == "YesLoadCaches") {
-			ListCaches(my_current_lat,my_current_lng,"no");	
-		} else {
-			// this is if we don't want to pull the list of live cacheSize
-			// and instead pull them from local storage
-			// minimally always load up what we last had, due to the inconsistencies with KaiOS keeping the app open
-				ListCaches(0,0,"yes");	
-
-		};
-
-		if(MapHasBeenDrawn == false) {
-			//Draw the map
-			//leafvar add basic map
-			map = L.map('map-container', {
-				zoomControl: false,
-				dragging: false,
-				keyboard: true
-			}).fitWorld();
-			tilesUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-			tilesLayer = L.tileLayer(tilesUrl, {
-				//attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-				//    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-			});
-
-			map.addLayer(tilesLayer);
-			
-			MapHasBeenDrawn = true;
-
-			// Setup, but don't pin, the cache marker
-			
-
-			
-			Waypoint_cache = L.icon({
-				iconUrl: '/assets/icons/icons8-waypoint-map-48.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 			
-			
-			NavTo_cache = L.icon({
-				iconUrl: '/assets/icons/icons8-cache-marker-40.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 40], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 			
-			
-			Found_cache = L.icon({
-				iconUrl: '/assets/icons/marker_found.png',
-
-				iconSize:     [20, 20], // size of the icon
-				iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-			
-			Traditional_cache = L.icon({
-				iconUrl: '/assets/icons/type_traditional.png',
-                //iconURL: '/play/app/ui-icons/sprites/cache-types.svg#icon-2',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-			
-			Multi_cache = L.icon({
-				iconUrl: '/assets/icons/type_multi.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-
-			Virtual_cache = L.icon({
-				iconUrl: '/assets/icons/type_virtual.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-			
-			Letterbox_cache = L.icon({
-				iconUrl: '/assets/icons/type_virtual.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 			
-
-			Event_cache = L.icon({
-				iconUrl: '/assets/icons/type_virtual.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-
-			Mystery_cache = L.icon({
-				iconUrl: '/assets/icons/type_mystery.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-			
-			ProjectAPE_cache = L.icon({
-				iconUrl: '/assets/icons/type_virtual.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-			
-			Webcam_cache = L.icon({
-				iconUrl: '/assets/icons/type_virtual.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 			
-
-			Locationless_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-			
-			CITO_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 				
-			
-			Earth_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-			
-			MegaEvent_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-
-			Adventures_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-			
-			Wherigo_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-
-			CommunityCelebration_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 				
-			
-			GeocachingHQ_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 				
-			
-			GeocachingHQCelebration_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 
-
-			GeocachingHQBlockParty_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 	
-
-			GigaEvent_cache = L.icon({
-				iconUrl: '/assets/icons/type_earth.png',
-
-				iconSize:     [40, 40], // size of the icon
-				iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-				popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-			}); 				
-			
-		}				
-
-		myMarker = L.marker([crd.latitude,crd.longitude]).addTo(map);
-		myAccuracy = L.circle([crd.latitude,crd.longitude], radius).addTo(map);
-		
-		map.setView([crd.latitude,crd.longitude], zoom_level);
-		
-		isFocusedonMe = "yes";	
-
-		map.panTo(new L.LatLng(crd.latitude,crd.longitude));
-		current_lat = crd.latitude;
-		current_lng = crd.longitude;		
-
-		myStatus="running";
-		softkeyBar();	
-
-		// and our very last action is to see if we were previously navigating to a cache when we 
-		// quit the app - if so, continue that nav selection
-		
-		var navToCacheGeoCode = localStorage.getItem("navToCacheGeoCode");	
-		if (navToCacheGeoCode !== null) {
-			// resume navigation
-				navToCache(navToCacheGeoCode,true);
-		};
-		
-		// if we have never logged in before, push the user to the Help screen to get them started and route them to log in for the first time
-		var token = localStorage.getItem("access_token");
-		
-		if (token == null) {		
-			  windowOpen = "viewHelp";
-			  showView(5,false);
-			  initView();	
-		}
+		firstRunSetup();
 
 	} else {
 		myMarker.remove();
@@ -2121,145 +2201,57 @@ function success(pos) {
 
 function error(err) {
   console.warn(`ERROR(${err.code}): ${err.message}`);
-  if(err.code == 1) {
+  if(err.code == 1 && stopGPSWarning == false) {
 	//either GPS is turned off or we don't have rights to access the GPS
-	console.log(`storedLat: ${storedLat}`);
-	if(storedLat !== '0') {
-		kaiosToaster({
-		  message: 'GPS is turned off or we have not been allowed access. Will use previously stored location',
-		  position: 'south',
-		  type: 'warning',
-		  timeout: 3000
-		});	
-		my_current_lat = storedLat;
-		my_current_lng = storedLng;
-		// if we have a previously stored location, use that to load us up 
-		if(myStatus=="First Run") {
-			// Pull list of caches near me and plot them on the map (but only if this is set to Yes in settings)
-
-			if (ShowCachesOnLoad == "YesLoadCaches") {
-				ListCaches(storedLat,storedLng,"no");	
-			} else {
-				// this is if we don't want to pull the list of live cacheSize
-				// and instead pull them from local storage
-				ListCaches(0,0,"yes");					
-			};
-
-			if(MapHasBeenDrawn == false) {
-				//Draw the map
-				//leafvar add basic map
-				map = L.map('map-container', {
-					zoomControl: false,
-					dragging: false,
-					keyboard: true
-				}).fitWorld();
-				tilesUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-				tilesLayer = L.tileLayer(tilesUrl, {
-					//attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-					//    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-				});
-
-				map.addLayer(tilesLayer);
-				
-				MapHasBeenDrawn = true;
-
-				// Setup, but don't pin, the cache marker
-				
-				Traditional_cache = L.icon({
-					iconUrl: '/assets/icons/type_traditional.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 
-				
-				Waypoint_cache = L.icon({
-					iconUrl: '/assets/icons/icons8-waypoint-map-48.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 			
-				
-				NavTo_cache = L.icon({
-					iconUrl: '/assets/icons/icons8-cache-marker-40.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 40], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 			
-				
-				Found_cache = L.icon({
-					iconUrl: '/assets/icons/marker_found.png',
-
-					iconSize:     [20, 20], // size of the icon
-					iconAnchor:   [10, 10], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 	
-				
-				Multi_cache = L.icon({
-					iconUrl: '/assets/icons/type_multi.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 
-
-				Mystery_cache = L.icon({
-					iconUrl: '/assets/icons/type_mystery.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 
-				
-				Virtual_cache = L.icon({
-					iconUrl: '/assets/icons/type_virtual.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 	
-
-				Earth_cache = L.icon({
-					iconUrl: '/assets/icons/type_earth.png',
-
-					iconSize:     [40, 40], // size of the icon
-					iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
-					popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-				}); 			
-
-			}				
-
-			myMarker = L.marker([storedLat,storedLng]).addTo(map);
-			//myAccuracy = L.circle([crd.latitude,crd.longitude], radius).addTo(map);
-			
-			map.setView([storedLat,storedLng], zoom_level);
-			
-			isFocusedonMe = "yes";	
-
-			map.panTo(new L.LatLng(storedLat,storedLng));
-			current_lat = storedLat;
-			current_lng = storedLng;		
-
-			myStatus="running";
-			softkeyBar();		
-
-		}		
-		
-		
-	} else {
-		kaiosToaster({
-		  message: 'GPS is turned off or we have not been allowed access.',
-		  position: 'south',
-		  type: 'warning',
-		  timeout: 3000
-		});		
-	}
-	navigator.geolocation.clearWatch(id);
-	console.log('stopping attempts at locating GPS');
-	container.innerHTML = "No GPS";		
 	
+	stopGPSWarning = true;
+	
+	var respondGPS = confirm("GPS is turned off - Select OK to go turn it on");
+	if (respondGPS == true) {
+		mozactivity.openGPS(); // open up the phone's geoLocation settings screen
+	} else {
+		// didn't get permission to turn on GPS, so stop trying to find GPS location
+		navigator.geolocation.clearWatch(id);
+		console.log('stopping attempts at locating GPS');
+		container.innerHTML = "No GPS";			
+	};
+	
+	var goAhead = false;
+	
+	if (goAhead == true) {
+		console.log(`storedLat: ${storedLat}`);
+		if(storedLat !== '0') {
+			kaiosToaster({
+			  message: 'GPS is turned off or we have not been allowed access. Will use previously stored location',
+			  position: 'south',
+			  type: 'warning',
+			  timeout: 3000
+			});	
+			my_current_lat = storedLat;
+			my_current_lng = storedLng;
+			// if we have a previously stored location, use that to load us up 
+			if(myStatus=="First Run") {
+				firstRunSetup();
+			}		
+			
+			
+		} else {
+			kaiosToaster({
+			  message: 'GPS is turned off or we have not been allowed access.',
+			  position: 'south',
+			  type: 'warning',
+			  timeout: 3000
+			});	
+			if(myStatus=="First Run") {
+				firstRunSetup();
+			}			
+		}
+	}
+	
+  } else if (err.code == 1 && stopGPSWarning == true) {
+	  // try stopping and restarting the GPS until the user has set the GPS to be turned on
+	  navigator.geolocation.clearWatch(id);	  
+	  id = navigator.geolocation.watchPosition(success, error, options);
   } else {
 	  attempt = attempt + 1;
 	  mapContent = "<img src='/assets/Bars-1s.gif'>Timeout #" + attempt;
@@ -2374,7 +2366,7 @@ function ListCachesFromMapCenter() {
 	
 }
 
-function ListCaches(myLat,myLng,loadFromStorage) {
+function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 	console.log(`ListCaches loadFromStorage=${loadFromStorage}`);
 
 	if(loadFromStorage =="no"){
@@ -2728,7 +2720,14 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 					  timeout: 3000	
 					});	
 					// turn off the loading spinner
-					loadingOverlay(false);					
+					loadingOverlay(false);	
+					
+					//if yes, bounce over to the cache list itself after loading the list of caches
+					if(showListWhenDone=="yes") {
+						showView(1,false);	
+						initView();	
+					}
+					
 
 				}  else if (geostatus == 401) {
 					// token has expired, refresh and tell caller to retry
@@ -3004,52 +3003,59 @@ function ListCaches(myLat,myLng,loadFromStorage) {
 			for (let i = 0; i < (arrayCacheDetails.length); i++) {
 				// very first thing we need to do before we even check
 				// is see if the full details we've loaded have expired 
-				if(arrayCacheDetails[i].expires < rightNowLocal){
+				var breakTest = false;
+				console.log(`expires:${arrayCacheDetails[i].expires} ?<? rightNowLocal:${rightNowLocal}`);
+				if(arrayCacheDetails[i].expires < rightNowLocal || breakTest){
 					// if expired, remove that item from the array 
+					console.log(`we think the cache should expire: ${arrayCacheDetails[i].expires}`);
 					arrayCacheDetails.splice(i,1);
-				};
-				// now pull the navCode and see if it maches one we already have in our array 
-				for (let j = 0; j < (arrayCache.length); j++){
-					if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
-						// update our stored cache array with these full details
-						//===============================================
-						// note: this code below should match what is in the LoadCacheDetails function
-						//===============================================================
-						// now parse the returned JSON out and do stuff with it
-						var CacheID = j;
-						var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
-						var imageCount = cacheDetails.images.length;
-						var logCount = cacheDetails.geocacheLogs.length;
-						//var logImageCount
+				} else {
+					console.log(`we think the cache should NOT expire: ${arrayCacheDetails[i].expires}`);
+					// the cache is not expired, so find it in our array and load the details up
+					// now pull the navCode and see if it maches one we already have in our array 
+					for (let j = 0; j < (arrayCache.length); j++){
+						if(arrayCacheDetails[i].navCode == arrayCache[j].cacheCode) {
+							// update our stored cache array with these full details
+							//===============================================
+							// note: this code below should match what is in the LoadCacheDetails function
+							//===============================================================
+							// now parse the returned JSON out and do stuff with it
+							var CacheID = j;
+							var cacheDetails = JSON.parse(arrayCacheDetails[i].cacheDetails);
+							var imageCount = cacheDetails.images.length;
+							var logCount = cacheDetails.geocacheLogs.length;
+							//var logImageCount
+								
+							var lastVisitedRaw = cacheDetails.lastVisitedDate;								
+							var lastVisited = lastVisitedRaw.slice(0,10);		
 							
-						var lastVisitedRaw = cacheDetails.lastVisitedDate;								
-						var lastVisited = lastVisitedRaw.slice(0,10);		
-						
-						//update the cache array entry with the rest of the live details 
-						arrayCache[CacheID].cacheName = cacheDetails.name;
-						arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
-						//arrayCache[CacheID].cacheHiddenDate = Placed;
-						//arrayCache[CacheID].cacheDifficulty = Difficulty;
-						//arrayCache[CacheID].cacheTerrain = Terrain;
-						//arrayCache[CacheID].cacheSize = ContainerSize;
-						arrayCache[CacheID].cacheHint = cacheDetails.hints;
-						arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
-						arrayCache[CacheID].cacheFullyLoaded = true;	
-						arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
-						arrayCache[CacheID].cacheStatus = cacheDetails.status;
-						arrayCache[CacheID].cacheLastVisited = lastVisited;
-						arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
-						arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
-						//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
-						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
-						arrayCache[CacheID].cacheImages = cacheDetails.images;					
-						
-						// and now update the cache list to show that cache is fully loaded
-						updateCacheListWithLoaded(CacheID);
-						
-						currentCacheID = CacheID;						
-					};
+							//update the cache array entry with the rest of the live details 
+							arrayCache[CacheID].cacheName = cacheDetails.name;
+							arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
+							//arrayCache[CacheID].cacheHiddenDate = Placed;
+							//arrayCache[CacheID].cacheDifficulty = Difficulty;
+							//arrayCache[CacheID].cacheTerrain = Terrain;
+							//arrayCache[CacheID].cacheSize = ContainerSize;
+							arrayCache[CacheID].cacheHint = cacheDetails.hints;
+							arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
+							arrayCache[CacheID].cacheFullyLoaded = true;	
+							arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
+							arrayCache[CacheID].cacheStatus = cacheDetails.status;
+							arrayCache[CacheID].cacheLastVisited = lastVisited;
+							arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
+							arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
+							//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
+							arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+							arrayCache[CacheID].cacheImages = cacheDetails.images;					
+							
+							// and now update the cache list to show that cache is fully loaded
+							updateCacheListWithLoaded(CacheID);
+							
+							currentCacheID = CacheID;						
+						};
+					};					
 				};
+
 				
 			};
 			// once we're done processing the array, we need to push it back to localstorage 
@@ -3239,10 +3245,6 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 			values = values + ",geocachelog.images:" + numLogsToLoad;
 			values = values + ",images:" + numLogsToLoad;
 			values = values + "&fields=referenceCode,name,difficulty,terrain,trackableCount,placedDate,geocacheType,geocacheSize,status,postedCoordinates,lastVisitedDate,ownerAlias,isPremiumOnly,shortDescription,longDescription,hints,attributes,userData";
-			
-
-  
-
 
 			var xhr = new XMLHttpRequest({ mozSystem: true });
 			var geomethod = "GET";	
@@ -3287,6 +3289,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						};
 						
 						var cacheExpires = localStorage.getItem("fullCallsReset");
+						
 						
 						// then construct the newly loaded cache detail
 						arrayCacheDetailsObject = {
