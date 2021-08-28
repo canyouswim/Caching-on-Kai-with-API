@@ -6,6 +6,7 @@ var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000
 // Geocaching API details
 var userMembershipLevelId;
 var myUserAlias;
+var favPointsAvailable = 0;
 var numCachesToLoad = 50; // how many caches should i load at one time?
 var numLogsToLoad = 15; // how many logs should i load at one time?
 var useAPI = true;
@@ -1311,6 +1312,15 @@ function logThisCache() {
 			clearLogForm = false;
 		}
 		
+		// hide the favorite points selector if the user has no more points to giveMeWayPoint
+		var logFavoritePoints = document.getElementById('logFav');
+		if (favPointsAvailable == 0) {
+			// hide
+			logFavoritePoints.style.display="none";
+		} else {
+			// show
+			logFavoritePoints.style.display="block";			
+		}
 		
 		showView(14,false);
 		initView();						 		 
@@ -1421,6 +1431,8 @@ function submitLog() {
 					// update our user profile details based on this log submission
 					document.getElementById("findCount").innerHTML = "<b>Finds:</b> " + body.owner.findCount;
 					document.getElementById("favoritePoints").innerHTML = "<b>Fav Points:</b> " + body.owner.favoritePoints;
+					
+					favPointsAvailable = body.owner.favoritePoints;
 					
 					
 					//then check to see if we need to submit an image, and do so
@@ -2343,11 +2355,19 @@ function updateUserDetails() {
 				
 				document.getElementById("username").innerHTML = myUserAlias;
 				//document.getElementById("userCode").innerHTML = userDetails.referenceCode;
-				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates.latitude + ", " + userDetails.homeCoordinates.longitude;
+				if(userDetails.homeCoordinates !== null) {
+					document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates.latitude + ", " + userDetails.homeCoordinates.longitude;
+				} else {
+					document.getElementById("homeLocation").innerHTML = "No home coordinates set";				
+				}
 				
-				document.getElementById("avatar").innerHTML = "<img src='" + userDetails.avatarUrl + "' width='50'>";
+				if(userDetails.avatarUrl !== null){
+					document.getElementById("avatar").innerHTML = "<img src='" + userDetails.avatarUrl + "' width='50'>";
+				}
 				document.getElementById("findCount").innerHTML = "<b>Finds:</b> " + userDetails.findCount;
 				document.getElementById("favoritePoints").innerHTML = "<b>Fav Points:</b> " + userDetails.favoritePoints;
+				
+				favPointsAvailable = userDetails.favoritePoints;
 	
 				if(userDetails.membershipLevelId == 1) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: BASIC";
