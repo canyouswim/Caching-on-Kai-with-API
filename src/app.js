@@ -1250,6 +1250,10 @@ function leftButton() {
 	}
 }
 
+
+var clearLogForm = false;
+var cacheIamLogging = -1;
+
 function logThisCache() {
 	 if (navGeoCode !='') {
 		 //show the log cache div
@@ -1273,20 +1277,39 @@ function logThisCache() {
 		document.getElementById("logHeader").innerHTML = BadgeContent;
 		
 		var logTypeSelect = document.getElementById("logType");
-		//hide the Found It log option if the user has already found this cache and logged if previously
-		if(cacheFound=="yes"){
-			document.getElementById("logType").innerHTML = "<option value='4'>Write note</option>";		
-			document.getElementById("logType").innerHTML += "<option value='3'>Didn't Find It</option>";
-		} else {
-			document.getElementById("logType").innerHTML = "<option value='2'>Found It</option>";
-			document.getElementById("logType").innerHTML += "<option value='3'>Didn't Find It</option>";
-			document.getElementById("logType").innerHTML += "<option value='4'>Write note</option>";	
-		}	
+
 		
 		//now clear out the rest of the form for new use
-		document.getElementById("logText").value = "";
-		document.getElementById("logImage").value = "";
-		document.getElementById("logFav").value = "false";		
+		// but only clear out the form if the log had previously been submitted 
+		// so we keep partially entered logs
+		// exception is if the cacheID has changed - in that case we need to clear the log out
+		
+		if (navGeoCode == cacheIamLogging) {
+			// do nothing
+		} else {
+			//ok, we're trying to log a new cache, so clear everything out
+			cacheIamLogging = navGeoCode;
+			clearLogForm = true;
+		}
+		
+		
+		if (clearLogForm == true) {
+			
+			//hide the Found It log option if the user has already found this cache and logged if previously
+			if(cacheFound=="yes"){
+				document.getElementById("logType").innerHTML = "<option value='4'>Write note</option>";		
+				document.getElementById("logType").innerHTML += "<option value='3'>Didn't Find It</option>";
+			} else {
+				document.getElementById("logType").innerHTML = "<option value='2'>Found It</option>";
+				document.getElementById("logType").innerHTML += "<option value='3'>Didn't Find It</option>";
+				document.getElementById("logType").innerHTML += "<option value='4'>Write note</option>";	
+			}				
+			
+			document.getElementById("logText").value = "";
+			document.getElementById("logImage").value = "";
+			document.getElementById("logFav").value = "false";	
+			clearLogForm = false;
+		}
 		
 		
 		showView(14,false);
@@ -1422,6 +1445,7 @@ function submitLog() {
 						  type: 'success',	
 						  timeout: 3000	
 						});	
+						clearLogForm = true;
 						goBack();
 						
 					}
@@ -1471,6 +1495,7 @@ function submitLogImage(logCode,logImage) {
 				  type: 'success',	
 				  timeout: 3000	
 				});	
+				clearLogForm = true;
 				goBack();				
 			}
 		}		
@@ -2124,6 +2149,7 @@ function success(pos) {
 	  movementDistance = movementDistance * 1000;
   }
 
+	mapContent = "  HINT: 1 -ZOOM MAP+ 3";
 	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
 		firstRunSetup();
@@ -2138,8 +2164,9 @@ function success(pos) {
 		}
 	}
 
-	mapContent = "";
+
 	if(CacheLat !== 0 && CacheLng !== 0) {
+		mapContent = "";
 		var mapCompassContainer = document.getElementById('compassContainer');
 		var compassIMG = document.getElementById('compass');
 		var LargeCompassIMG = document.getElementById('largeCompass');
@@ -3497,7 +3524,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 			var CacheDescStr = document.getElementById('CacheDescription');
 			CacheDescStr.innerHTML = '';	
 				var CacheDescription = document.createElement("span");
-				CacheDescription.innerHTML = "<b>Description</b><br>" + arrayCache[CacheID].cacheDescription;
+				CacheDescription.innerHTML = arrayCache[CacheID].cacheDescription;
 			if(arrayCache[CacheID].cacheType == "WAYPOINT"){
 				CacheDescription.innerHTML = arrayCache[CacheID].cacheDescription;;
 			}
