@@ -1412,12 +1412,17 @@ function submitLog() {
 			showModal(logErrors);
 		} else {
 		
-			var logURL = rootAPIurl + "geocachelogs?fields=referencecode&api_key=" + token;		
+			var logURL = rootAPIurl + "geocachelogs?fields=referencecode,owner&api_key=" + token;		
 			var request = new XMLHttpRequest({ mozSystem: true });
 			
 			request.onreadystatechange = function() {
 				if (this.readyState == 4 && (this.status == 200 || this.status == 201)) {
 					body = JSON.parse(this.response);
+					// update our user profile details based on this log submission
+					document.getElementById("findCount").innerHTML = "<b>Finds:</b> " + body.owner.findCount;
+					document.getElementById("favoritePoints").innerHTML = "<b>Fav Points:</b> " + body.owner.favoritePoints;
+					
+					
 					//then check to see if we need to submit an image, and do so
 					if(cacheLogImage.value !== "") {
 						// convert file to base64
@@ -2291,7 +2296,7 @@ function updateUserDetails() {
 	//----------------------------
 	// update our stored user details / stats
 	
-	var values = "users/me?fields=referenceCode%2Cusername%2CmembershipLevelId%2ChomeCoordinates%2CgeocacheLimits";
+	var values = "users/me?fields=referenceCode,username,membershipLevelId,homeCoordinates,geocacheLimits,favoritePoints,findCount,avatarUrl";
 
 	var xhr = new XMLHttpRequest({ mozSystem: true });
 	var geomethod = "GET";	
@@ -2336,9 +2341,13 @@ function updateUserDetails() {
 				console.log(`User cache limit resets on ${fullCallsResetLocal}`);
 				localStorage.setItem('fullCallsReset',fullCallsResetLocal);				
 				
-				document.getElementById("username").innerHTML = "<b>Username</b>: " + myUserAlias;
+				document.getElementById("username").innerHTML = myUserAlias;
 				//document.getElementById("userCode").innerHTML = userDetails.referenceCode;
-				//document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates;
+				document.getElementById("homeLocation").innerHTML = userDetails.homeCoordinates.latitude + ", " + userDetails.homeCoordinates.longitude;
+				
+				document.getElementById("avatar").innerHTML = "<img src='" + userDetails.avatarUrl + "' width='50'>";
+				document.getElementById("findCount").innerHTML = "<b>Finds:</b> " + userDetails.findCount;
+				document.getElementById("favoritePoints").innerHTML = "<b>Fav Points:</b> " + userDetails.favoritePoints;
 	
 				if(userDetails.membershipLevelId == 1) {
 					document.getElementById("membershipType").innerHTML = "<b>Membership</b>: BASIC";
