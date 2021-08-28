@@ -14,6 +14,20 @@ var rootAPIurl = "https://staging.api.groundspeak.com/v1/"; // staging
 //var rootAPIurl = //production
 var rootSiteURL = "https://staging.geocaching.com";
 
+// if connected to staging, make the button bar background stand out so the user knows we're in the staging server
+if (rootAPIurl == "https://staging.api.groundspeak.com/v1/") {
+	var barBackground = document.getElementById("softkeyBar");
+	var barBack = document.getElementById("bar-back");
+	var barAction = document.getElementById("bar-action");
+	var barOptions = document.getElementById("bar-options");
+	
+	barBackground.style.backgroundColor = "red";
+	barBack.style.backgroundColor = "red";
+	barAction.style.backgroundColor = "red";
+	barOptions.style.backgroundColor = "red";
+}
+
+
 // message to show to basic users when they look to download the full details of a particular cache
 var basicUserMessageForCacheDownload;
 
