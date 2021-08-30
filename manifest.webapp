@@ -7,8 +7,8 @@
   "origin": "app://caching-on-kai.com",
   "launch_path": "/index.html",
   "icons": {
-    "56": "/assets/appLogo/Logo_caching-on-kai_56x56.png",
-    "112": "/assets/appLogo/Logo_caching-on-kai_112x112.png"
+    "56": "/assets/appLogo/icons8-waypoint-map-56.png",
+    "112": "/assets/appLogo/icons8-waypoint-map-112.png"
   },
   "developer": {
     "name": "canyouswim",

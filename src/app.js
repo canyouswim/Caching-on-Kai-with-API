@@ -21,11 +21,21 @@ if (rootAPIurl == "https://staging.api.groundspeak.com/v1/") {
 	var barAction = document.getElementById("bar-action");
 	var barOptions = document.getElementById("bar-options");
 	
-	barBackground.style.backgroundColor = "red";
-	barBack.style.backgroundColor = "red";
-	barAction.style.backgroundColor = "red";
-	barOptions.style.backgroundColor = "red";
+	//barBackground.style.backgroundColor = "red";
+	//barBack.style.backgroundColor = "red";
+	//barAction.style.backgroundColor = "red";
+	//barOptions.style.backgroundColor = "red";
 }
+
+console.log(`userAgent = ${navigator.userAgent}`);
+
+var isNokia = false;
+var myUserAgent = navigator.userAgent;
+if(myUserAgent.search("Nokia") > 0) {
+	//alert("you're on a Nokia device");
+}
+
+
 
 
 // message to show to basic users when they look to download the full details of a particular cache
@@ -687,7 +697,7 @@ window.addEventListener("load", function () {
 			return response.json();
 		  })
 		  .then(function (data) {
-				document.getElementById("aboutVersion").innerHTML = "<b>Caching-on-Kai<br>&nbsp;&nbsp;&nbsp;&nbsp;v" + data.version + "</b>";
+				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";
 				document.getElementById("loadingVersion").innerText = "v" + data.version;			  
 		  })
 		  .catch(function (err) {
