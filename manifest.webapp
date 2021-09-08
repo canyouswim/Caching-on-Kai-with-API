@@ -1,5 +1,5 @@
 {
-  "version": "3.0.11",
+  "version": "3.1.0",
   "name": "Cache-on-Kai",
   "subtitle": "Geocaching for the rest of us",
   "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
@@ -7,8 +7,8 @@
   "origin": "app://caching-on-kai.com",
   "launch_path": "/index.html",
   "icons": {
-    "56": "/assets/appLogo/Logo_caching-on-kai_56x56.png",
-    "112": "/assets/appLogo/Logo_caching-on-kai_112x112.png"
+    "56": "/assets/appLogo/icons8-waypoint-map-56.png",
+    "112": "/assets/appLogo/icons8-waypoint-map-112.png"
   },
   "developer": {
     "name": "canyouswim",
