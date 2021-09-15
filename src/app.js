@@ -82,7 +82,30 @@ if (app.useProduction == false) {
 // =======================================================================
 // =======================================================================
 // insert API details here...
+if(app.useProduction == false) {
+	//===============================
+	// Staging server details
+		app.rootAPIurl = "https://staging.api.groundspeak.com/v1/"; 
+		app.rootSiteURL = "https://staging.geocaching.com";
 
+		// Authorization server details
+		app.config = {
+			client_id: "11BA3E15-D061-4AC7-A39A-F0BF8A8FBEC3",
+			client_secret: "2B6726F6-5B9B-4FF8-A01D-4C877BD30C2A",
+			redirect_uri: "https://caching-on-kai.com/",
+			authorization_endpoint: "https://staging.geocaching.com/oauth/authorize.aspx",
+			token_endpoint: "https://oauth-staging.geocaching.com/token",
+			requested_scopes: "*"
+		};
+		
+	//================================
+} else {
+	//===============================
+	// Production server details
+
+		
+	//================================
+}
 
 
 // =======================================================================
@@ -1936,7 +1959,7 @@ function firstRunSetup() {
 	//console.log(`from first run: ShowCachesOnLoad = ${ShowCachesOnLoad}`);
 	
 	if(myUserAgent.search("Nokia") > 0) {
-		alert("A special note if you use any of the Nokia phones (8110, 6300, 8000, probably 2720): the 4G antenna interfers with the A-GPS ability to obtain an accurate lock on your location. Use the 'Phone Data Settings' button under the 'Settings' screen to jump over to the phone's settings and turn off 4G when you require an accurate GPS lock.");
+		//alert("A special note if you use any of the Nokia phones (8110, 6300, 8000, probably 2720): the 4G antenna interfers with the A-GPS ability to obtain an accurate lock on your location. Use the 'Phone Data Settings' button under the 'Settings' screen to jump over to the phone's settings and turn off 4G when you require an accurate GPS lock.");
 	}	
 	
 	if (ShowCachesOnLoad == "YesLoadCaches") {
