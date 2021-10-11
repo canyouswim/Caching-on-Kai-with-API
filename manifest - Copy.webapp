@@ -1,15 +1,29 @@
 {
-  "version": "3.1.11",
+  "version": "3.1.13",
   "name": "Cache-on-Kai",
+  "id": "Cache-on-Kai",
   "subtitle": "Geocaching for the rest of us",
   "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
   "type": "privileged",
   "origin": "app://caching-on-kai.com",
   "launch_path": "/index.html",
-  "icons": {
-    "56": "/assets/appLogo/icons8-waypoint-map-56.png",
-    "112": "/assets/appLogo/icons8-waypoint-map-112.png"
-  },
+  "start_url": "/index.html",
+  "theme_color": "#02874D",
+  "orientation": "natural",  
+  "dir": "ltr",  
+  "scope": "/",  
+  "display": "browser",
+  "background_color": "white",  
+  "icons": [{
+    "src": "/assets/appLogo/icons8-waypoint-map-56.png",
+	"type": "image/png",
+	"sizes": "56x56"
+   },
+   {
+    "src": "/assets/appLogo/icons8-waypoint-map-112.png",
+	"type": "image/png",
+	"sizes": "112x112"
+  }],
   "developer": {
     "name": "canyouswim",
     "url": "https://caching-on-kai.com"
@@ -40,6 +54,7 @@
 	  
   
   "default_locale": "en-US",
+  "lang": "en-US",
   "permissions": {
 	"geolocation": {
 	"description": "Required to show user's location on map"

@@ -2,6 +2,7 @@
 var MODULE = (function () {
 
 var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
+var initialLoadofApp = localStorage.getItem('initialLoadofApp');
 //=========================================
 // Geocaching API details
 var userMembershipLevelId;
@@ -36,7 +37,7 @@ var basicUserMessageForCacheDownload;
 
 var app = {};
 // use the custom module namespace 'app' for all variables and functions you need to access through other scripts
-app.useProduction = false;
+app.useProduction = true;
 app.rootAPIurl = null; 
 app.rootSiteURL = null;
 app.config = new Array();
@@ -718,6 +719,7 @@ app.newKeyCallback={
 window.addEventListener("load", function () {
 
 	//localStorage.clear();
+
 	
 	// set the correct version number in various places within the app
 	
@@ -802,7 +804,16 @@ window.addEventListener("load", function () {
 	} else {
 		// this is the first time running the app, and we have not logged in yet - uncomment below to force login on the first run of the app
 		//console.log('We do not have a token at first log in, so trying to get one now');
-		//getToken();		
+		//getToken();	
+		// is this the very first run of the app after load?
+		
+
+
+		if(initialLoadofApp == null) {	
+			localStorage.setItem('initialLoadofApp', "finished");
+			alert('Finished one time app setup. Please restart the app.');
+			window.close();
+		}		
 	};	
 
 
@@ -5347,7 +5358,7 @@ function getToken(signup){
 
 
 	// Redirect to the authorization server
-	window.open(url);
+	window.open(url,"_blank");
 };
 
 function refreshToken(method,action) {
@@ -5440,6 +5451,8 @@ function sendPostRequest(url, params, success, error) {
 		//alert("Error returned from authorization server: "+q.error);
 		//document.getElementById("error_details").innerText = q.error+"\n\n"+q.error_description;
 		//document.getElementById("error").classList = "";
+		alert("Apologies, there was an error in finishing the login process. This will usually resolve if you restart the app and try logging in again");
+		window.close();			
 	};
 
 	// If the server returned an authorization code, attempt to exchange it for an access token
@@ -5449,9 +5462,13 @@ function sendPostRequest(url, params, success, error) {
 		if(localStorage.getItem("pkce_state") != q.state) {
 			var returnedState = "q.state: " + q.state;
 			var storedState = "stored state: " + localStorage.getItem("pkce_state");
-			alert("Invalid state\n\n" + returnedState + "\n\n" + storedState);
+			//alert("Invalid state\n\n" + returnedState + "\n\n" + storedState);
+			alert("Apologies, there was an error in finishing the login process. This will usually resolve if you restart the app and try logging in again");
+			window.close();			
 		} else {
-
+			var returnedState = "q.state: " + q.state;
+			var storedState = "stored state: " + localStorage.getItem("pkce_state");
+			//alert("Checking our state:\n\n" + returnedState + "\n\n" + storedState);
 			// Exchange the authorization code for an access token
 			console.log('line 4575, trying to exchange auth code for access token');
 			sendPostRequest(app.config.token_endpoint, {
@@ -5497,7 +5514,9 @@ function sendPostRequest(url, params, success, error) {
 			}, function(request, error) {
 				// This could be an error response from the OAuth server, or an error because the 
 				// request failed such as if the OAuth server doesn't allow CORS requests
-				alert(error.error+"\n\n"+error.error_description);
+				//alert(error.error+"\n\n"+error.error_description);
+				alert("Apologies, there was an error in finishing the login process. This will usually resolve if you restart the app and try logging in again");	
+				window.close();				
 				//document.getElementById("error_details").innerText = error.error+"\n\n"+error.error_description;
 				//document.getElementById("error").classList = "";
 			});
@@ -5750,7 +5769,8 @@ function loadCachesToList(myLat,myLng,cacheListJSON) {
 	
 }
 
-id = navigator.geolocation.watchPosition(success, error, options);	
+
+if(initialLoadofApp == "finished") {id = navigator.geolocation.watchPosition(success, error, options);};
 
 return app;
 }());
