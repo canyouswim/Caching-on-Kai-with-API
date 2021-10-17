@@ -1,5 +1,5 @@
 {
-  "version": "3.1.11",
+  "version": "3.1.16",
   "name": "Cache-on-Kai",
   "subtitle": "Geocaching for the rest of us",
   "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
@@ -52,9 +52,6 @@
 
 	"device-storage:apps":{ "access": "readonly" },
 
-	"spatialnavigation-app-manage": {
-	"navigator.spatialNavigationEnabled": false
-	},
 
 	"systemXHR": {
 	"description": "Required to load remote content from geocaching.com"
