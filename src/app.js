@@ -5,8 +5,8 @@ var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000
 var initialLoadofApp = localStorage.getItem('initialLoadofApp');
 //=========================================
 // Geocaching API details
-var userMembershipLevelId;
-var myUserAlias;
+var userMembershipLevelId="0";
+var myUserAlias="notSet";
 var favPointsAvailable = 0;
 var numCachesToLoad = 50; // how many caches should i load at one time?
 var numLogsToLoad = 15; // how many logs should i load at one time?
@@ -112,6 +112,13 @@ if(app.useProduction == false) {
 // =======================================================================
 // =======================================================================
 // =======================================================================
+
+// =================================
+// Google Analytics details
+
+var googleUA = "UA-208621269-1";
+
+// =================================
 
 var following = false;
 
@@ -248,7 +255,7 @@ var pauseClicks = false; // used to not allow buttons to fire until a modal is c
 
 var stopGPSWarning = false;
 
-
+var manifestVersion="0";
 
 
 
@@ -731,7 +738,8 @@ window.addEventListener("load", function () {
 		  })
 		  .then(function (data) {
 				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";
-				document.getElementById("loadingVersion").innerText = "v" + data.version;			  
+				document.getElementById("loadingVersion").innerText = "v" + data.version;	
+				manifestVersion = data.version;
 		  })
 		  .catch(function (err) {
 			console.log(err);
@@ -745,8 +753,6 @@ window.addEventListener("load", function () {
 	
 	helper.getVersion();
 
-
-	
 	
 	if(app.gpsCoordRepresentation == null) {
 		//meaning this is the first time the app has been run
@@ -811,6 +817,9 @@ window.addEventListener("load", function () {
 
 		if(initialLoadofApp == null) {	
 			localStorage.setItem('initialLoadofApp', "finished");
+			console.log(`start analytics log, initial install`);
+			logAnalytics("Install","Install","RestartPrompt");
+			console.log(`finish analytics log, initial install`);			
 			alert('Finished one time app setup. Please restart the app.');
 			window.close();
 		}		
@@ -1497,6 +1506,8 @@ function submitLog() {
 			showModal(logErrors);
 		} else {
 		
+			logAnalytics("Caches","LogCache",cacheLogType.value);			
+		
 			var logURL = app.rootAPIurl + "geocachelogs?fields=referencecode,owner&api_key=" + token;		
 			var request = new XMLHttpRequest({ mozSystem: true });
 			
@@ -2004,6 +2015,13 @@ function firstRunSetup() {
 		// Setup, but don't pin, the cache marker
 		
 
+		Owned_cache = L.icon({
+			iconUrl: '/assets/icons/cache_icon_badge_owned.png',
+
+			iconSize:     [32, 32], // size of the icon
+			iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
+			popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+		}); 
 		
 		Waypoint_cache = L.icon({
 			iconUrl: '/assets/icons/icons8-waypoint-map-48.png',
@@ -2249,6 +2267,7 @@ function success(pos) {
 	mapContent = "  HINT: 1 -ZOOM MAP+ 3";
 	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
+		logAnalytics("Startup","Startup",userMembershipLevelId);
 		firstRunSetup();
 
 	} else {
@@ -2489,6 +2508,139 @@ function updateUserDetails() {
 	};	
 }
 
+function logAnalytics(eventCategory,eventAction,eventLabel) {
+
+// generally, we log:
+// - app version
+// - OS version
+// - action the user took (started app, pull cache list, nav to cache, log cache)
+// - is the user premium or not 
+// the intent of these analytics are to understand app usage, generally, and how deeply it is being used
+
+/*
+	Sample app page payload:
+
+Do as a screenview:
+These are required:
+	v=1                         // Version, always 1 for now
+	&tid=UA-XXXXX-Y             // Tracking ID / Property ID - my google ID -> UA-208621269-1
+	&cid=555                    // Anonymous Client ID to uniquely identify the app client user
+	&t=screenview               // Screenview hit type, append the "action" variable here
+	
+Then app details:
+	&an=cache-on-kai                // App name -> cache-on-kai
+	&av=manifestVersion             // App version -> pull the version from this code manifest
+	
+Then screen name details (goes along with screenview hit type)
+	&cd=action						// this is the screen or action the user is taking - logging in, nav to cache, etc
+
+Do as an Event trigger:
+v=1
+&t=event
+&tid=UA-208621269-1
+&cid=myUserAlias   							// unique ID of the user
+&av=3.1.13									// manifest version ID
+&an=cache-on-kai
+&ec=Login									// event category
+&ea=Login									// event action
+&el=membershipLevelId						// type of user, put into the event label field
+
+or:
+&ec=Caches									// event category
+&ea=LoadCaches / NavToCache / LogCache									// event action
+&el=Found / DNF / Note (if log cache)									// event label - in this case, type of user
+&ev=userMembershipLevelId													// type of user
+
+
+
+	Details on those ^^^ parameters - https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters
+	
+	Details on formating the payload - https://developers.google.com/analytics/devguides/collection/protocol/v1/reference
+	
+	GET /collect?payload_data     (using HTTP/1.1)
+	Host: https://www.google-analytics.com
+	User-Agent: user_agent_string
+
+*/
+
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var method = "GET";	
+	var url = "https://www.google-analytics.com/collect?";
+	
+	url = url + "v=1&t=event&tid=" + googleUA;
+	url = url + "&cid=" + myUserAlias;
+	url = url + "&an=cache-on-kai&av=" + manifestVersion;
+	url = url + "&ec=" + eventCategory;
+	url = url + "&ea=" + eventAction;
+	url = url + "&el=" + eventLabel;
+	url = url + "&ev=" + userMembershipLevelId;
+
+		xhr.open(method, url, true);	
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  //console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  //console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			//console.log('headers received'); 
+		  } else if (geoloadstate == 3) {
+			 // console.log('loading data');
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				console.log(`GA submit status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+
+				
+			}  else if (geostatus == 401) {
+
+			}
+		  }  else {
+			// Oh no! There has been an error with the request!
+			console.log("some problem trying to write to analytics...");
+		  }
+		}; 
+		xhr.send();	
+}
+
+function getChangeLog() {
+	console.log('pulling change log');
+
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var geomethod = "GET";	
+	var geourl = "https://caching-on-kai.com/home/change-log/";
+
+		//console.log('we have a token');
+		xhr.open(geomethod, geourl, true);	
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  //console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  //console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			//console.log('headers received'); 
+		  } else if (geoloadstate == 3) {
+			 // console.log('loading data');
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				//console.log(`status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+				console.log(`Change Log: ${siteText}`);
+				
+			}  else if (geostatus == 401) {
+
+			}
+		  }  else {
+			// Oh no! There has been an error with the request!
+			console.log("some problem trying to pull change log...");
+		  }
+		}; 
+		xhr.send();	
+}
+
 function ListCachesFromMapCenter() {
 	// get the lat/lng of the center of the current map view and refresh the list of caches from that point instead
 	// of the current GPS location
@@ -2506,7 +2658,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 	console.log(`ListCaches loadFromStorage=${loadFromStorage}`);
 
 	if(loadFromStorage =="no"){
-		updateUserDetails()		
+		updateUserDetails()	
+		logAnalytics("Caches","LoadCaches",userMembershipLevelId);		
 		var values = "geocaches/search?q=location: [" + myLat + "," + myLng + "]";
 		values = values + "&lite=true";			
 
@@ -2729,7 +2882,12 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 						entry.appendChild(BadgeContent);
 
 						var headline = document.createElement("span");
-						headline.innerHTML = "<b>" + CacheName + "</b><br>" + Distance;							
+						headline.innerHTML = "<b>" + CacheName + "</b><br>" + Distance;
+
+						if(CachePremium=="true" || CachePremium==true) {
+							headline.innerHTML = headline.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+						}
+						
 						// take that structured HTML and drop it into the page:
 						entry.appendChild(headline);	
 
@@ -2775,7 +2933,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 							cacheDNFCount: geoCacheDetails[i].dnfCount,
 							cacheLastVisited: lastVisitedDate,
 							cacheOwner: geoCacheDetails[i].ownerAlias,
-							cacheOwnerCode: geoCacheDetails[i].ownerCode
+							cacheOwnerCode: geoCacheDetails[i].ownerCode,
+							cacheIsPremium: geoCacheDetails[i].isPremiumOnly
 						};
 						arrayCache[i] = arrayCacheObject;	
 						
@@ -2843,7 +3002,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 									arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
 									//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
 									arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
-									arrayCache[CacheID].cacheImages = cacheDetails.images;					
+									arrayCache[CacheID].cacheImages = cacheDetails.images;
+									arrayCache[CacheID].cacheIsPremium = cacheDetails.isPremiumOnly;
 									
 									// and now update the cache list to show that cache is fully loaded
 									updateCacheListWithLoaded(CacheID);
@@ -3086,7 +3246,13 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 				entry.appendChild(BadgeContent);
 
 				var headline = document.createElement("span");
-				headline.innerHTML = "<b>" + CacheName + "</b><br>" + Distance;							
+				headline.innerHTML = "<b>" + CacheName + "</b><br>" + Distance;		
+
+				if(CachePremium=="true" || CachePremium==true) {
+					headline.innerHTML = headline.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+				}
+
+				
 				// take that structured HTML and drop it into the page:
 				entry.appendChild(headline);	
 
@@ -3125,7 +3291,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 					cacheDNFCount: geoCacheDetails[i].dnfCount,
 					cacheLastVisited: lastVisitedDate,
 					cacheOwner: geoCacheDetails[i].ownerAlias,
-					cacheOwnerCode: geoCacheDetails[i].ownerCode
+					cacheOwnerCode: geoCacheDetails[i].ownerCode,
+					cacheIsPremium: geoCacheDetails[i].isPremiumOnly
 				};
 				arrayCache[i] = arrayCacheObject;		
 				
@@ -3346,7 +3513,9 @@ function ShowAllCachesOnMap(ShowCaches) {
 	
 	if(ShowCaches=="yes-noName"){
 		for (let i = 0; i < CacheNumber; i++) {
-			if(arrayCache[i].cacheFound == "yes") {
+			if(arrayCache[i].cacheOwner == myUserAlias) { // i own this cache
+				arrayCacheMarker[i] = L.marker([arrayCache[i].cacheLat,arrayCache[i].cacheLng], {icon: Owned_cache}).addTo(map);			
+			} else if(arrayCache[i].cacheFound == "yes") { // i've found this cache
 				arrayCacheMarker[i] = L.marker([arrayCache[i].cacheLat,arrayCache[i].cacheLng], {icon: Found_cache}).addTo(map);
 			} else if(arrayCache[i].cacheType == 2) { // Traditional
 				arrayCacheMarker[i] = L.marker([arrayCache[i].cacheLat,arrayCache[i].cacheLng], {icon: Traditional_cache}).addTo(map);
@@ -3542,6 +3711,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 						arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
 						//arrayCache[CacheID].cacheImages = cacheDetails.images;
 						arrayCache[CacheID].cacheLogLoadCount = cacheDetails.geocacheLogs.length;
+						arrayCache[CacheID].cacheIsPremium = cacheDetails.isPremiumOnly;
 							
 						// our array is now updated - go show the cache details
 						//viewCacheLogs(CacheID);
@@ -3762,12 +3932,17 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 		CacheHeader.innerHTML = '';	
 			var BadgeContent = document.createElement("span");
 			BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+			
+			if(arrayCache[CacheID].cacheIsPremium == "true" || arrayCache[CacheID].cacheIsPremium == true) {
+				BadgeContent.innerHTML = BadgeContent.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+			}
+			
 		CacheHeader.appendChild(BadgeContent);	
 			
 		var CacheLevels = document.getElementById('CacheDetails');
 		CacheLevels.innerHTML = '';	
 			var CacheLevelsDetail = document.createElement("span");
-			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
+			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation)+"<br>Premium: " + arrayCache[CacheID].cacheIsPremium;
 		if(arrayCache[CacheID].cacheType == "WAYPOINT"){
 			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>" + arrayCache[CacheID].cacheHiddenDate;
 		}
@@ -3955,6 +4130,11 @@ function viewCacheLogs(CacheID) {
 	CacheHeader.innerHTML = '';	
 		var BadgeContent = document.createElement("span");
 		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+		
+		if(arrayCache[CacheID].cacheIsPremium == "true" || arrayCache[CacheID].cacheIsPremium == true) {
+			BadgeContent.innerHTML = BadgeContent.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+		}		
+		
 	CacheHeader.appendChild(BadgeContent);	
 	
 	CacheLogCounts.innerHTML = "Finds: <img src='/images/icons/2.png'> " + findCount + "&nbsp;&nbsp;&nbsp;<img src='/images/icons/3.png'> " + dnfCount;
@@ -4226,6 +4406,11 @@ function viewCacheGallery(CacheID) {
 	CacheHeader.innerHTML = '';	
 		var BadgeContent = document.createElement("span");
 		BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+		
+	if(arrayCache[CacheID].cacheIsPremium == "true" || arrayCache[CacheID].cacheIsPremium == true) {
+		BadgeContent.innerHTML = BadgeContent.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+	}		
+		
 	CacheHeader.appendChild(BadgeContent);	
 
 	//================================================================================
@@ -4318,6 +4503,7 @@ function ShowCacheOnMap(CacheCode) {
 function navToCache(navGeoCode,startNav) {
 	if(startNav) {
 		windowOpen = "viewMap";
+		logAnalytics("Caches","NavToCache",userMembershipLevelId);			
 		showView(0,false);
 		initView();	
 		ShowCacheOnMap(navGeoCode);
@@ -5358,7 +5544,7 @@ function getToken(signup){
 
 
 	// Redirect to the authorization server
-	window.open(url,"_blank");
+	window.open(url);
 };
 
 function refreshToken(method,action) {
