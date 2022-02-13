@@ -1,0 +1,72 @@
+{
+  "name": "Cache-on-Kai",
+  "id": "Cache-on-Kai",
+  "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
+  "type": "privileged",
+  "lang": "en-US",
+  "theme_color": "#02874D",
+  "orientation": "natural",
+  "launch_path": "/index.html",
+  "start_url": "/index.html",
+  "dir": "ltr",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#02874D",
+  "categories": [
+      "social"
+  ],  
+  "icons": [
+    {
+      "src": "/assets/appLogo/icons8-waypoint-map-56.png",
+      "type": "image/png",
+      "sizes": "56x56"
+    },
+    {
+      "src": "/assets/appLogo/icons8-waypoint-map-112.png",
+      "type": "image/png",
+      "sizes": "112x112"
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "name": "Cache-on-Kai",
+      "subtitle": "Geocaching for the rest of us",
+      "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program."
+    }
+  },
+
+  "default_locale": "en-US",
+
+  "url_handlers": [
+    {
+      "origin": "https://caching-on-kai.com"
+    }
+  ],
+
+    "b2g_features": {
+	  "version": "3.1.20.3",
+    "developer": {
+      "name": "canyouswim",
+      "url": "https://caching-on-kai.com"
+    },	  
+    "permissions": {
+      "geolocation": {
+        "description": "Required to show user's location on map"
+      },
+      "camera": {
+        "description": "Required for accessing cameras on the device."
+      },
+      "device-storage:apps": {
+        "access": "readonly"
+      },
+      "systemXHR": {
+        "description": "Required to load remote content from geocaching.com"
+      }
+    },
+    "subtitle": "Geocaching for the rest of us",
+    "dependencies": {
+     "ads-sdk": "1.5.1"
+    }
+
+  }
+}

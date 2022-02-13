@@ -37,7 +37,7 @@ var basicUserMessageForCacheDownload;
 
 var app = {};
 // use the custom module namespace 'app' for all variables and functions you need to access through other scripts
-app.useProduction = true;
+app.useProduction = false;
 app.rootAPIurl = null; 
 app.rootSiteURL = null;
 app.config = new Array();
@@ -91,8 +91,8 @@ if(app.useProduction == false) {
 
 		// Authorization server details
 		app.config = {
-			client_id: "11BA3E15-D061-4AC7-A39A-F0BF8A8FBEC3",
-			client_secret: "2B6726F6-5B9B-4FF8-A01D-4C877BD30C2A",
+			client_id: 
+			client_secret: 
 			redirect_uri: "https://caching-on-kai.com/",
 			authorization_endpoint: "https://staging.geocaching.com/oauth/authorize.aspx",
 			token_endpoint: "https://oauth-staging.geocaching.com/token",
@@ -103,7 +103,18 @@ if(app.useProduction == false) {
 } else {
 	//===============================
 	// Production server details
+		app.rootAPIurl = "https://api.groundspeak.com/v1/"; 
+		app.rootSiteURL = "https://geocaching.com";
 
+		// Authorization server details
+		app.config = {
+			client_id:
+			client_secret: 
+			redirect_uri: "https://caching-on-kai.com/",
+			authorization_endpoint: "https://geocaching.com/oauth/authorize.aspx",
+			token_endpoint: "https://oauth.geocaching.com/token",
+			requested_scopes: "*"
+		};
 		
 	//================================
 }
@@ -732,7 +743,8 @@ window.addEventListener("load", function () {
 	
 	const helper = (() => {
 	  let getVersion = function () {
-		fetch("/manifest.webapp")
+		fetch("/manifest.webapp") // v2.5.x manifest
+		//fetch("/manifest.webmanifest")	// v3.x manifest
 		  .then(function (response) {
 			return response.json();
 		  })
@@ -1549,6 +1561,9 @@ function submitLog() {
 						  timeout: 3000	
 						});	
 						clearLogForm = true;
+						// stop navigation now that we've logged the cache 
+						
+						
 						goBack();
 						
 					}
@@ -2498,6 +2513,9 @@ function updateUserDetails() {
 		  }  else {
 			// Oh no! There has been an error with the request!
 			console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");			
 		  }
 		}; 
 		
@@ -3040,6 +3058,9 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 				}  else {
 				// Oh no! There has been an error with the request!
 				console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");
 			    }
 			  }; 
 			}
@@ -3733,6 +3754,9 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 					}  else {
 					// Oh no! There has been an error with the request!
 					console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");					
 				    }
 				  }; 
 				};
@@ -3831,6 +3855,9 @@ function loadCacheImages(CacheCode, CacheID) {
 			}  else {
 			// Oh no! There has been an error with the request!
 			console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");			
 			}
 		  }; 
 		};
@@ -3942,7 +3969,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails) {
 		var CacheLevels = document.getElementById('CacheDetails');
 		CacheLevels.innerHTML = '';	
 			var CacheLevelsDetail = document.createElement("span");
-			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation)+"<br>Premium: " + arrayCache[CacheID].cacheIsPremium;
+			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
 		if(arrayCache[CacheID].cacheType == "WAYPOINT"){
 			CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>" + arrayCache[CacheID].cacheHiddenDate;
 		}
@@ -4385,7 +4412,9 @@ function loadMoreCacheLogs(CacheCode) {
 			}  else {
 			// Oh no! There has been an error with the request!
 			console.log("some problem...");
-			loadingOverlay(false);
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");
 			}
 		  }; 
 		};
@@ -5631,6 +5660,7 @@ function sendPostRequest(url, params, success, error) {
 
 	if(localStorage.getItem("access_token")==null) {
 	var q = parseQueryString(window.location.search.substring(1));
+		//alert("queryString\n\n" + window.location);
 
 	// Check if the server returned an error string
 	if(q.error) {
@@ -5825,6 +5855,9 @@ function pullFromAPI(method,action,myLat,myLng, cacheGC) {
 			}  else {
 			// Oh no! There has been an error with the request!
 			console.log("some problem in pullFromAPI function call...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					//alert("There was an issue connecting to geocaching.com...");			
 			}
 		}
 		}		
