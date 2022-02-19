@@ -23,8 +23,7 @@ var google_key;
 var isNokia = false;
 var myUserAgent = navigator.userAgent;
 
-
-
+var showConnectionError = true;
 
 
 // message to show to basic users when they look to download the full details of a particular cache
@@ -1729,6 +1728,10 @@ function submitLog() {
 					loadingOverlay(false);						
 					//showModal(responseError);
 					alert(responseError);
+					loadingOverlay(false);	
+				} else {
+					alert("There was an error connecting to geocaching.com...");
+					loadingOverlay(false);	
 				}
 			}		
 			request.open("POST", logURL, true);
@@ -1771,6 +1774,9 @@ function submitLogImage(logCode,logImage) {
 				clearLogForm = true;
 				navToCache(0,false);
 				goBack();				
+			} else {
+				alert("There was an error connecting to geocaching.com...");
+				loadingOverlay(false);					
 			}
 		}		
 		request.open("POST", logURL, true);
@@ -4074,11 +4080,18 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 							//console.log('refreshing token');
 							refreshToken();
 						}  else {
-						// Oh no! There has been an error with the request!
-						//console.log("some problem...");
-						// turn off the loading spinner
-						loadingOverlay(false);	
-						alert("There was an issue connecting to geocaching.com...");					
+							// Oh no! There has been an error with the request!
+							//console.log("some problem...");
+							// turn off the loading spinner
+							loadingOverlay(false);	
+							// there was some issue loading full details, so pushing to the partial details screen.
+							logAnalytics("Caches","ViewPartialDetails",userMembershipLevelId);				
+							ShowCacheDetails(CacheID,true,false);	
+							if(showConnectionError) {
+								if (confirm("There was an issue connecting to geocaching.com... We will display  partial cache details. Select OK to stop showing this message.")) {
+									showConnectionError = false;
+								}
+							}
 						}
 					  }; 
 					};
@@ -4391,6 +4404,8 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				initView();
 			} else {
 				// we are a non-premium user and need to be prompted to decide if we want to load the full details
+				// -or- we are a premium user who has not pre-loaded a cache and now has no
+				// internet connectivity, so we are only showing a stub of the cache 
 				// for this cache - construct that message now
 				var showCacheFullDetails = document.getElementById('CacheFullDetails');
 				var hidePromptForLoad = document.getElementById('PromptForFullDetails');
@@ -4403,17 +4418,78 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				
 				var remainingFullCaches = localStorage.getItem('fullCallsRemaining');
 				
-				var promptToLoad = document.getElementById('promptToLoadFullDetails');
+				var promptToLoad = document.getElementById('promptToLoadFullDetails');				
+				
+				if(userMembershipLevelId < 2) {
 
-				if (remainingFullCaches == 0) {
-					// the user has no more available full cache loads for the day
-					// message to show to basic users when they look to download the full details of a particular cache
+					if (remainingFullCaches == 0) {
+						// the user has no more available full cache loads for the day
+						// message to show to basic users when they look to download the full details of a particular cache
+						
+						var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
+
+						basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";					
+
+						basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + "<br><br>Upgrade to Geocaching.com Premium Membership today for as little at $2.50 per month to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade.";				
+
+						promptToLoad.innerHTML = basicUserMessageForCacheDownload;
+						
+						// we also need to adjust the cache options menu to hide non-available options
+						var cacheMenuOptions = document.getElementById('viewCacheOptions');
 					
+						var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
+						newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
+						newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";
+						
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCompass'>9: View Compass</button>";					
+								
+						cacheMenuOptions.innerHTML = newCacheOptions;
+						
+					} else {
+						// message to show to basic users when they look to download the full details of a particular cache
+						
+						
+						var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
+
+						basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining";
+
+						if(fullCallsResetLocal != "Invalid Date") {
+							basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
+						};
+						
+						promptToLoad.innerHTML = basicUserMessageForCacheDownload;
+						
+						// we also need to adjust the cache options menu to hide non-available options
+						var cacheMenuOptions = document.getElementById('viewCacheOptions');
+					
+						var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";			
+						newCacheOptions =newCacheOptions +  "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
+						newCacheOptions = newCacheOptions + "<div id='loadFullCacheDetailsText'>Load full cache details</div></button>";
+						
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
+						newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
+						newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";				
+
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
+			
+						cacheMenuOptions.innerHTML = newCacheOptions;
+					}
+				} else { 
+					// this is the special case where a prem user has not loaded the full
+					// cache details and has no internet connectivity
+					// in this case we use the stub view of the cache, which is similar
+					// to the basic user, but we don't show the message about
+					// only being able to load 3 full caches a day 
 					var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
 
-					basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";					
-
-					basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + "<br><br>Upgrade to Geocaching.com Premium Membership today for as little at $2.50 per month to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade.";				
+					basicUserMessageForCacheDownload = "We are only showing a stub of this cache's details as it appears you do not currently have internet connectivity.";								
 
 					promptToLoad.innerHTML = basicUserMessageForCacheDownload;
 					
@@ -4430,39 +4506,8 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCompass'>9: View Compass</button>";					
 							
-					cacheMenuOptions.innerHTML = newCacheOptions;
+					cacheMenuOptions.innerHTML = newCacheOptions;					
 					
-				} else {
-					// message to show to basic users when they look to download the full details of a particular cache
-					
-					
-					var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
-
-					basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining";
-
-					if(fullCallsResetLocal != "Invalid Date") {
-						basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + " until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";	
-					};
-					
-					promptToLoad.innerHTML = basicUserMessageForCacheDownload;
-					
-					// we also need to adjust the cache options menu to hide non-available options
-					var cacheMenuOptions = document.getElementById('viewCacheOptions');
-				
-					var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";			
-					newCacheOptions =newCacheOptions +  "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
-					newCacheOptions = newCacheOptions + "<div id='loadFullCacheDetailsText'>Load full cache details</div></button>";
-					
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
-					newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
-					newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";				
-
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
-		
-					cacheMenuOptions.innerHTML = newCacheOptions;
 				}
 				initView();	
 			}
