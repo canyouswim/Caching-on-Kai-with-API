@@ -619,6 +619,7 @@ app.keyCallback = {
 			//initView();	
 		},	
 		ShowCompass: function () { //push9	
+			logAnalytics("Caches","ShowCompass",0);
 			showView(2,false); 	
 			initView();	
 		},	
@@ -941,7 +942,7 @@ window.addEventListener("load", function () {
 		if(initialLoadofApp == null) {	
 			localStorage.setItem('initialLoadofApp', "finished");
 			//console.log(`start analytics log, initial install`);
-			logAnalytics("Install","Install","RestartPrompt");
+			logAnalytics("Install","Install",manifestVersion);
 			//console.log(`finish analytics log, initial install`);			
 			alert('Finished one time app setup. Please restart the app.');
 			window.close();
@@ -2506,7 +2507,8 @@ function success(pos) {
 	mapContent = "  HINT: 1 -ZOOM MAP+ 3";
 	//console.log(`myStatus=${myStatus}`);
 	if(myStatus=="First Run") {
-		logAnalytics("Startup","Startup",userMembershipLevelId);
+		logAnalytics("Startup","Startup",manifestVersion);
+		logAnalytics("Startup","PhoneDetails",myUserAgent);
 		firstRunSetup(my_current_lat,my_current_lng,radius);
 
 	} else {
@@ -4063,7 +4065,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 							//now load up images for this cache 
 							loadCacheImages(CacheCode, CacheID);
 							
-
+							logAnalytics("Caches","ViewFullDetails",userMembershipLevelId);
 							// now that we're done, push over to showing the cache details 
 							//ShowCacheDetails(CacheID,false);
 							
@@ -4087,11 +4089,13 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 				};	
 			} else {
 				//viewCacheLogs(CacheID);
+				logAnalytics("Caches","ViewPartialDetails",userMembershipLevelId);				
 				ShowCacheDetails(CacheID,true,false);			
 			};
 		} else {
 			// we already have the cache fully loaded - go direct to showing it
 			//viewCacheLogs(CacheID);
+			logAnalytics("Caches","ViewFullDetails",userMembershipLevelId);				
 			ShowCacheDetails(CacheID,false,false);
 		}
 	} else { // we're loading a waypoint
@@ -4106,7 +4110,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 		}	
 		
 		//console.log(`CacheCode: ${CacheCode}, arrayWaypoint.length: ${arrayWaypoint.length}, waypoint CacheID: ${CacheID}`);
-		
+		logAnalytics("Caches","ViewWaypoint",userMembershipLevelId);			
 		ShowCacheDetails(CacheID,false,true);		
 	}
 }
@@ -5690,7 +5694,9 @@ function addNewWP(lat, lng, cache_id){
 		if(showingAllCaches == "yes-yesName") {
 			arrayWaypointMarker[lastID].bindTooltip(arrayWaypoint[lastID].cacheName).openTooltip();
 		};		
-				
+			
+		logAnalytics("Caches","CreateWaypoint",lastID);
+			
 	}
 	else{
 		//if not a Waypoint, pull the cache that we want to attach the waypoint to
