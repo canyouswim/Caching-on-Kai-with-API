@@ -5645,22 +5645,24 @@ function addNewWP(lat, lng, cache_id){
 
 function DeleteWaypoints () {
 	var waypointCount = Number(localStorage.getItem('waypointCount'));
-	for (let x = 0; x < waypointCount; x++) {				
-		//remove from localStorage
-		var tempX = x;
-
-		storedCacheName = "storedCacheDetails_WP" + tempX;
-		localStorage.removeItem(storedCacheName);		
-		//and remove from arrayWaypoint						
-		arrayWaypoint.length = 0;	
-	}
-	localStorage.setItem('waypointCount',0);
-	// then regenerate the empty waypoint list 
-	var listContainer = document.getElementById("waypointList");
-	listContainer.innerHTML = "No waypoints have been created yet...";
-	showView(0,false);
-	initView();		
 	
+	if(confirm("This will delete _all_ waypoints. Select OK to continue.")){
+		for (let x = 0; x < waypointCount; x++) {				
+			//remove from localStorage
+			var tempX = x;
+
+			storedCacheName = "storedCacheDetails_WP" + tempX;
+			localStorage.removeItem(storedCacheName);		
+			//and remove from arrayWaypoint						
+			arrayWaypoint.length = 0;	
+		}
+		localStorage.setItem('waypointCount',0);
+		// then regenerate the empty waypoint list 
+		var listContainer = document.getElementById("waypointList");
+		listContainer.innerHTML = "No waypoints have been created yet...";
+		showView(0,false);
+		initView();	
+	};	
 };
 
 function ZoomMap(in_out) {
