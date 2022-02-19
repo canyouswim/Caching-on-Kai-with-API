@@ -5512,6 +5512,31 @@ function addNewWP(lat, lng, cache_id){
 				wpID = i;
 			}
 		}	
+		
+		// calc the distanct to the waypoint
+		var strTripDistance;
+		
+		if (lat !== 0 && lng !== 0) {
+			var tripDistance = findDistance(my_current_lat,my_current_lng,lat,lng);
+
+			if(myUnits == "mi") {
+				if(tripDistance < .5) {
+					strTripDistance = `${roundToTwo(tripDistance * 5280)}ft`;
+				} else {
+					strTripDistance = `${roundToTwo(tripDistance)}mi`;		
+				};
+			} else {
+				if(tripDistance < .5) {
+					strTripDistance = `${roundToTwo(tripDistance * 1000)}m`;
+				} else {
+					strTripDistance = `${roundToTwo(tripDistance)}km`;
+				};
+			};
+		} else {
+			strTripDistance = "";
+		}			
+		
+		
 		// jump to the end of the list of waypoints, and create a new waypoint there for the waypoint
 		//....................Creating waypoint container:
 		var lastID=arrayWaypoint.length;
@@ -5520,14 +5545,14 @@ function addNewWP(lat, lng, cache_id){
 		var listContainer = document.getElementById('waypointList');
 		if(lastID == 0) {listContainer.innerHTML = "";};
 		var entry = document.createElement("div");	
-			entry.className = 'navItem';	
+			entry.className = 'navItem cacheFullyLoaded';	
 			entry.name='CacheList_WP';	
 			entry.tabIndex = lastID*10;	
 		var BadgeContent = document.createElement("span");				
-			BadgeContent.innerHTML = "<img src='/assets/icons/icons8-waypoint-map-48.png'>";													
+			BadgeContent.innerHTML = "<img class='cache-type-img' width='48' height='48' src='/assets/icons/icons8-waypoint-map-48.png'>";													
 			entry.appendChild(BadgeContent);	
 		var headline = document.createElement("span");	
-			headline.innerHTML = "<b>WayPoint #" + (lastID) + "</b><br>";	
+			headline.innerHTML = "<b>WayPoint #" + (lastID) + "</b><br>" + strTripDistance;	
 			entry.appendChild(headline);						
 		entry.setAttribute('data-function', 'NavToWaypointDetails');	
 		// need to create a new ID for this new waypoint - will use "waypoint" + the current location in the cache array
