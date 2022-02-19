@@ -18,10 +18,6 @@ var staging_secret_id = "";
 var google_key;
 
 
-
-
-
-
 //console.log(`userAgent = ${navigator.userAgent}`);
 
 var isNokia = false;
@@ -353,6 +349,7 @@ var pauseClicks = false; // used to not allow buttons to fire until a modal is c
 var stopGPSWarning = false;
 
 var manifestVersion="0";
+var showChangeLog = false;
 
 
 
@@ -853,7 +850,12 @@ window.addEventListener("load", function () {
 				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";
 				document.getElementById("loadingVersion").innerText = "v" + data.version;	
 				manifestVersion = data.version;
-				document.getElementById("aboutVersion-changelog").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";			
+				document.getElementById("aboutVersion-changelog").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";	
+				var prevManifestVersion = localStorage.getItem('manifestVersion');
+				//alert("v_old:" + localStorage.getItem('manifestVersion') + "v_now:" + manifestVersion);
+				if(manifestVersion != prevManifestVersion) {showChangeLog = true};
+				localStorage.setItem('manifestVersion',manifestVersion);
+				//console.log(`showChangeLog? ${showChangeLog}. v_old:${prevManifestVersion}, v_now:${manifestVersion}`);
 		  })
 		  .catch(function (err) {
 			console.log(err);
@@ -954,8 +956,10 @@ window.addEventListener("load", function () {
 	
 	
     // load first view
-    showView(0,false);
-    initView();		
+	//showChangeLog = true;
+	showView(0,false);
+	initView();		
+
 });
 
 //===================================================
@@ -1344,6 +1348,7 @@ function goBack(count) {
 
 // use the index to navigate to the view
 function showView(index,isBack) {
+	
 	// switch active view
 	//app.prevViewId = app.currentViewID;	
 	//prevWindowOption = windowOpen;
@@ -2198,6 +2203,8 @@ function softkeyBar() {
 		}
 		//console.log(`Button/Action: ${app.optionsButton.innerHTML}/${app.optionButtonAction}`);
 	}
+	
+	
 };
 
 function firstRunSetup(startupLat,startupLng,startupRadius) {
@@ -2460,6 +2467,12 @@ function firstRunSetup(startupLat,startupLng,startupRadius) {
 		  initView();	
 	}	
 	
+	//console.log(`showChangeLog? ${showChangeLog} & startupRadius: ${startupRadius}`);
+	if(showChangeLog == true && startupRadius == 0) { // show the change log
+		showChangeLog = false; // turn off the flag
+		showView(19,false);
+		initView();		
+	}	
 	
 }
 
@@ -2565,6 +2578,12 @@ function success(pos) {
 	container.innerHTML = mapContent;	
 
 	attempt = 0;
+	
+	if(showChangeLog == true) { //otherwise show the change log
+		showChangeLog = false; // turn off the flag
+		showView(19,false);
+		initView();		
+	}		
   
 }
 
@@ -2660,6 +2679,7 @@ function error(err) {
 
 		
   }		
+
 }
 
 function updateUserDetails() {
