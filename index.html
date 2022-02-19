@@ -67,7 +67,7 @@
 		
 		</div>
 
-		<div class="view" id="viewList">  <!-- view 1 -->
+		<div class="view viewPaddingOverride" id="viewList">  <!-- view 1 -->	
 			<div id="CacheList" class="list">Waiting on the list of caches...<br><br>Press the Call button or select "Refresh Cache List" from the Options menu to load caches based on the map position</div>
 		</div>
 
@@ -220,8 +220,9 @@
 				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
 			  </select>
 			</fieldset>	-->		
-			<button class="navItem" tabIndex="0" data-function="toggleUnits" id="unitsDisplay">Toggle display units</button>				
-			<button class="navItem" tabIndex="10" data-function="showMozSettings" id="showMozSettings">Phone Data Settings</button>			
+			<button class="navItem" tabIndex="0" data-function="toggleUnits" id="unitsDisplay">Toggle display units</button>
+			<button class="navItem" tabIndex="10" data-function="toggleCoords" id="coordsDisplay">Toggle Coordinates Format</button>			
+			<button class="navItem" tabIndex="20" data-function="showMozSettings" id="showMozSettings">Phone Data Settings</button>			
 			<!--<fieldset>
 			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
 			  <select id="select2">
@@ -238,9 +239,10 @@
 			  </select>
 			</fieldset>-->
 	
-			<button class="navItem" tabIndex="20" data-function="Help">Help</button>		
-			<button class="navItem" tabIndex="30" data-function="About">About</button>
-			<button class="navItem" tabIndex="40" data-function="Logout">Logout</button>				
+			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
+			<button class="navItem" tabIndex="40" data-function="About">About</button>
+			<button class="navItem" tabIndex="50" data-function="changeLog">Change Log</button>
+			<button class="navItem" tabIndex="60" data-function="Logout">Logout</button>				
 		</div>
 	
 		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
@@ -387,6 +389,58 @@
 					<div>A special note if you use any of the Nokia phones (8110, 6300, 8000, probably 2720): the 4G antenna interfers with the A-GPS ability to obtain an accurate lock on your location. Use the "Phone Data Settings" button under the "Settings" screen to jump over to the phone's settings and turn off 4G when you require an accurate GPS lock. 
 					</div>
 				</div>				
+			</div>
+		</div>
+		
+		<div class="view viewPaddingOverride" id="changeLog">  <!-- view 19 -->
+			<div class="CacheTopLine">	
+				<div id="aboutHeader">
+					<div id="appLogo"><img src="/assets/appLogo/logo2a.png" height="50"></div>
+					<div id="aboutVersion-changelog"></div>						
+				</div>
+			</div>
+			<div  id="attributions-changelog" class="listChangeLog">			
+				<div class="navItem"tabIndex="0">
+					<b>Change Log</b><br>Submit feedback, bugs, or feature requests here:
+				</div>
+				<div class="navItem" tabIndex="10" data-function="mailto" id="submitFeedback">
+					chris@caching-on-kai.com
+				</div>					
+				<div class="navItem" tabIndex="20">
+					<b>Bug Fixes</b><br>
+					<ul>
+						<li>Addressed issue where the bouncing ball may never go away when loading data</li>
+					</ul>
+					
+					<b>Feature Updates</b><br>
+					<ul>
+						<li>The app will now finish loading if you have no GPS signal or GPS is turned off.  We will use your last known coordinates </li>
+						<li>Improved the ability to select a cache from the map view</li>
+						<li>Automatically turn off Nav-to-Cache after you log the cache</li>
+						<li>Added the ability to specify which GPS coordinate format you want - DDD, DMM, DMS. This is under the Settings screen</li>
+						<li>Fully added the ability to create Waypoints. The Cache listing page now has a "Waypoints" button which will toggle your view from Caches to Waypoints. Created waypoints will persist until you delete them (delete from the "Manage Waypoints" menu option)</li>
+						<li>Added this change log screen!</li>
+					</ul>
+				</div>			
+			</div>
+		</div>		
+
+		<div class="view" id="viewWaypoints">  <!-- view 20 -->
+			<div id="waypointList" class="list">No waypoints have been created yet...</div>
+		</div>
+
+		<div class="view viewPaddingOverride" id="viewWaypoint">  <!-- view 21 -->
+			<div class="viewCacheDetails">
+				<div class="CacheTopLine">
+					<div id="WaypointHeaderDetail">Waiting on waypoint details...<br></div>	
+				</div>
+				<div id="WaypointDetails"></div>
+
+				
+				<div id="WaypointFullDetails" style="display:block">
+					<div class="kui-separator"><b>Description</b></div>					
+					<div id="WaypointDescription"></div>	
+				</div>
 			</div>
 		</div>
 
