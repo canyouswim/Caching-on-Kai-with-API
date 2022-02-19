@@ -4447,7 +4447,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 			
 			CacheHeader.innerHTML = '';	
 				var BadgeContent = document.createElement("span");
-				BadgeContent.innerHTML = arrayWaypoint[CacheID].cacheBadge + "<b>" + arrayWaypoint[CacheID].cacheName + "</b>";
+				BadgeContent.innerHTML = arrayWaypoint[CacheID].cacheBadge + "<b>" + arrayWaypoint[CacheID].cacheName + "</b><br>";
 				
 				
 			CacheHeader.appendChild(BadgeContent);	
@@ -5565,7 +5565,7 @@ function addNewWP(lat, lng, cache_id){
 
 		var arrayWaypointObject = {
 			cacheName: "Waypoint #" + (lastID), 
-			cacheBadge: "<img src='/assets/icons/icons8-waypoint-map-48.png'>",
+			cacheBadge: "<img class='cache-type-img' src='/assets/icons/icons8-waypoint-map-48.png'>",
 			cacheDescription: "<p>Waypoint coords:<br><b>"+displayPosition(myWP.lat,myWP.lng,app.gpsCoordRepresentation)+"</b></p>",
 			cacheHiddenDate: dateNowLocal,
 			cacheDifficulty: "",
