@@ -17,33 +17,7 @@ var staging_client_id = "";
 var staging_secret_id = "";
 var google_key;
 
-	// get our geocaching.com keys
-	
-	const keys = (() => {
-	  let getKeys = function () {
-		fetch("/keys.txt") 
-		  .then(function (response) {
-			return response.json();
-		  })
-		  .then(function (data) {
-			  console.log(`from keys file: prod_client_id: ${data.prod_client_id}`);
-				prod_client_id = data.prod_client_id;
-				prod_secret_id = data.prod_secret_id;
-				staging_client_id = data.staging_client_id;
-				staging_secret_id = data.staging_secret_id;
-				google_key = data.google_ua;
-		  })
-		  .catch(function (err) {
-			console.log(err);
-		  });
-	  };
 
-	  return {
-		getKeys,
-	  };
-	})();	
-	
-	keys.getKeys();	
 
 
 
@@ -113,6 +87,7 @@ if (app.useProduction == false) {
 // =======================================================================
 // =======================================================================
 // insert API details here...
+
 if(app.useProduction == false) {
 	//===============================
 	// Staging server details
@@ -121,8 +96,6 @@ if(app.useProduction == false) {
 
 		// Authorization server details
 		app.config = {
-			client_id: staging_client_id,
-			client_secret_id: staging_secret_id,
 			redirect_uri: "https://caching-on-kai.com/",
 			authorization_endpoint: "https://staging.geocaching.com/oauth/authorize.aspx",
 			token_endpoint: "https://oauth-staging.geocaching.com/token",
@@ -136,19 +109,91 @@ if(app.useProduction == false) {
 		app.rootAPIurl = "https://api.groundspeak.com/v1/"; 
 		app.rootSiteURL = "https://geocaching.com";
 
+		//console.log(`Prod client_id: ${prod_client_id}`);
 		// Authorization server details
 		app.config = {
-			client_id: prod_client_id,
-			client_secret: prod_secret_id,
 			redirect_uri: "https://caching-on-kai.com/",
 			authorization_endpoint: "https://geocaching.com/oauth/authorize.aspx",
 			token_endpoint: "https://oauth.geocaching.com/token",
 			requested_scopes: "*"
 		};
 		
+		//console.log(`at top, app.config.client_id: ${app.config.client_id}`);
 	//================================
+}	
+
+
+
+	// get our geocaching.com keys if we don't already have them
+	var tmpclient_id = localStorage.getItem('client_id');
+	//alert("before stored client_id:" + tmpclient_id);
+	//if(tmpclient_id == null) {alert("id is null");};
+	
+if(tmpclient_id == null) {	
+	const keys = (() => {
+	  let getKeys = function () {
+		fetch("/keys.txt") 
+		  .then(function (response) {
+			return response.json();
+		  })
+		  .then(function (data) {
+			  //console.log(`from keys file: prod_client_id: ${data.prod_client_id}`);
+				prod_client_id = data.prod_client_id;
+				prod_secret_id = data.prod_secret_id;
+				staging_client_id = data.staging_client_id;
+				staging_secret_id = data.staging_secret_id;
+				google_key = data.google_ua;
+				
+				if(app.useProduction == false) {
+					//===============================
+					// Staging server details
+
+						// Authorization server details
+						app.config = {
+							client_id: staging_client_id,
+							client_secret_id: staging_secret_id,
+						};
+						
+					//================================
+				} else {
+					//===============================
+					// Production server details
+
+						//console.log(`Prod client_id: ${prod_client_id}`);
+						// Authorization server details
+						app.config = {
+							client_id: prod_client_id,
+							client_secret: prod_secret_id,
+						};
+						
+						//console.log(`at top, app.config.client_id: ${app.config.client_id}`);
+					//================================
+				}
+				//alert("new id: " + app.config.client_id + "secret: " + app.config.client_secret);
+				localStorage.setItem('client_id',app.config.client_id);
+				localStorage.setItem('client_secret',app.config.client_secret);
+				localStorage.setItem('GA_key',google_key);
+				//alert("in keys load, after stored client_id:" + localStorage.getItem('client_id'));				
+		  })
+		  .catch(function (err) {
+			console.log(err);
+		  });
+	  };
+
+	  return {
+		getKeys,
+	  };
+	})();	
+	
+	keys.getKeys();	
+} else { // otherwise pull from storage
+	//alert("is not null");
+	app.config.client_id = localStorage.getItem('client_id');
+	app.config.client_secret = localStorage.getItem('client_secret');
+	google_key = localStorage.getItem('GA_key');
 }
 
+	//alert("after stored client_id:" + localStorage.getItem('client_id'));
 
 // =======================================================================
 // =======================================================================
@@ -808,6 +853,7 @@ window.addEventListener("load", function () {
 				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";
 				document.getElementById("loadingVersion").innerText = "v" + data.version;	
 				manifestVersion = data.version;
+				document.getElementById("aboutVersion-changelog").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";			
 		  })
 		  .catch(function (err) {
 			console.log(err);
@@ -821,10 +867,6 @@ window.addEventListener("load", function () {
 	
 	helper.getVersion();
 	
-
-	
-	
-
 	var displayCoords = document.getElementById("coordsDisplay");
 	if(app.gpsCoordRepresentation == null) {
 		//meaning this is the first time the app has been run
@@ -868,8 +910,6 @@ window.addEventListener("load", function () {
 	
 	cacheIconDisplay = document.getElementById("cacheIconDisplay");
 	cacheIconDisplay.innerHTML = "Show all cache icons on map";
-	
-
 	
 	var viewRoot = document.getElementById("views");
     app.views = viewRoot.querySelectorAll('.view');
@@ -1078,6 +1118,8 @@ function navVertical(forward) {
 		// decide if we wrap back to the top of the list when we get to the bottom
 		var wrapToTop = true;
 		
+		//console.log(`windowOpen: ${windowOpen}`);
+		
 		if (windowOpen == "viewCacheGallery") {
 			var myElement = document.getElementsByClassName("listGalleryView")[0];		
 			wrapToTop = false;			
@@ -1085,8 +1127,13 @@ function navVertical(forward) {
 			var myElement = document.getElementsByClassName("listLogsView")[0];		
 			wrapToTop = false;			
 		} else if (windowOpen == "About") {
-			var myElement = document.getElementsByClassName("listAttributions")[0];		
-			wrapToTop = false;			
+			var myElement = document.getElementsByClassName("listAttributions")[0];	
+				//console.log(`scrolling about`);
+			wrapToTop = false;		
+		} else if (windowOpen == "changeLog") {
+			var myElement = document.getElementsByClassName("listChangeLog")[0];	
+				//console.log(`scrolling changelog`);
+			wrapToTop = false;				
 		} else if (windowOpen == "Help") {
 			var myElement = document.getElementsByClassName("listHelpSections")[0];	
 			wrapToTop = false;
@@ -2753,9 +2800,9 @@ Then screen name details (goes along with screenview hit type)
 Do as an Event trigger:
 v=1
 &t=event
-&tid=UA-208621269-1
+&tid=
 &cid=myUserAlias   							// unique ID of the user
-&av=3.1.13									// manifest version ID
+&av=								// manifest version ID
 &an=cache-on-kai
 &ec=Login									// event category
 &ea=Login									// event action
@@ -2804,7 +2851,7 @@ or:
 			 // console.log('loading data');
 		  } else if (geoloadstate == 4) {
 			var geostatus = xhr.status;
-				console.log(`GA submit status: ${geostatus}`);
+				console.log(`GA submit status: ${geostatus}. wrote category: ${eventCategory}, Action: ${eventAction}, Label: ${eventLabel}, MembershipLevel: ${userMembershipLevelId}`);
 			if (geostatus >= 200 && geostatus < 400) {
 			  var siteText = xhr.response;				
 
@@ -5938,6 +5985,8 @@ function getToken(signup){
 	//var code_challenge = await pkceChallengeFromVerifier(code_verifier);
 
 	// Build the authorization URL
+	console.log(`app.config.client_id: ${app.config.client_id}`);
+	
 	var url = app.config.authorization_endpoint 
 		+ "?response_type=code"
 		+ "&client_id="+(app.config.client_id)
@@ -6067,6 +6116,7 @@ function sendPostRequest(url, params, success, error) {
 	if(localStorage.getItem("access_token")==null) {
 	var q = parseQueryString(window.location.search.substring(1));
 		//alert("queryString\n\n" + window.location);
+		//alert("q.error: " + q.error + "\n\n q.code: " + q.code);
 
 	// Check if the server returned an error string
 	if(q.error) {
@@ -6080,6 +6130,8 @@ function sendPostRequest(url, params, success, error) {
 	// If the server returned an authorization code, attempt to exchange it for an access token
 	if(q.code) {
 
+		//alert("we think there is a q.code");
+		
 		// Verify state matches what we set at the beginning
 		if(localStorage.getItem("pkce_state") != q.state) {
 			var returnedState = "q.state: " + q.state;
@@ -6151,6 +6203,8 @@ function sendPostRequest(url, params, success, error) {
 	} else {
 		// Replace the history entry to remove the auth code from the browser address bar
 		//window.history.replaceState({}, null, "/");
+		
+		//alert("no q here");
 		
 		console.log(`Access Token: ${localStorage.getItem("access_token")}`);
 		//console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
