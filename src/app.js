@@ -1729,9 +1729,13 @@ function submitLog() {
 					//showModal(responseError);
 					alert(responseError);
 					loadingOverlay(false);	
-				} else {
+				} else if (this.readyState==4 && (this.status != 201 || this.status != 201)) {
+					// meaning we've hit some error 
 					alert("There was an error connecting to geocaching.com...");
 					loadingOverlay(false);	
+				} else {
+					//alert("There was an error connecting to geocaching.com...");
+					//loadingOverlay(false);	
 				}
 			}		
 			request.open("POST", logURL, true);
@@ -1774,9 +1778,13 @@ function submitLogImage(logCode,logImage) {
 				clearLogForm = true;
 				navToCache(0,false);
 				goBack();				
-			} else {
+			} else if (this.readyState==4 && (this.status != 201 || this.status != 201)) {
+				// meaning we've hit some error 
 				alert("There was an error connecting to geocaching.com...");
-				loadingOverlay(false);					
+				loadingOverlay(false);				
+			} else {
+				//alert("There was an error connecting to geocaching.com...");
+				//loadingOverlay(false);					
 			}
 		}		
 		request.open("POST", logURL, true);
