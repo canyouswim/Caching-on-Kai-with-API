@@ -1729,11 +1729,8 @@ function submitLog() {
 					//showModal(responseError);
 					alert(responseError);
 					loadingOverlay(false);	
-				} else if (this.readyState==4 && (this.status != 201 || this.status != 201)) {
-					// meaning we've hit some error 
-					alert("There was an error connecting to geocaching.com...");
-					loadingOverlay(false);	
 				} else {
+					console.log(`readystate: ${readystate}`);
 					//alert("There was an error connecting to geocaching.com...");
 					//loadingOverlay(false);	
 				}
@@ -6006,9 +6003,18 @@ function bearing(startLat, startLng, destLat, destLng){
 function loadingOverlay(show) {
   if (show==true) {
 	document.getElementById("loadingOverlay").style.display = "block";
+	var timeoutCheck = setTimeout(setTimer, 5000);
+	function setTimer() {
+		document.getElementById("loadingOverlay").style.display = "none";
+	}  	
   } else {
 	document.getElementById("loadingOverlay").style.display = "none";
+	clearTimeout(timeoutCheck);	
   }
+  
+
+
+  
 }
 
 //==================================
