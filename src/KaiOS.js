@@ -122,7 +122,7 @@
 	// on the device or simulator press left soft key
 	var fullscreenAd = true; /* switch between fullscreen and responsive ad */
 	var testMode = 0; /* set to 0 for real ads */
-	var turnoffAds = false;
+	var turnoffAds = true;
 
 
 	if (!turnoffAds) {

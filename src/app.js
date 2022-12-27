@@ -1,12 +1,30 @@
 //global module
 var MODULE = (function () {
 
+var myUserAgent = navigator.userAgent;
+console.log(`userAgent: ${myUserAgent}`);
+
+var manual_login;
+var manifestLocation;
+var rootKaiOSVersion = myUserAgent.charAt(myUserAgent.search("KAIOS/") + 6);
+//console.log(`KaiOS v${myUserAgent.charAt(myUserAgent.search("KAIOS/") + 6)}`);
+	if (rootKaiOSVersion == 2) {
+		manual_login = false;
+		manifestLocation = "/manifest.webapp"; // v2.x manifest 882
+	} else {
+		manual_login = true;
+		manifestLocation = "/manifest.webmanifest"; // v3.x manifest
+	};
+	
+
 var time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
 var initialLoadofApp = localStorage.getItem('initialLoadofApp');
 //=========================================
 // Geocaching API details
 var userMembershipLevelId="0";
 var myUserAlias="notSet";
+var myUserAvatar;
+var myTrackableView;
 var favPointsAvailable = 0;
 var numCachesToLoad = 50; // how many caches should i load at one time?
 var numLogsToLoad = 15; // how many logs should i load at one time?
@@ -21,7 +39,7 @@ var google_key;
 //console.log(`userAgent = ${navigator.userAgent}`);
 
 var isNokia = false;
-var myUserAgent = navigator.userAgent;
+
 
 var showConnectionError = true;
 
@@ -132,12 +150,37 @@ if(tmpclient_id == null) {
 			return response.json();
 		  })
 		  .then(function (data) {
-			  //console.log(`from keys file: prod_client_id: ${data.prod_client_id}`);
+			  console.log(`from keys file: prod_client_id: ${data.prod_client_id}`);
 				prod_client_id = data.prod_client_id;
 				prod_secret_id = data.prod_secret_id;
 				staging_client_id = data.staging_client_id;
 				staging_secret_id = data.staging_secret_id;
 				google_key = data.google_ua;
+				force_access_token = data.access_token;
+				force_refresh_token = data.refresh_token;
+				var force_pkce_state = data.pkce_state;
+				var force_pkce_code_verifier = data.pkce_code_verifier;
+				console.log(`loading from keys: access_token: ${data.access_token}`);
+				//alert("startup token:" + data.access_token);
+				
+				// this is a stop gap measure to try to use an access token generated from a v2.5.4 instance of KaiOS on a v3.x version for testing only
+				if (manual_login && force_access_token !== "0") {
+					console.log(`force_access_token: ${force_access_token}`);
+					console.log(`force_refresh_token: ${force_refresh_token}`);
+					localStorage.setItem("access_token", force_access_token);
+					localStorage.setItem("refresh_token", force_refresh_token);
+					
+					var token_expires = Date.now();
+					
+					localStorage.setItem("token_expires", token_expires);	
+					localStorage.setItem("pkce_state", force_pkce_state);
+					localStorage.setItem("pkce_code_verifier", force_pkce_code_verifier);					
+					
+					
+					localStorage.setItem('initialLoadofApp', "finished");					
+					
+				}				
+				
 				
 				if(app.useProduction == false) {
 					//===============================
@@ -146,7 +189,7 @@ if(tmpclient_id == null) {
 						// Authorization server details
 						app.config = {
 							client_id: staging_client_id,
-							client_secret_id: staging_secret_id,
+							client_secret: staging_secret_id,
 						};
 						
 					//================================
@@ -249,6 +292,8 @@ var haveAllMarkersBeenPlaced=false;
 var navCacheName;
 
 
+
+
 var myWP={};
 		myWP.lat=0;
 		myWP.lng=0;
@@ -332,6 +377,13 @@ var arrayCacheImageDetailsObject;
 
 var cacheNameNavigating;
 
+// Trackable variables
+var trackableID = null;
+var arrayCacheInventoryObject;
+var arrayCacheInventory = [];
+var trackableCount = 0;
+var trackableListID;
+
 var showingAllCaches="no";
 var FullCacheListDetails;
 //var myUnits;
@@ -349,6 +401,9 @@ var stopGPSWarning = false;
 
 var manifestVersion="0";
 var showChangeLog = false;
+
+var force_access_token = null;
+var force_refresh_token = null;
 
 
 
@@ -472,18 +527,26 @@ app.keyCallback = {
 				if(app.editWPmode==2){
 					editWP("LEFT");
 				}else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&& currentCacheFullLoaded==true) {
-				switchCacheView(false);		
+					switchCacheView(false);		
+				}else if ((windowOpen=="viewTrackableDetails" || windowOpen=="viewTrackableLogs" || windowOpen=="viewTrackableGallery")) {
+					switchTrackableView(false);		
+				} else if (windowOpen=="viewCacheInventory" && myTrackableView !== null) {
+					switchInventoryView(false);
 				}else if (windowOpen!=="viewCache"){
-				navHorizontal(false);
+					navHorizontal(false);
 				} 
 			},
 	    dRight: function () { 
 				if(app.editWPmode==2){
 					editWP("RIGHT");
 				} else if ((windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery")&&currentCacheFullLoaded==true) {
-				switchCacheView(true);
+					switchCacheView(true);
+				}else if ((windowOpen=="viewTrackableDetails" || windowOpen=="viewTrackableLogs" || windowOpen=="viewTrackableGallery")) {
+					switchTrackableView(true);			
+				} else if (windowOpen=="viewCacheInventory" && myTrackableView !== null) {
+					switchInventoryView(true);					
 				}else if (windowOpen!=="viewCache"){
-				navHorizontal(true);
+					navHorizontal(true);
 				} 
 			
 			},
@@ -841,16 +904,19 @@ window.addEventListener("load", function () {
 	
 	const helper = (() => {
 	  let getVersion = function () {
-		fetch("/manifest.webapp") // v2.5.x manifest
-		//fetch("/manifest.webmanifest")	// v3.x manifest
+		fetch(manifestLocation)
 		  .then(function (response) {
 			return response.json();
 		  })
 		  .then(function (data) {
-				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";
-				document.getElementById("loadingVersion").innerText = "v" + data.version;	
-				manifestVersion = data.version;
-				document.getElementById("aboutVersion-changelog").innerHTML = "<center><b>version<br>" + data.version + "</b></center>";	
+				if(rootKaiOSVersion == 2) {
+					manifestVersion = data.version;
+				} else {
+					manifestVersion = data.b2g_features.version;
+				}
+				document.getElementById("aboutVersion").innerHTML = "<center><b>version<br>" + manifestVersion + "</b></center>";
+				document.getElementById("loadingVersion").innerText = "v" + manifestVersion;	
+				document.getElementById("aboutVersion-changelog").innerHTML = "<center><b>version<br>" + manifestVersion + "</b></center>";	
 				var prevManifestVersion = localStorage.getItem('manifestVersion');
 				//alert("v_old:" + localStorage.getItem('manifestVersion') + "v_now:" + manifestVersion);
 				if(manifestVersion != prevManifestVersion) {showChangeLog = true};
@@ -1091,7 +1157,7 @@ function navVertical(forward) {
 		} else {
 			MovemMap('up');
 		}
-	} else if (windowOpen == "viewCache"  || windowOpen == "showModal") {
+	} else if (windowOpen == "viewCache"  || windowOpen == "showModal" || windowOpen == "viewTrackableDetails") {
 
 		if(forward == true) {
 			app.currentView.scrollBy(0, 50);
@@ -1248,7 +1314,7 @@ function navHorizontal(forward) {
 		} else {
 			MovemMap('left');
 		}
-	} else if (windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery") {
+	} else if (windowOpen=="viewCache" || windowOpen=="viewCacheLogs" || windowOpen=="viewCacheGallery" || windowOpen=="viewTrackableLogs" || windowOpen=="viewTrackableGallery") {
 		// move to the next or previous cache details and set the position in the overall cache list
 		var gotoCacheID;
 		if (forward) {
@@ -1310,6 +1376,58 @@ function switchCacheView(forward) {
 		}		
 	}
 }
+
+function switchInventoryView(forward) {
+	// order is All (owned) -> In Hand (inventory) -> Collection (collection)	
+	if (myTrackableView == 'owned') {
+		if (forward) {
+			viewTrackableInventory(null,'inventory');			
+		} else {
+			viewTrackableInventory(null,'collection');				
+		}
+	} else if (myTrackableView == 'inventory') {
+		// forward from log view goes to image gallery.  backwards goes to cache details
+		if (forward) {
+			viewTrackableInventory(null,'collection');				
+		} else {
+			viewTrackableInventory(null,'owned');				
+		}
+	} else if (myTrackableView == 'collection') {
+		// forward from image gallery goes to cache details, backwards goes to log view
+		if (forward) {
+			viewTrackableInventory(null,'owned');				
+		} else {
+			viewTrackableInventory(null,'inventory');				
+		}	
+	};
+	
+};
+
+function switchTrackableView(forward) {
+	if (windowOpen=="viewTrackableDetails") {
+		// forward from Trackable details goes to log view.  backwards goes to image gallery
+		if (forward) {
+			viewTrackableLogs(trackableID);			
+		} else {
+			viewTrackableLogs(trackableID);				
+		}
+	} else if (windowOpen=="viewTrackableLogs") {
+		// forward from log view goes to image gallery.  backwards goes to cache details
+		if (forward) {
+			viewTrackableDetails(trackableID);				
+		} else {
+			viewTrackableDetails(trackableID);				
+		}
+	} //else if (windowOpen=="viewTrackableGallery") {
+		// forward from image gallery goes to cache details, backwards goes to log view
+		//if (forward) {
+		//	viewTrackableDetails(trackableID);				
+		//} else {
+		//	viewTrackableLogs(trackableID);				
+		//}		
+	//}
+}
+
 
 app.isInputFocused = function () {
 	var activeTag = document.activeElement.tagName.toLowerCase();
@@ -1456,14 +1574,14 @@ function initView() {
 		//app.currentNavid = CacheListID;
 		focusActiveButton(app.navItems[tmpWaypointListID],forward);		
 	  } else if (app.currentViewName == 'viewCacheLogs') {
-		console.log(`switching to Log view. CacheLogListID=${CacheLogListID}`);
+		//console.log(`switching to Log view. CacheLogListID=${CacheLogListID}`);
 		var tmpLogListID = CacheLogListID/10;
 		focusActiveButton(app.navItems[tmpLogListID],forward);		
 	  } else if (app.currentViewName == 'viewCacheGallery') {
-		console.log(`switching to Gallery list. GalleryListID=${GalleryListID}`);
+		//console.log(`switching to Gallery list. GalleryListID=${GalleryListID}`);
 		var tmpGalleryListID = GalleryListID/10;
 		//app.currentNavid = CacheListID;
-		focusActiveButton(app.navItems[tmpGalleryListID],forward);				 
+		focusActiveButton(app.navItems[tmpGalleryListID],forward);			
 	  } else {
 		focusActiveButton(app.navItems[0],forward);	
 	  }
@@ -1890,6 +2008,25 @@ function execute() {
 				case 'showCacheGallery':
 					viewCacheGallery(currentCacheID);
 				 break;
+				case 'viewCacheInventory':
+					viewTrackableInventory(arrayCache[currentCacheID].cacheCode);
+					//initView();					
+				break;
+				case 'viewMyTrackables':
+					viewTrackableInventory(null,null);	// don't pass in any cachecode so that we pull the trackables of the user			
+				break;
+				case 'showTrackableDetails':
+					trackableID = app.activeNavItem.getAttribute('trackableid');
+					windowOpen = "viewTrackableDetails";
+					viewTrackableDetails(trackableID);
+					//initView();					
+				break;
+				case 'viewTrackableLogs':
+					viewTrackableLogs(trackableID);
+				break;
+				case 'viewTrackableGallery':
+					viewTrackableGallery(trackableID);
+				break;
 				case 'loadCacheDetails':
 					loadAllCacheDetails(currentCacheID);
 				 break;
@@ -1960,7 +2097,7 @@ function execute() {
 				 break;
 				case 'viewCacheSettings':
 					windowOpen="CacheSettings";
-					showView(10,true);
+					showView(10,false);
 					initView();
 				 break;
 				case 'toggleUnits':
@@ -2160,6 +2297,18 @@ function softkeyBar() {
 			app.actionButton.innerHTML = "GoNav";
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewCacheOptions';
+		} else if(app.currentViewName == "viewTrackableDetails" || app.currentViewName == "viewTrackableLogs") {
+			app.backButton.innerHTML = "Back";
+			
+			app.actionButton.innerHTML = "";
+			app.optionsButton.innerHTML = "Options";
+			app.optionButtonAction = 'viewTrackableOptions';	
+		} else if(app.currentViewName == "viewCacheInventory") {
+			app.backButton.innerHTML = "Back";
+			
+			app.actionButton.innerHTML = "SELECT";
+			app.optionsButton.innerHTML = "Options";
+			app.optionButtonAction = 'viewInventoryOptions';			
 		} else if(app.currentViewName == "viewWaypoint") {
 			app.backButton.innerHTML = "Waypoints";
 			
@@ -2193,6 +2342,7 @@ function softkeyBar() {
 			app.optionsButton.innerHTML = "";
 			app.optionButtonAction = '';
 		} else {
+			console.log(`setting buttons, current view: ${app.currentViewName}`);
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "SELECT";
 			if (app.isInputFocused()) {
@@ -2474,6 +2624,9 @@ function firstRunSetup(startupLat,startupLng,startupRadius) {
 	};
 	
 	// if we have never logged in before, push the user to the Help screen to get them started and route them to log in for the first time
+
+
+
 	var token = localStorage.getItem("access_token");
 	
 	if (token == null) {		
@@ -2738,6 +2891,7 @@ function updateUserDetails() {
 				
 				var userDetails = JSON.parse(siteText);
 				myUserAlias = userDetails.username;
+				myUserAvatar = userDetails.avatarUrl;
 				
 				var fullCallsSecondsToLive = userDetails.geocacheLimits.fullCallsSecondsToLive;
 				var fullCallsMillisecondsToLive = (fullCallsSecondsToLive * 1000);
@@ -4402,7 +4556,10 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";		
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='https://www.geocaching.com/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
 				
+				// add the option to view trackables if there are any for this cache
+				if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};
 				
 				cacheMenuOptions.innerHTML = newCacheOptions;
 
@@ -4486,6 +4643,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='https://www.geocaching.com/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
+					
+					// add the option to view trackables if there are any for this cache
+					if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};			
+			
 			
 						cacheMenuOptions.innerHTML = newCacheOptions;
 					}
@@ -4746,6 +4908,539 @@ function viewCacheLogs(CacheID) {
 	}
 	initView();	
 };
+
+function viewTrackableInventory(currentCacheID,listType) {
+
+		if (listType == null || listType == 1) {
+			listType = "inventory"; //if no list type is passed in, assume we want an inventory returned
+		} else if (listType == 2) {
+			listType = "collection";
+		} else if (listType == 3) {
+			listType = "owned";
+		};
+		
+		myTrackableView = listType;
+		
+		// possible list types: 1 = Inventory, 2 = Collection, 3 = owned (all the trackables i own, regardless of where they are)
+
+	
+		if (currentCacheID == null) { // pull trackable inventory of the logged in user
+			logAnalytics("Caches","LoadInventory",userMembershipLevelId);		
+		
+			var values = "trackables?";
+			values = values + "skip=0"; // start at the beginning of the list of trackables?  yes = 0
+			values = values + "&take=40"; // how many trackables to pull in
+			values = values + "&type=" + listType;			
+			values = values + "&fields=referenceCode,iconURL,name";
+		} else { // pull the trackable inventory of a cache
+			logAnalytics("Caches","LoadInventory",userMembershipLevelId);		
+		
+			var values = "geocaches/" + currentCacheID + "/trackables?";
+			values = values + "skip=0"; // start at the beginning of the list of trackables?  yes = 0
+			values = values + "&take=40"; // how many trackables to pull in
+			values = values + "&fields=referenceCode,iconURL,name,currentGeocacheName";
+			
+		}
+		
+		
+
+		var xhr = new XMLHttpRequest({ mozSystem: true });
+		var geomethod = "GET";	
+		var geourl = app.rootAPIurl + values;
+		
+		var token = localStorage.getItem("access_token");
+		
+		if (token !== null) {
+			//console.log('we have a token');
+			xhr.open(geomethod, geourl, true);
+			
+			xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+			xhr.onreadystatechange = function () {
+			  var geoloadstate = xhr.readyState;
+			 // console.log(`Load state: ${geoloadstate}`);
+			  if (geoloadstate == 1) {
+				//  console.log('request opened');
+			  } else if (geoloadstate == 2) {
+				//console.log('headers received'); 
+						
+			  } else if (geoloadstate == 3) {
+				 // console.log('loading data');						  
+			  } else if (geoloadstate == 4) {
+				var geostatus = xhr.status;
+				//console.log(`status: ${geostatus}`);
+				if (geostatus >= 200 && geostatus < 400) {
+					var siteText = xhr.response;				
+					//console.log(`response: ${siteText}`);
+					//localStorage.setItem('geocachingResponse', siteText);
+
+					//===============================================================
+					// now parse the returned JSON out and do stuff with it
+					
+					var cacheInventoryList = JSON.parse(siteText);
+					trackableCount = cacheInventoryList.length;
+					console.log(`Pulling list of trackables: trackableCount: ${trackableCount}`);
+						
+
+					//================================================================
+					// Setup the header of the inventory of trackables
+					//
+					//
+					var headerContainer = document.getElementById('cacheInventoryHeader');
+					var headerAvatar = document.getElementById('cacheInventoryAvatar');
+					var headerName = document.getElementById('cacheInventoryName');
+					var headerSeparator = document.getElementById('cacheInventoryHeaderBreak');
+					headerSeparator.innerHTML = '';
+					headerAvatar.innerHTML = '';
+					headerName.innerHTML = '';
+					headerContainer.innerHTML = '';					
+
+					if (currentCacheID == null) { // pull trackable inventory of the logged in user
+						if (myUserAvatar !== null) {headerAvatar.innerHTML = "<img src='" + myUserAvatar + "' width='40'>"; }
+						headerName.innerHTML = '<b> My<br>Trackables</b>';
+						//1 = Inventory, 2 = Collection, 3 = owned
+						if (listType == 'inventory') {
+							headerSeparator.innerHTML = 'All | <b>In Hand</b> | Collection';							
+						} else if (listType == 'collection') {
+							headerSeparator.innerHTML = 'All | In Hand | <b>Collection</b>';													
+						} else if (listType == 'owned') {
+							headerSeparator.innerHTML = '<b>All</b> | In Hand | Collection';							
+						}
+
+					} else { // inventory of the cache
+						headerSeparator.innerHTML = "<b>Inventory for " + cacheInventoryList[0].currentGeocacheName + "</b><br>";
+					
+					};
+					
+
+
+					//================================================================================
+					//
+					// Display list of trackables
+					//
+					//
+					var listContainer = document.getElementById('cacheInventoryList');
+					listContainer.innerHTML = '';
+					
+					trackableListID = 0;
+		
+					//Loading up trackables...
+					
+					//kaiosToaster({
+					//  message: 'Loading up cache inventory...',
+					//  position: 'north',
+					//  type: 'warning',
+					//  timeout: 3000
+					//});				
+					// turn on the loading spinner
+					loadingOverlay(true);
+
+					//clear out any existing trackables in the array					
+					arrayCacheInventory.length = 0;
+
+					//
+					// cycle through all the returned trackables and 
+					//		load them into the cache inventory page for display / selection by the user 
+					//
+					for (let i = 0; i < trackableCount; i++) {
+						// parse out the returned response 
+						
+						var trackableCode = cacheInventoryList[i].referenceCode;
+						var trackableIcon = cacheInventoryList[i].iconUrl;
+						var trackableName = cacheInventoryList[i].name;
+						
+
+						// now work on loading those details into the cache inventory page 
+						var entry = document.createElement("div");
+						entry.className = 'navItem';
+						entry.tabIndex = i * 10;		
+
+						var trackableImage = document.createElement("div");
+						trackableImage.innerHTML = "<img src='" + trackableIcon + "'>";;
+						trackableImage.className = 'iconLeft';
+						entry.appendChild(trackableImage);
+
+						var trackableNameInList = document.createElement("div");
+						trackableNameInList.innerHTML = "<b>" + trackableName + "</b>";
+						entry.appendChild(trackableNameInList);	
+
+						entry.setAttribute('data-function', 'showTrackableDetails');
+						entry.setAttribute('trackableID',trackableCode);
+
+						listContainer.appendChild(entry);	
+
+					};
+
+					// let the user know we're done processing data
+					//kaiosToaster({	
+					//  message: 'Cache inventory loaded',	
+					//  position: 'north',	
+					//  type: 'success',	
+					//  timeout: 3000	
+					//});	
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					
+					//now, bounce over to the cache inventory list after loading the inventory
+						windowOpen="viewCacheInventory";
+						showView(25,false);						
+						initView();
+
+				}  else if (geostatus == 401) {
+					// token has expired, refresh and tell caller to retry
+					//console.log('refreshing token');
+					refreshToken();
+				}  else {
+				// Oh no! There has been an error with the request!
+				//console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");
+			    }
+			  }; 
+			}
+
+			// turn on the loading spinner
+			loadingOverlay(true);
+			
+			xhr.send();	
+		} else {
+			getToken();
+		};	
+};
+
+
+function viewTrackableDetails(trackableID) {
+
+	var values = "trackables/" + trackableID;
+	values = values + "?fields=referenceCode,iconUrl,name,owner,holder,goal,allowedToBeCollected,description,releasedDate,originLocation,ownerCode,holderCode,currentGeocacheCode,currentGeocacheName,isMissing,trackingNumber,kilometersTraveled,milesTraveled,trackableType,lastDiscoveredDate";
+
+	var xhr = new XMLHttpRequest({ mozSystem: true });
+	var geomethod = "GET";	
+	var geourl = app.rootAPIurl + values;
+	
+	var token = localStorage.getItem("access_token");
+	
+	if (token !== null) {
+		//console.log('we have a token');
+		xhr.open(geomethod, geourl, true);
+		
+		xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+		xhr.onreadystatechange = function () {
+		  var geoloadstate = xhr.readyState;
+		  //console.log(`Load state: ${geoloadstate}`);
+		  if (geoloadstate == 1) {
+			  //console.log('request opened');
+		  } else if (geoloadstate == 2) {
+			//console.log('headers received'); 
+					
+		  } else if (geoloadstate == 3) {
+			 // console.log('loading data');
+
+		  } else if (geoloadstate == 4) {
+			var geostatus = xhr.status;
+				//console.log(`status: ${geostatus}`);
+			if (geostatus >= 200 && geostatus < 400) {
+			  var siteText = xhr.response;				
+
+				//===============================================================
+				// now parse the returned JSON out and do stuff with it
+				var trackableDetails = JSON.parse(siteText);
+					//referenceCode
+					//iconUrl
+					//name
+					//owner
+					//holder
+					//goal
+					//description
+					//releasedDate
+					//originLocation
+					//ownerCode
+					//holderCode
+					//currentGeocacheCode
+					//currentGeocacheName
+					//isMissing
+					//trackingNumber
+					//kilometersTraveled
+					//milesTraveled
+					//trackableType
+					//lastDiscoveredDate
+					//allowedToBeCollected
+
+				// load up the header - icon, name, code
+					var trackableHeader = document.getElementById('TrackableHeaderDetail');
+					var trackableLogsHeader = document.getElementById('TrackableLogsHeaderDetail');
+					var trackableGalleryHeader = document.getElementById('TrackableGalleryHeaderDetail');
+					trackableHeader.innerHTML = '';
+					trackableLogsHeader.innerHTML = '';
+					trackableGalleryHeader.innerHTML = '';
+
+					var entry1 = document.createElement("div");
+					entry1.innerHTML = "<img src='" + trackableDetails.iconUrl + "'>";;
+					entry1.className = 'iconLeft';
+
+					trackableHeader.appendChild(entry1);
+
+					var entry2 = document.createElement("span");
+					entry2.innerHTML = "<b>" + trackableDetails.name + "</b><br>" + trackableDetails.referenceCode;
+
+					trackableHeader.appendChild(entry2);	
+
+					trackableLogsHeader.innerHTML = trackableHeader.innerHTML;
+					trackableGalleryHeader.innerHTML = trackableHeader.innerHTML;
+
+					
+				// then load up the overview section -owner/released/origin/recently spotted/collectible pref
+					var trackableOverview = document.getElementById('TrackableDescription');
+					trackableOverview.innerHTML = '';
+
+					var entry3 = document.createElement("span");
+					entry3.innerHTML = "<b>Owner:</b> " + trackableDetails.owner.username + "<br>";
+					
+					var trackableReleaseDate = trackableDetails.releasedDate
+								
+					var trackableDistanceTraveled;
+					if (myUnits == "mi") {
+						trackableDistanceTraveled = Math.round(trackableDetails.milesTraveled);
+					} else {
+						trackableDistanceTraveled = Math.round(trackableDetails.kilometersTraveled);						
+					};
+					
+					var lastSeen;
+					if (trackableDetails.currentGeocacheName == null && trackableDetails.holder !== null) {
+						lastSeen = "In the hands of " + trackableDetails.holder.username;
+						
+					} else if (trackableDetails.currentGeocacheName !== null) {
+						lastSeen = "In " + trackableDetails.currentGeocacheName;
+						
+					} else {
+						lastSeen = "Unknown location";
+					};
+					
+							
+					entry3.innerHTML = entry3.innerHTML + "<b>Released:</b> " + trackableReleaseDate.slice(0,10) + "<br>";
+					entry3.innerHTML = entry3.innerHTML + "<b>Origin:</b> " + trackableDetails.originLocation.state + ", " + trackableDetails.originLocation.country + "<br>";
+					entry3.innerHTML = entry3.innerHTML + "<b>Distance traveled:</b> " + trackableDistanceTraveled + myUnits + "<br>";
+					entry3.innerHTML = entry3.innerHTML + "<b>Last seen:</b> " + lastSeen + "<br><br>";
+					if (trackableDetails.allowedToBeCollected) {
+						entry3.innerHTML = entry3.innerHTML + "This <b>is</b> a collectible<br>";						
+					} else {
+						entry3.innerHTML = entry3.innerHTML + "This <b>is not</b> a collectible<br>";
+					};
+					
+					trackableOverview.appendChild(entry3);						
+					
+				// then load up the goal section - goal
+					var trackableGoal = document.getElementById('TrackableGoal');
+					trackableGoal.innerHTML = trackableDetails.goal;
+					
+					
+				// then load up the about section - about
+					var trackableAbout = document.getElementById('TrackableAbout');
+					trackableAbout.innerHTML = trackableDetails.description;
+				
+
+				//
+				// now load up logs for this trackable
+				// <code here>
+				//
+				//
+				// now load up image gallery for this trackable
+				// <code here>
+				//
+				//
+
+				logAnalytics("Trackables","ViewTrackableDetails",userMembershipLevelId);
+				// turn off the loading spinner
+				
+				loadingOverlay(false);	
+				//now, bounce over to the cache inventory list after loading the inventory
+					windowOpen="viewTrackableDetails";
+					showView(22,false);	
+					initView();
+				
+				
+				
+				
+			}  else if (geostatus == 401) {
+				// token has expired, refresh and tell caller to retry
+				//console.log('refreshing token');
+				// turn off the loading spinner
+				loadingOverlay(false);					
+				refreshToken();
+			}  else {
+				// Oh no! There has been an error with the request!
+				//console.log("some problem...");
+				// turn off the loading spinner
+				loadingOverlay(false);	
+				// there was some issue loading full details, so pushing to the partial details screen.
+				logAnalytics("Caches","ViewPartialDetails",userMembershipLevelId);				
+				ShowCacheDetails(CacheID,true,false);	
+				if(showConnectionError) {
+					if (confirm("There was an issue connecting to geocaching.com...")) {
+						showConnectionError = false;
+					}
+				}
+			}
+		  }; 
+		};
+		
+
+		// turn on the loading spinner
+		loadingOverlay(true);		
+		xhr.send();	
+	} else {
+		getToken();
+
+	};	
+	
+};
+
+
+function viewTrackableLogs(trackableID) {
+
+
+		logAnalytics("Trackable","LoadTrackableLogs",userMembershipLevelId);		
+	
+	
+		var values = "trackables/" + trackableID + "/trackablelogs?";
+		values = values + "skip=0"; // start at the beginning of the list of trackable logs?  yes = 0
+		values = values + "&take=40"; // how many trackable logs to pull in
+		values = values + "&fields=referenceCode,geocacheName,trackableLogType,owner,loggedDate,text";
+
+		var xhr = new XMLHttpRequest({ mozSystem: true });
+		var geomethod = "GET";	
+		var geourl = app.rootAPIurl + values;
+		
+		var token = localStorage.getItem("access_token");
+		
+		if (token !== null) {
+			//console.log('we have a token');
+			xhr.open(geomethod, geourl, true);
+			
+			xhr.setRequestHeader('Authorization', 'bearer ' + token);		
+
+			xhr.onreadystatechange = function () {
+			  var geoloadstate = xhr.readyState;
+			 // console.log(`Load state: ${geoloadstate}`);
+			  if (geoloadstate == 1) {
+				//  console.log('request opened');
+			  } else if (geoloadstate == 2) {
+				//console.log('headers received'); 
+						
+			  } else if (geoloadstate == 3) {
+				 // console.log('loading data');						  
+			  } else if (geoloadstate == 4) {
+				var geostatus = xhr.status;
+				//console.log(`status: ${geostatus}`);
+				if (geostatus >= 200 && geostatus < 400) {
+					var siteText = xhr.response;				
+
+					//===============================================================
+					// now parse the returned JSON out and do stuff with it
+					
+					var trackableLogList = JSON.parse(siteText);
+					var trackableLogCount = trackableLogList.length;					
+
+
+					//================================================================================
+					//
+					// Display list of trackable logs
+					//
+					//
+					var listContainer = document.getElementById('TrackableLogsView');
+					listContainer.innerHTML = '';
+		
+					//Loading up trackables...
+			
+					// turn on the loading spinner
+					loadingOverlay(true);
+
+
+					//
+					// cycle through all the returned trackables and 
+					//		load them into the cache inventory page for display / selection by the user 
+					//
+					for (let i = 0; i < trackableLogCount; i++) {
+						// parse out the returned response 
+						
+						var trackableLogDate = trackableLogList[i].loggedDate;
+						var trackableLogUsername = trackableLogList[i].owner.username;
+						var trackableLogAction = trackableLogList[i].trackableLogType.name;
+						var trackableLogActionImage = trackableLogList[i].trackableLogType.imageUrl;
+						var trackableLogCacheName = trackableLogList[i].geocacheName;
+						var trackableLogText = trackableLogList[i].text;
+						
+						trackableLogDate = trackableLogDate.slice(0,10);
+
+						// now work on loading those details into the cache inventory page 
+						var entry = document.createElement("div");
+						entry.className = 'navItem';
+						entry.tabIndex = i * 10;		
+
+						var trackableImage = document.createElement("div");
+						trackableImage.innerHTML = "<img src='" + trackableLogActionImage + "'>";;
+						trackableImage.className = 'iconLeft';
+						entry.appendChild(trackableImage);
+
+						var trackableNameInList = document.createElement("div");
+						trackableNameInList.innerHTML = "<b>" + trackableLogDate + "</b> " + trackableLogUsername + " " +  trackableLogAction + " to/in " + trackableLogCacheName;
+						if (trackableLogText !== null) {
+							trackableNameInList.innerHTML = trackableNameInList.innerHTML + "<br><br>" + trackableLogText;
+						};
+						entry.appendChild(trackableNameInList);	
+
+						//entry.setAttribute('data-function', 'showTrackableDetails');
+						//entry.setAttribute('trackableID',trackableCode);
+
+						listContainer.appendChild(entry);	
+
+					};
+
+					// let the user know we're done processing data
+					//kaiosToaster({	
+					//  message: 'Cache inventory loaded',	
+					//  position: 'north',	
+					//  type: 'success',	
+					//  timeout: 3000	
+					//});	
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					
+					//now, bounce over to the cache inventory list after loading the inventory
+						windowOpen="viewCacheInventory";
+						showView(23,true);						
+						initView();
+
+				}  else if (geostatus == 401) {
+					// token has expired, refresh and tell caller to retry
+					//console.log('refreshing token');
+					refreshToken();
+				}  else {
+				// Oh no! There has been an error with the request!
+				//console.log("some problem...");
+					// turn off the loading spinner
+					loadingOverlay(false);	
+					alert("There was an issue connecting to geocaching.com...");
+			    }
+			  }; 
+			}
+
+			// turn on the loading spinner
+			loadingOverlay(true);
+			
+			xhr.send();	
+		} else {
+			getToken();
+		};		
+	
+};
+
+function viewTrackableGallery(trackableID) {
+
+};
+
 
 function loadMoreCacheLogs(CacheCode) {
 	loadingOverlay(true);
@@ -5834,22 +6529,73 @@ function ZoomMap(in_out) {
 }
 
 function zoom_speed() {
-	if (zoom_level <= 7) {
-		step = 1;
-	}
-
-
-	if (zoom_level > 7) {
-		step = 0.1;
-	}
-
-
-	if (zoom_level > 11) {
-		step = 0.001;
-	}
+	//console.log(`current zoom level: ${zoom_level}`);
 	
-	if (zoom_level > 16) {
-		step = .0001;
+	switch(zoom_level) {
+		case -1:
+			step = 30;		
+		 break;
+		case 0:
+			step = 30;		
+		 break;
+		case 1:
+			step = 25;		
+		 break;
+		case 2:
+			step = 20;		
+		 break;
+		case 3:
+			step = 12;		
+		 break;
+		case 4:
+			step = 8;		
+		 break;
+		case 5:
+			step = 4;		
+		 break;
+		case 6:
+			step = 1;		
+		 break;
+		case 7:
+			step = 1;		
+		 break;
+		case 8:
+			step = 0.5;		
+		 break;
+		case 9:
+			step = 0.1;			
+		 break;
+		case 10:
+			step = 0.1;			
+		 break;
+		case 11:
+			step = 0.1;			
+		 break;
+		case 12:
+			step = 0.01;			
+		 break;
+		case 13:
+			step = 0.01;			
+		 break;
+		case 14:
+			step = 0.01;		
+		 break;
+		case 15:
+			step = 0.001;		
+		 break;
+		case 16:
+			step = 0.001;		
+		 break;
+		case 17:
+			step = 0.0001;			
+		 break;
+		case 18:
+			step = 0.0001;			
+		 break;
+		case 19:
+			step = 0.0001;			
+		 break;
+
 	}
 
 	return step;
@@ -6242,6 +6988,7 @@ function sendPostRequest(url, params, success, error) {
 				// Replace the history entry to remove the auth code from the browser address bar
 				//window.history.replaceState({}, null, "/");
 				
+				console.log ('Getting access token');
 				console.log(`Access Token: ${body.access_token}`);
 				console.log(`Refresh Token: ${body.refresh_token}`);
 				console.log(`Expires in ${body.expires_in} seconds`);
@@ -6285,11 +7032,16 @@ function sendPostRequest(url, params, success, error) {
 		
 		//alert("no q here");
 		
-		console.log(`Access Token: ${localStorage.getItem("access_token")}`);
-		//console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);		
+		console.log('No refresh needed - our creds are:');
+		console.log(`Access Token: ${localStorage.getItem("access_token")}`);	
+		console.log(`Refresh Token: ${localStorage.getItem("refresh_token")}`);	
+		console.log(`pkce_state: ${localStorage.getItem("pkce_state")}`);
+		console.log(`pkce_code_verifier: ${localStorage.getItem("pkce_code_verifier")}`);
+
+		
 		//console.log(`Token Expires: ${localStorage.getItem("token_expires")}`);	
 
-		//console.log(`Seconds till expiration: ${time_till_expire}`);
+		console.log(`Seconds till expiration: ${time_till_expire}`);
 
 		if(time_till_expire < 3400) {refreshToken();};
 };

@@ -152,10 +152,11 @@
 				<button class="navItem" tabIndex="0" data-function="viewShortcuts">View all Shortcuts</button>	
 				<button class="navItem" tabIndex="10" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
 				<button class="navItem" tabIndex="20" data-function="refreshList">✆: Refresh Cache List</button>	
-				<button class="navItem" tabIndex="30" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>	
-				<button class="navItem" tabIndex="40" data-function="viewMap">6: View Map</button>	
-				<button class="navItem" tabIndex="50" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
-				<button class="navItem" tabIndex="60" data-function="viewCompass">9: View Compass</button>
+				<!--<button class="navItem" tabIndex="30" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>-->
+				<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
+				<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
+				<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
+				<button class="navItem" tabIndex="60" data-function="viewMyTrackables">My Trackables</button>				
 				<button class="navItem" tabIndex="70" data-function="stopNavToCache">Stop Navigation</button>				
 				<button class="navItem" tabIndex="80" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
 				<button class="navItem" tabIndex="90" data-function="viewSettings">Settings/Help/About</button>		
@@ -336,7 +337,7 @@
 				<option value="false">No</option>
 				<option value="true">Yes</option>
 			  </select>	
-			</fieldset>			  
+			</fieldset>	
 			<button class="navItem" tabIndex="50" data-function="submitLog">Submit</button>
 			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>			
 		
@@ -409,17 +410,16 @@
 				<div class="navItem" tabIndex="20">
 					<b>Bug Fixes</b><br>
 					<ul>
-						<li>Addressed issue where the bouncing ball may never go away when loading data</li>
+						<li>none</li>
 					</ul>
 					
 					<b>Feature Updates</b><br>
 					<ul>
-						<li>The app will now finish loading if you have no GPS signal or GPS is turned off.  We will use your last known coordinates </li>
-						<li>Improved the ability to select a cache from the map view</li>
-						<li>Automatically turn off Nav-to-Cache after you log the cache</li>
-						<li>Added the ability to specify which GPS coordinate format you want - DDD, DMM, DMS. This is under the Settings screen</li>
-						<li>Fully added the ability to create Waypoints. The Cache listing page now has a "Waypoints" button which will toggle your view from Caches to Waypoints. Created waypoints will persist until you delete them (delete from the "Manage Waypoints" menu option)</li>
-						<li>Added this change log screen!</li>
+						<li>Adjusted how much the map moves when scrolling at different zoom levels</li>
+						<li>Added function to message a cache owner (from the cache options menu)</li>
+						<li>Added list of trackables in a given cache (from the cache options menu if the cache has any trackables in its inventory)</li>
+						<li>Added the ability to see all my own trackables (from the main options menu)</li>
+						<li>Created the trackables details page</li>
 					</ul>
 				</div>			
 			</div>
@@ -442,6 +442,59 @@
 					<div id="WaypointDescription"></div>	
 				</div>
 			</div>
+		</div>
+		
+		<div class="view viewPaddingOverride" id="viewTrackableDetails">  <!-- view 22 -->
+			<div class="CacheTopLine">
+				<div id="TrackableHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator"><b>Details</b> | Logs</div>	
+			</div>
+			<div id="TrackableDetails">
+			
+				<div id="TrackableDescription">owner/released/origin/recently spotted/collectible pref</div>
+				
+				<div class="kui-separator"><b>Goal</b></div>	
+				<div id="TrackableGoal">goal here</div>
+				
+				<div class="kui-separator"><b>About</b></div>	
+				<div id="TrackableAbout">about here</div>				
+			</div>			
+			
+			<!-- <div class="listLogsView" id="TrackableLogsView"> Logs go here </div> -->
+			<!-- <div class="listGalleryView" id="TrackableGallery"> Image gallery here</div> -->			
+		</div>		
+		
+		<div class="view viewPaddingOverride" id="viewTrackableLogs">  <!-- view 23 -->
+			<div class="CacheTopLine">
+				<div id="TrackableLogsHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator">Details | <b>Logs</b></div>	
+			</div>
+	
+			
+			<div class="listLogsView" id="TrackableLogsView"> Logs go here </div>
+			<!-- <div class="listGalleryView" id="TrackableGallery"> Image gallery here</div> -->			
+		</div>	
+
+		<div class="view viewPaddingOverride" id="viewTrackableGallery">  <!-- view 24 -->
+			<div class="CacheTopLine">
+				<div id="TrackableGalleryHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator">Details | Log | <b>Gallery</b></div>	
+			</div>
+	
+			
+			<!--<div class="listLogsView" id="TrackableLogsView"> Logs go here </div> -->
+			<div class="listGalleryView" id="TrackableGallery"> Image gallery here</div>			
+		</div>	
+
+		<div class="view viewPaddingOverride" id="viewCacheInventory">  <!-- view 25 -->
+			<div class="CacheTopLine">
+				<div id="cacheInventoryHeader"></div>
+				<div id="cacheInventoryAvatar" class="iconLeft"></div>
+				<div id="cacheInventoryName"></div>				
+				<div id="cacheInventoryHeaderBreak" class="kui-separator"></div>	
+			</div>
+	
+			<div id="cacheInventoryList" class="list">No trackables here...</div>
 		</div>
 
 	</div>	 	 

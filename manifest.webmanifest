@@ -10,7 +10,7 @@
   "start_url": "/index.html",
   "dir": "ltr",
   "scope": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#02874D",
   "categories": [
       "social"
@@ -44,7 +44,7 @@
   ],
 
     "b2g_features": {
-	  "version": "3.1.20.3",
+	  "version": "4.20",
     "developer": {
       "name": "canyouswim",
       "url": "https://caching-on-kai.com"
