@@ -23,6 +23,7 @@ var initialLoadofApp = localStorage.getItem('initialLoadofApp');
 // Geocaching API details
 var userMembershipLevelId="0";
 var myUserAlias="notSet";
+var myUserCode;
 var myUserAvatar;
 var myTrackableView;
 var favPointsAvailable = 0;
@@ -54,7 +55,7 @@ var basicUserMessageForCacheDownload;
 
 var app = {};
 // use the custom module namespace 'app' for all variables and functions you need to access through other scripts
-app.useProduction = true;
+app.useProduction = false;
 app.rootAPIurl = null; 
 app.rootSiteURL = null;
 app.config = new Array();
@@ -257,7 +258,7 @@ var Rk = 6373; // mean radius of the earth (km) at 39 degrees from the equator
 //var distanceDIV = document.getElementById("distance");
 
 var screenYscroll = 0;
-var step = 0.001;
+var step = 0.0001;
 var current_lng = 0;
 var current_lat = 0;
 var current_alt = 0;
@@ -379,6 +380,13 @@ var cacheNameNavigating;
 
 // Trackable variables
 var trackableID = null;
+var trackableHolder;
+var trackableOwner;
+var trackableCacheName;
+var trackableCacheCode;
+var trackableLogName;
+var trackableLogIcon;
+var trackableIamLogging;
 var arrayCacheInventoryObject;
 var arrayCacheInventory = [];
 var trackableCount = 0;
@@ -590,7 +598,9 @@ app.keyCallback = {
 		  //navGeoCode = app.activeNavItem.getAttribute('navCode');
 			//console.log(`pressed goNav, navGeoCode:${navGeoCode}`);
 		  navToCache(navGeoCode,true);
-			  
+		} else if (app.currentViewName == "viewTrackableDetails" || app.currentViewName == "viewTrackableLogs" || app.currentViewName == "viewTrackableGallery") {
+			windowOpen = "logTrackable";
+			logTrackable();			
 		} else if (app.currentViewName == "viewCompass") {
 			// show help screen for using the compass
 			showView(18,false);
@@ -1622,6 +1632,18 @@ function leftButton() {
 
 var clearLogForm = false;
 var cacheIamLogging = -1;
+var clearTrackableLogForm = false;
+var trackableIamLogging = -1;
+
+function showModal(displayText){
+	//windowOpen = "showModal";
+	document.getElementById("message").innerHTML = displayText;
+	showView(15,false);	
+	//console.log(`text to show: ${displayText}`);
+	// update the initView function to allow for different user response options to this modal:
+	// yes-no | confirm-cancel | just OK, etc
+	initView();
+}
 
 function logThisCache() {
 	 if (navGeoCode !='') {
@@ -1697,15 +1719,7 @@ function logThisCache() {
 	 }	
 };
 
-function showModal(displayText){
-	//windowOpen = "showModal";
-	document.getElementById("message").innerHTML = displayText;
-	showView(15,false);	
-	//console.log(`text to show: ${displayText}`);
-	// update the initView function to allow for different user response options to this modal:
-	// yes-no | confirm-cancel | just OK, etc
-	initView();
-}
+
 
 function submitLog() {
 	loadingOverlay(true);
@@ -1915,6 +1929,253 @@ function submitLogImage(logCode,logImage) {
 	}
 }
 
+
+
+
+
+
+
+
+
+
+
+function logTrackable() {
+	
+	// trackable logging rules appear to be:
+	//
+	// if you own the trackable and it is in your own inventory, you can only write a note log
+	//
+	// if you don't have the trackable in your inventory, you can 1) retrieve from a cache (if in one now), 2) grab it from somewhere eles 3) write a note 4) discover it
+	
+
+	//Id	Name
+	//4	Write Note
+	//13	Retrieve It from a Cache
+	//14	Dropped Off
+	//15	Transfer
+	//16	Mark Missing
+	//19	Grab It (Not from a Cache)
+	//48	Discovered It
+	//69	Move To Collection
+	//70	Move To Inventory
+	//75	Visited	
+	
+	
+	 if (trackableID !=='') {
+		 //show the log cache div
+		windowOpen = "logTrackable";
+
+		// put together what the trackable log header should look likely
+		
+		
+		// trackableID = null;
+		// trackableHolder;
+		// trackableOwner;
+		// trackableCacheName;
+		// trackableLogName;
+		// trackableLogIcon;	
+		// trackableCacheCode;
+		
+		var BadgeContent;
+		BadgeContent = "<b>Post a new log for</b><br><img src='" + trackableLogIcon + "'> " + trackableLogName;		
+		
+		document.getElementById("logTrackableHeader").innerHTML = BadgeContent;
+		
+
+		//now clear out the rest of the form for new use
+		// but only clear out the form if the log had previously been submitted 
+		// so we keep partially entered logs
+		// exception is if the trackable has changed - in that case we need to clear the log out
+		
+		if (trackableIamLogging == trackableLogName) {
+			// do nothing
+		} else {
+			//ok, we're trying to log a new cache, so clear everything out
+			trackableIamLogging = trackableLogName;
+			clearLogForm = true;
+		}
+		
+		// figure out what kinds of trackable log options i should have
+		// the questions are: is the trackable in my current inventory, is the trackable in a cache currently?
+		
+		
+			//	<option value="13">Retrieved it from ???</option>
+			//	<option value="19">Grab it from somewhere else</option>
+			//	<option value="4">Write note</option>	
+			//	<option value="48">Discovered it</option>			
+		
+		if (clearLogForm == true) {
+			
+			if(trackableCacheName !== null){
+				document.getElementById("logTrackableType").innerHTML = "<option value='13'>Retrieved it from " + trackableCacheName + "</option>";		
+				document.getElementById("logTrackableType").innerHTML += "<option value='19'>Grab it from somewhere else</option>";
+				document.getElementById("logTrackableType").innerHTML += "<option value='4'>Write note</option>";
+				document.getElementById("logTrackableType").innerHTML += "<option value='48'>Discovered it</option>";				
+			} else if (trackableHolder == myUserAlias) {
+				document.getElementById("logTrackableType").innerHTML = "<option value='4'>Write note</option>";
+			} else {
+				document.getElementById("logTrackableType").innerHTML = "<option value='19'>Grab it from somewhere else</option>";				
+				document.getElementById("logTrackableType").innerHTML += "<option value='4'>Write note</option>";
+			}
+			
+			document.getElementById("logTrackableText").value = "";
+			document.getElementById("logTrackingCode").value = "";			
+			clearLogForm = false;
+		}
+		
+		
+		showView(26,false);
+		initView();						 		 
+	 }	
+};
+
+
+
+function submitTrackableLog() {
+	loadingOverlay(true);
+	
+	//var cacheLogImage = document.getElementById('logImage');
+	var trackableLogDate = document.getElementById('logTrackableDate');
+		var trackableLogDateRaw = trackableLogDate.value;
+		var trackableLogDateValue = trackableLogDate.value + "T00:00:00.000Z";
+	var trackableLogTextRaw = document.getElementById('logTrackableText');
+		var trackableLogText = trackableLogTextRaw.value;
+	var thisTrackableLogType = document.getElementById('logTrackableType');	
+	var trackableTrackingCode = document.getElementById('logTrackingCode');
+		
+		
+	//console.log(`LogDate: ${cacheLogDateValue}`);
+	//console.log(`LogText: ${cacheLogText}`);
+	//console.log(`LogType: ${cacheLogType.value}`);
+
+	var token = localStorage.getItem("access_token");
+	var params = {	
+		loggedDate: trackableLogDateValue,
+		text: trackableLogText,
+		trackableLogType: {id: thisTrackableLogType.value},
+		trackingNumber: trackableTrackingCode.value,
+		geocacheCode: trackableCacheCode,
+		trackableCode: trackableID
+	};	
+	
+	var todayDate = new Date();
+	//console.log(`todayDate: ${todayDate}`);
+	var todayYear = todayDate.getFullYear();
+	var todayMonth = todayDate.getMonth();
+	var todayDay = todayDate.getDate();
+	
+	var logFullDate = new Date(trackableLogDate.value);
+	//console.log(`logFullDate: ${logFullDate}`);
+	var logYear = logFullDate.getFullYear();
+	var logMonth = logFullDate.getMonth();
+	var logDay = logFullDate.getDate();
+
+	
+	var fixedLogDate = new Date();
+	fixedLogDate.setFullYear(logYear, logMonth, logDay);
+	//console.log(`fixedLogDate: ${fixedLogDate}`);
+	
+	//console.log(`${todayYear}${todayMonth}${todayDay} ?=? ${logYear}${logMonth}${logDay}`);
+	
+	if (token !== null) {
+		// check for errors
+		//var BadgeContent;
+		//BadgeContent = arrayCache[currentCacheID].cacheBadge + "<b>" + arrayCache[currentCacheID].cacheName + "</b><br>" + arrayCache[currentCacheID].cacheCode;				
+		
+		var logErrors = "<br><br>Your log submission has the following error(s)</b>:<br><ul class='bullets'>"
+		var logHasError = false;
+		
+		if(fixedLogDate > todayDate) {
+			logErrors += "<li>Your log date cannot be in the future</li>";
+			logHasError = true;
+		};			
+		if(trackableLogText.length == 0) {
+			logErrors += "<li>Your log details cannot be empty</li>";
+			logHasError = true;
+		};	
+		if(trackableLogDateRaw.length == 0) {
+			logErrors += "<li>Your log date cannot be empty</li>";
+			logHasError = true;
+		};		
+		if(thisTrackableLogType.value !== "4" && trackableTrackingCode.length == 0) {
+			logErrors += "<li>You must provide a tracking code</li>";
+			logHasError = true;
+		};					
+		
+		//console.log(`today: ${todayDate}`);
+		
+		logErrors += "</ul>";
+
+		//console.log(`errors? ${logHasError}`);
+		//console.log(`error text: ${logErrors}`);
+
+		if(logHasError) {
+			loadingOverlay(false);	
+			showModal(logErrors);
+		} else {
+		
+			logAnalytics("Trackables","LogTrackable",thisTrackableLogType.value);			
+		
+			var logURL = app.rootAPIurl + "trackablelogs?fields=referencecode&api_key=" + token;		
+			var request = new XMLHttpRequest({ mozSystem: true });
+			
+			request.onreadystatechange = function() {
+				if (this.readyState == 4 && (this.status == 200 || this.status == 201)) {
+					body = JSON.parse(this.response);
+
+					//console.log('no log image attached');
+					loadingOverlay(false);							
+					// send up success message and punt the user back to previous screen
+					kaiosToaster({	
+					  message: 'Log submitted successfully',	
+					  position: 'north',	
+					  type: 'success',	
+					  timeout: 3000	
+					});	
+					clearLogForm = true;
+
+					goBack();
+
+				} else if(this.readyState == 4 && (this.status !== 200 || this.status !== 201)) {
+					// some issue
+					body = JSON.parse(this.response);
+					var responseError = "There was an error on the log submission: " + body.errorMessage;
+					loadingOverlay(false);						
+					//showModal(responseError);
+					alert(responseError);
+					loadingOverlay(false);	
+				} else if (this.readyState==4 && (this.status != 201 || this.status != 201)) {
+					// meaning we've hit some error 
+					alert("There was an error connecting to geocaching.com...");
+					loadingOverlay(false);	
+				} else {
+					//alert("There was an error connecting to geocaching.com...");
+					//loadingOverlay(false);	
+				}
+			}		
+			request.open("POST", logURL, true);
+			
+			request.setRequestHeader("Content-Type", "application/json;");
+			request.setRequestHeader("Accept", "application/json;");
+			request.setRequestHeader("Authorization", "bearer " + token);
+			
+			request.send(JSON.stringify(params));
+		}
+	} else {
+		getToken();
+	};		
+}
+
+
+
+
+
+
+
+
+
+
+
 function refreshListofCaches() {
 		// get the lat/lng of the center of the current map view and refresh the list of caches from that point instead
 		// of the current GPS location
@@ -2020,6 +2281,25 @@ function execute() {
 					windowOpen = "viewTrackableDetails";
 					viewTrackableDetails(trackableID);
 					//initView();					
+				break;
+				case 'lookupTrackable':
+					var lookupCode = document.getElementById('lookupTrackableCode').value;
+					var lookupNumber = document.getElementById('lookupTrackingNumber').value;
+					windowOpen = "viewTrackableDetails";
+					if(lookupCode !== "") {
+						viewTrackableDetails(lookupCode);	
+					} else if (lookupNumber !== "") {
+						viewTrackableDetails(lookupNumber);	
+					} else {
+						alert("Enter either a Tracking Number or Trackable Code!");
+					}
+				break;
+				case 'logTrackable':
+					windowOpen = "logTrackable";
+					logTrackable(); // 
+				break;			
+				case 'submitTrackableLog':
+					submitTrackableLog();
 				break;
 				case 'viewTrackableLogs':
 					viewTrackableLogs(trackableID);
@@ -2266,6 +2546,14 @@ function executeOption() {
 	  windowOpen = "viewCacheOptions";
 	  showView(10,false);
 	  initView();
+  } else if (app.optionButtonAction == 'trackableLookup') {
+	  windowOpen = "trackableLookup";
+	  showView(28,false);
+	  initView();	  
+  } else if (app.optionButtonAction == 'viewTrackableOptions') {
+	  windowOpen = "viewTrackableOptions";
+	  showView(27,false);
+	  initView();	  
   } else if (app.optionButtonAction == 'doneInTextArea') {
 	document.getElementById("logText").blur();
   }
@@ -2300,15 +2588,15 @@ function softkeyBar() {
 		} else if(app.currentViewName == "viewTrackableDetails" || app.currentViewName == "viewTrackableLogs") {
 			app.backButton.innerHTML = "Back";
 			
-			app.actionButton.innerHTML = "";
+			app.actionButton.innerHTML = "LOG";
 			app.optionsButton.innerHTML = "Options";
 			app.optionButtonAction = 'viewTrackableOptions';	
 		} else if(app.currentViewName == "viewCacheInventory") {
 			app.backButton.innerHTML = "Back";
 			
 			app.actionButton.innerHTML = "SELECT";
-			app.optionsButton.innerHTML = "Options";
-			app.optionButtonAction = 'viewInventoryOptions';			
+			app.optionsButton.innerHTML = "Lookup";
+			app.optionButtonAction = 'trackableLookup';			
 		} else if(app.currentViewName == "viewWaypoint") {
 			app.backButton.innerHTML = "Waypoints";
 			
@@ -2342,7 +2630,7 @@ function softkeyBar() {
 			app.optionsButton.innerHTML = "";
 			app.optionButtonAction = '';
 		} else {
-			console.log(`setting buttons, current view: ${app.currentViewName}`);
+			//console.log(`setting buttons, current view: ${app.currentViewName}`);
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "SELECT";
 			if (app.isInputFocused()) {
@@ -2890,6 +3178,7 @@ function updateUserDetails() {
 				// now parse the returned JSON out and do stuff with it
 				
 				var userDetails = JSON.parse(siteText);
+				myUserCode = userDetails.referenceCode;
 				myUserAlias = userDetails.username;
 				myUserAvatar = userDetails.avatarUrl;
 				
@@ -3041,7 +3330,7 @@ or:
 			 // console.log('loading data');
 		  } else if (geoloadstate == 4) {
 			var geostatus = xhr.status;
-				console.log(`GA submit status: ${geostatus}. wrote category: ${eventCategory}, Action: ${eventAction}, Label: ${eventLabel}, MembershipLevel: ${userMembershipLevelId}`);
+				//console.log(`GA submit status: ${geostatus}. wrote category: ${eventCategory}, Action: ${eventAction}, Label: ${eventLabel}, MembershipLevel: ${userMembershipLevelId}`);
 			if (geostatus >= 200 && geostatus < 400) {
 			  var siteText = xhr.response;				
 
@@ -4556,7 +4845,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";		
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='https://www.geocaching.com/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
 				
 				// add the option to view trackables if there are any for this cache
 				if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};
@@ -4643,7 +4932,7 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
 					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='https://www.geocaching.com/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
 					
 					// add the option to view trackables if there are any for this cache
 					if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};			
@@ -5110,9 +5399,9 @@ function viewTrackableInventory(currentCacheID,listType) {
 };
 
 
-function viewTrackableDetails(trackableID) {
+function viewTrackableDetails(inboundTrackableID) {
 
-	var values = "trackables/" + trackableID;
+	var values = "trackables/" + inboundTrackableID;
 	values = values + "?fields=referenceCode,iconUrl,name,owner,holder,goal,allowedToBeCollected,description,releasedDate,originLocation,ownerCode,holderCode,currentGeocacheCode,currentGeocacheName,isMissing,trackingNumber,kilometersTraveled,milesTraveled,trackableType,lastDiscoveredDate";
 
 	var xhr = new XMLHttpRequest({ mozSystem: true });
@@ -5141,7 +5430,7 @@ function viewTrackableDetails(trackableID) {
 		  } else if (geoloadstate == 4) {
 			var geostatus = xhr.status;
 				//console.log(`status: ${geostatus}`);
-			if (geostatus >= 200 && geostatus < 400) {
+			if (geostatus == 200 || geostatus == 201) {
 			  var siteText = xhr.response;				
 
 				//===============================================================
@@ -5169,6 +5458,15 @@ function viewTrackableDetails(trackableID) {
 					//allowedToBeCollected
 
 				// load up the header - icon, name, code
+					trackableID = trackableDetails.referenceCode;
+					if (trackableDetails.holder !== null) {trackableHolder = trackableDetails.holder.username;};
+					trackableOwner = trackableDetails.owner.username;
+					trackableCacheName = trackableDetails.currentGeocacheName;
+					trackableLogName = trackableDetails.name;
+					trackableLogIcon = trackableDetails.iconUrl;	
+					trackableCacheCode = trackableDetails.currentGeocacheCode;
+					
+					
 					var trackableHeader = document.getElementById('TrackableHeaderDetail');
 					var trackableLogsHeader = document.getElementById('TrackableLogsHeaderDetail');
 					var trackableGalleryHeader = document.getElementById('TrackableGalleryHeaderDetail');
@@ -5241,15 +5539,21 @@ function viewTrackableDetails(trackableID) {
 					trackableAbout.innerHTML = trackableDetails.description;
 				
 
-				//
-				// now load up logs for this trackable
-				// <code here>
-				//
-				//
-				// now load up image gallery for this trackable
-				// <code here>
-				//
-				//
+				// now set the options menu appropriately
+				
+				var menuTrackableOptions = document.getElementById('viewTrackableOptions');
+				
+				var menuOptionsSetup = "<button class='navItem' tabIndex='0' data-function='logTrackable'>Log this trackable</button>";	
+				var nextTabIndex = "10";
+				if (trackableDetails.owner.username !== myUserAlias) {
+					menuOptionsSetup = menuOptionsSetup + "<button class='navItem' tabIndex='10' data-href='" + app.rootSiteURL + "/email/?u=" + trackableDetails.owner.username + "'>Send message to trackable owner</button>";
+					nextTabIndex = "20";
+				};
+				if (trackableDetails.holder !== null) {
+					if (trackableDetails.holder.username !== myUserAlias) {menuOptionsSetup = menuOptionsSetup + "<button class='navItem' tabIndex='" + nextTabIndex + "' data-href='" + app.rootSiteURL + "/email/?u=" + trackableDetails.holder.username + "'>Send message to current holder of the trackable</button>";};
+				};
+				
+				menuTrackableOptions.innerHTML = menuOptionsSetup;
 
 				logAnalytics("Trackables","ViewTrackableDetails",userMembershipLevelId);
 				// turn off the loading spinner
@@ -5261,7 +5565,14 @@ function viewTrackableDetails(trackableID) {
 					initView();
 				
 				
-				
+			} else if(geostatus == 404) {
+				// some issue
+				body = JSON.parse(this.response);
+				var responseError = "There was an error on the log submission: " + body.errorMessage;
+				loadingOverlay(false);						
+				//showModal(responseError);
+				alert(responseError);
+				loadingOverlay(false);					
 				
 			}  else if (geostatus == 401) {
 				// token has expired, refresh and tell caller to retry

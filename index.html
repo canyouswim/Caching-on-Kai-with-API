@@ -338,8 +338,38 @@
 				<option value="true">Yes</option>
 			  </select>	
 			</fieldset>	
-			<button class="navItem" tabIndex="50" data-function="submitLog">Submit</button>
-			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>			
+			<div id="addTrackable"><b>Trackables</b></div>
+			<fieldset>
+			  <legend class="navItem" tabIndex="50">TB3NC58: canyouswim's geopatch</legend>
+			  <select id="TB3NC58">
+				<option value="0">No action</option>
+				<option value="75">Visit</option>
+				<option value="14">Drop</option>				
+			  </select>
+			</fieldset>		
+			  <legend class="navItem" tabIndex="60">TB3NC58: Dogtag number 2</legend>
+			  <select id="TB3NC58">
+				<option value="0">No action</option>
+				<option value="75">Visit</option>
+				<option value="14">Drop</option>				
+			  </select>
+			</fieldset>	
+			  <legend class="navItem" tabIndex="70">TB3NC58: Dogtag number 3</legend>
+			  <select id="TB3NC58">
+				<option value="0">No action</option>
+				<option value="75">Visit</option>
+				<option value="14">Drop</option>				
+			  </select>
+			</fieldset>	
+			  <legend class="navItem" tabIndex="80">TB3NC58: Dogtag number 4</legend>
+			  <select id="TB3NC58">
+				<option value="0">No action</option>
+				<option value="75">Visit</option>
+				<option value="14">Drop</option>				
+			  </select>
+			</fieldset>				
+			<button class="navItem" tabIndex="90" data-function="submitLog">Submit</button>
+			<button class="navItem" tabIndex="100" data-function="cancel">Cancel</button>			
 		
 		</div>
 
@@ -497,7 +527,63 @@
 			<div id="cacheInventoryList" class="list">No trackables here...</div>
 		</div>
 
-	</div>	 	 
+		<div class="view" id="logTrackable">  <!-- view 26 -->
+			<div id="logTrackableHeader">Log this trackable</div>
+			<br>
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Log Type</legend>
+			  <select id="logTrackableType">
+				<option value="13">Retrieved it from ???</option>
+				<option value="19">Grab it from somewhere else</option>
+				<option value="4">Write note</option>	
+				<option value="48">Discovered it</option>				
+			  </select>
+			</fieldset>
+
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Date Found</legend>
+			  <input id="logTrackableDate" type="date"/>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="20">Tracking Number</legend>
+			  <input id="logTrackingCode" type="text"/>
+			</fieldset>			
+			<fieldset>
+			  <legend class="navItem" tabIndex="30">Comments</legend>
+			  <textarea id="logTrackableText" rows="5" columns="20"></textarea>
+			</fieldset>
+			<button class="navItem" tabIndex="40" data-function="submitTrackableLog">Submit</button>
+			<button class="navItem" tabIndex="50" data-function="cancel">Cancel</button>			
+		
+		</div>
+		
+		<div class="view" id="viewTrackableOptions">  <!-- view 27 -->
+			<button class="navItem" tabIndex="0" data-function="logTrackable">
+				<div id="createTrackableLog">Log Trackable</div></button>	
+			<button class="navItem" tabIndex="10" data-function="messageTrackerHolder">
+				<div id="messageTrackableHolder">Message current holder</div></button>				
+			<button class="navItem" tabIndex="20" data-function="messageTrackerOwner">
+				<div id="messageTrackableOwner">Message owner</div></button>				
+		</div>			
+ 	
+
+		<div class="view" id="lookupTrackable">  <!-- view 28 -->
+			<div id="lookupHeader"><b>Trackable lookup - enter one of the following:</b></div>
+			<br>
+
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Trackable Code</legend>
+			  <input id="lookupTrackableCode" type="text"/>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Tracking Number (the secret code on the dog tag)</legend>
+			  <input id="lookupTrackingNumber" type="text"/>
+			</fieldset>			
+
+			<button class="navItem" tabIndex="20" data-function="lookupTrackable">Search</button>
+			<button class="navItem" tabIndex="30" data-function="cancel">Cancel</button>			
+		
+		</div>	
 
 	 
 	
