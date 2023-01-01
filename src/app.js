@@ -348,7 +348,7 @@ var search_current_lat;
 var map;
 var mapContent;
 
-var Cache;
+var Cache = null;
 var crd;
 var container;
 
@@ -391,6 +391,8 @@ var arrayCacheInventoryObject;
 var arrayCacheInventory = [];
 var trackableCount = 0;
 var trackableListID;
+var showCacheLogTrackableList = false;
+var cacheLogTrackableListLength = 0;
 
 var showingAllCaches="no";
 var FullCacheListDetails;
@@ -1712,6 +1714,11 @@ function logThisCache() {
 			logFavoritePoints.style.display="block";			
 		}
 		
+		// now workup our trackable inventory list
+		viewTrackableInventory(null,null,"cacheLog");
+
+
+
 		showView(14,false);
 		initView();						 		 
 	//	 var LogCacheURL = "https://www.geocaching.com/play/geocache/" + navGeoCode + "/log";
@@ -1818,6 +1825,7 @@ function submitLog() {
 					
 					favPointsAvailable = body.owner.favoritePoints;
 					
+					submitTrackableCacheLog();					
 					
 					//then check to see if we need to submit an image, and do so
 					if(cacheLogImage.value !== "") {
@@ -1838,7 +1846,9 @@ function submitLog() {
 
 					} else {
 						//console.log('no log image attached');
-						loadingOverlay(false);							
+						
+						loadingOverlay(false);	
+						reloadCacheDetails(navGeoCode);					
 						// send up success message and punt the user back to previous screen
 						kaiosToaster({	
 						  message: 'Log submitted successfully',	
@@ -1849,6 +1859,8 @@ function submitLog() {
 						clearLogForm = true;
 						// stop navigation now that we've logged the cache 
 						navToCache(0,false);
+						
+						
 						
 						goBack();
 						
@@ -1930,13 +1942,18 @@ function submitLogImage(logCode,logImage) {
 }
 
 
+function submitTrackableCacheLog() {
+	
+		var myInventory = document.getElementById('logCacheTrackableContainer').getElementsByTagName('select');		
 
-
-
-
-
-
-
+		//console.log(`number of items in inventory: ${myInventory.length}`);
+		for (let i = 0; i < myInventory.length; i++) {
+			//console.log(`item ${i}, ${myInventory[i].id} contents: ${myInventory[i].value}`);
+			if (myInventory[i].value !== "0") {submitTrackableLog("fromCache",myInventory[i].id,myInventory[i].value);};
+		}	
+	
+	
+}
 
 
 function logTrackable() {
@@ -2031,18 +2048,31 @@ function logTrackable() {
 
 
 
-function submitTrackableLog() {
+function submitTrackableLog(submitLocation,tbCode,tbLogType) {
 	loadingOverlay(true);
 	
-	//var cacheLogImage = document.getElementById('logImage');
-	var trackableLogDate = document.getElementById('logTrackableDate');
-		var trackableLogDateRaw = trackableLogDate.value;
-		var trackableLogDateValue = trackableLogDate.value + "T00:00:00.000Z";
-	var trackableLogTextRaw = document.getElementById('logTrackableText');
-		var trackableLogText = trackableLogTextRaw.value;
-	var thisTrackableLogType = document.getElementById('logTrackableType');	
-	var trackableTrackingCode = document.getElementById('logTrackingCode');
-		
+	if (submitLocation == 'fromCache') { // we are dropping or visiting a trackable to a cache
+		var trackableLogDate = document.getElementById('logDate');
+			var trackableLogDateRaw = trackableLogDate.value;
+			var trackableLogDateValue = trackableLogDate.value + "T00:00:00.000Z";
+		var trackableLogTextRaw = document.getElementById('logText');
+			var trackableLogText = trackableLogTextRaw.value;
+		var thisTrackableLogType = tbLogType;
+		var trackableTrackingCode = null;	
+		var geoCodeToLog = navGeoCode;
+		var tbCodeToLog = tbCode;
+	} else { // we are picking up a trackable or discovering it or writing a note
+		//var cacheLogImage = document.getElementById('logImage');
+		var trackableLogDate = document.getElementById('logTrackableDate');
+			var trackableLogDateRaw = trackableLogDate.value;
+			var trackableLogDateValue = trackableLogDate.value + "T00:00:00.000Z";
+		var trackableLogTextRaw = document.getElementById('logTrackableText');
+			var trackableLogText = trackableLogTextRaw.value;
+		var thisTrackableLogType = document.getElementById('logTrackableType').value;	
+		var trackableTrackingCode = document.getElementById('logTrackingCode').value;
+		var geoCodeToLog = trackableCacheCode;	
+		var tbCodeToLog = trackableID;
+	}
 		
 	//console.log(`LogDate: ${cacheLogDateValue}`);
 	//console.log(`LogText: ${cacheLogText}`);
@@ -2052,10 +2082,10 @@ function submitTrackableLog() {
 	var params = {	
 		loggedDate: trackableLogDateValue,
 		text: trackableLogText,
-		trackableLogType: {id: thisTrackableLogType.value},
-		trackingNumber: trackableTrackingCode.value,
-		geocacheCode: trackableCacheCode,
-		trackableCode: trackableID
+		trackableLogType: {id: thisTrackableLogType},
+		trackingNumber: trackableTrackingCode,
+		geocacheCode: geoCodeToLog,
+		trackableCode: tbCodeToLog
 	};	
 	
 	var todayDate = new Date();
@@ -2096,11 +2126,13 @@ function submitTrackableLog() {
 		if(trackableLogDateRaw.length == 0) {
 			logErrors += "<li>Your log date cannot be empty</li>";
 			logHasError = true;
-		};		
-		if(thisTrackableLogType.value !== "4" && trackableTrackingCode.length == 0) {
-			logErrors += "<li>You must provide a tracking code</li>";
-			logHasError = true;
-		};					
+		};	
+		if (submitLocation !== "fromCache") {
+			if(thisTrackableLogType.value !== "4" && trackableTrackingCode.length == 0) {
+				logErrors += "<li>You must provide a tracking code</li>";
+				logHasError = true;
+			};
+		};
 		
 		//console.log(`today: ${todayDate}`);
 		
@@ -2126,12 +2158,7 @@ function submitTrackableLog() {
 					//console.log('no log image attached');
 					loadingOverlay(false);							
 					// send up success message and punt the user back to previous screen
-					kaiosToaster({	
-					  message: 'Log submitted successfully',	
-					  position: 'north',	
-					  type: 'success',	
-					  timeout: 3000	
-					});	
+
 					clearLogForm = true;
 
 					goBack();
@@ -2165,14 +2192,6 @@ function submitTrackableLog() {
 		getToken();
 	};		
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -2285,7 +2304,7 @@ function execute() {
 				case 'lookupTrackable':
 					var lookupCode = document.getElementById('lookupTrackableCode').value;
 					var lookupNumber = document.getElementById('lookupTrackingNumber').value;
-					windowOpen = "viewTrackableDetails";
+					windowOpen = "lookupTrackingNumber";
 					if(lookupCode !== "") {
 						viewTrackableDetails(lookupCode);	
 					} else if (lookupNumber !== "") {
@@ -2309,6 +2328,9 @@ function execute() {
 				break;
 				case 'loadCacheDetails':
 					loadAllCacheDetails(currentCacheID);
+				 break;
+				case 'reloadCacheDetails':
+					reloadCacheDetails(arrayCache[currentCacheID].cacheCode);				
 				 break;
 				case 'refreshCacheDetails':
 					loadAllCacheDetails(currentCacheID);				
@@ -2634,8 +2656,8 @@ function softkeyBar() {
 			app.backButton.innerHTML = "Back";
 			app.actionButton.innerHTML = "SELECT";
 			if (app.isInputFocused()) {
-			  app.optionsButton.innerHTML = "Clear";
-			  app.optionButtonAction = 'clear';
+			  app.optionsButton.innerHTML = "";
+			  app.optionButtonAction = '';
 			} else {
 				app.optionsButton.innerHTML = "";
 			}
@@ -3695,6 +3717,7 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 						// now parse through these and see if any match what we have already
 						
 						var rightNowMilliseconds = Date.now();
+						var cacheExpiresDate;
 						
 						var rightNow = new Date(rightNowMilliseconds);
 						var rightNowLocal = rightNow.toLocaleString();	
@@ -3702,7 +3725,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 						for (let i = 0; i < (arrayCacheDetails.length); i++) {
 							// very first thing we need to do before we even check
 							// is see if the full details we've loaded have expired 
-							if(arrayCacheDetails[i].expires < rightNowLocal){
+							cacheExpiresDate = new Date(arrayCacheDetails[i].expires);
+							if(cacheExpiresDate < rightNow){
 								// if expired, remove that item from the array 
 								arrayCacheDetails.splice(i,1);
 							};
@@ -4057,6 +4081,7 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 			// now parse through these and see if any match what we have already
 			
 			var rightNowMilliseconds = Date.now();
+			var cacheExpiresDate;
 			
 			var rightNow = new Date(rightNowMilliseconds);
 			var rightNowLocal = rightNow.toLocaleString();	
@@ -4066,7 +4091,8 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 				// is see if the full details we've loaded have expired 
 				var breakTest = false;
 				//console.log(`expires:${arrayCacheDetails[i].expires} ?<? rightNowLocal:${rightNowLocal}`);
-				if(arrayCacheDetails[i].expires < rightNowLocal || breakTest){
+				cacheExpiresDate = new Date(arrayCacheDetails[i].expires);
+				if(cacheExpiresDate < rightNow || breakTest){
 					// if expired, remove that item from the array 
 					//console.log(`we think the cache should expire: ${arrayCacheDetails[i].expires}`);
 					arrayCacheDetails.splice(i,1);
@@ -4371,7 +4397,25 @@ function ShowAllCachesOnMap(ShowCaches) {
 
 }
 
-function LoadCacheDetails(CacheCode,loadFullDetails) {
+function reloadCacheDetails(CacheCode) {
+	// find out cache in the array
+	// see if it's fully loaded yet or not
+		var CacheID = -1;
+		var cacheFullyLoaded = false;
+		for (let i = 0; i < arrayCache.length; i++) {
+		  // search for cache in array
+		  if (CacheCode == arrayCache[i].cacheCode) {
+			CacheID = i;
+			cacheFullyLoaded = arrayCache[i].cacheFullyLoaded;
+		  }
+		}		
+	
+	// then load them back up
+	LoadCacheDetails(CacheCode,cacheFullyLoaded,true);
+	
+}
+
+function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 	// decide if we are loading a cache or a waypoint
 	var isWaypoint = CacheCode.startsWith("WAYPOINT");
 	
@@ -4397,6 +4441,8 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 				cacheFullyLoaded = arrayCache[i].cacheFullyLoaded;
 			  }
 			}	
+			
+			if (isRefresh) {cacheFullyLoaded = false;};
 
 		// force to always load full details if we're not a basic user
 		//console.log(`userMembershipLevelId = ${userMembershipLevelId}`);
@@ -4469,12 +4515,21 @@ function LoadCacheDetails(CacheCode,loadFullDetails) {
 								cacheDetails: siteText
 							};
 							
-							// drop that new cache detail into the list of loaded caches
-							arrayCacheDetails[arrayCacheDetails.length] = arrayCacheDetailsObject;
-
+							// drop that new cache detail into the list of loaded caches, but only if not a refresh
+							if (isRefresh !== true) {
+								arrayCacheDetails[arrayCacheDetails.length] = arrayCacheDetailsObject;
+							} else {
+								// if this is a refresh, find that previously loaded cache and update it instead of adding a new array entry
+								for (let i = 0; i < arrayCacheDetails.length; i++) {
+								  // search for cache in array
+								  if (CacheCode == arrayCacheDetails[i].navCode) {
+									arrayCacheDetails[i] = arrayCacheDetailsObject;
+								  }
+								}									
+							};
+							
 							// finally update our localstore of fully loaded caches 
-							localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));
-
+							localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));							
 							//===============================================================
 							// now parse the returned JSON out and do stuff with it
 							var cacheDetails = JSON.parse(siteText);
@@ -4836,19 +4891,21 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 				var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
 				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='showHint'>";
 				newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Decrypt Hint</div></button>";	
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='reloadCacheDetails'>";
+				newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Refresh Cache Details</div></button>";					
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='takePhoto'>";
 				
 				newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='LogCache'>";
 				newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";	
 				
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";		
-				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewMap'>6: View Map</button>";
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-function='viewCompass'>9: View Compass</button>";		
+				newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
 				
 				// add the option to view trackables if there are any for this cache
-				if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};
+				if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='80' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};
 				
 				cacheMenuOptions.innerHTML = newCacheOptions;
 
@@ -4892,14 +4949,16 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 						var cacheMenuOptions = document.getElementById('viewCacheOptions');
 					
 						var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
-						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='takePhoto'>";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='reloadCacheDetails'>";
+						newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Refresh Cache Details</div></button>";								
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
 						newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
-						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='LogCache'>";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
 						newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";
 						
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewMap'>6: View Map</button>";
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCompass'>9: View Compass</button>";					
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";					
 								
 						cacheMenuOptions.innerHTML = newCacheOptions;
 						
@@ -4920,22 +4979,24 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 						// we also need to adjust the cache options menu to hide non-available options
 						var cacheMenuOptions = document.getElementById('viewCacheOptions');
 					
-						var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";			
-						newCacheOptions =newCacheOptions +  "<button class='navItem' tabIndex='0' data-function='loadFullCacheDetails'>";
+						var newCacheOptions = "<b>Hint:</b> Press 1 for prev cache. Press 3 for next cache.";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='0' data-function='reloadCacheDetails'>";
+						newCacheOptions = newCacheOptions + "<div id='showCacheHint'>Refresh Cache Details</div></button>";								
+						newCacheOptions =newCacheOptions +  "<button class='navItem' tabIndex='10' data-function='loadFullCacheDetails'>";
 						newCacheOptions = newCacheOptions + "<div id='loadFullCacheDetailsText'>Load full cache details</div></button>";
 						
-						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='10' data-function='takePhoto'>";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='takePhoto'>";
 						newCacheOptions = newCacheOptions + "<div id='takePhotoText'>2: Take a Photo</div></button>";				
-						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='20' data-function='LogCache'>";
+						newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='LogCache'>";
 						newCacheOptions = newCacheOptions + "<div id='logCacheText'>0: Log Cache</div></button>";				
 
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='30' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewMap'>6: View Map</button>";
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewCompass'>9: View Compass</button>";	
-					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='40' data-function='viewCacheList'><div id='viewCacheText'>4: View Cache List</div></button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='50' data-function='viewMap'>6: View Map</button>";
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='60' data-function='viewCompass'>9: View Compass</button>";	
+					newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-href='" + app.rootSiteURL + "/email/?u=" + arrayCache[CacheID].cacheOwner + "'>Send message to cache owner</button>";				
 					
 					// add the option to view trackables if there are any for this cache
-					if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='70' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};			
+					if (arrayCache[CacheID].cacheTrackableCount > 0) {newCacheOptions = newCacheOptions + "<button class='navItem' tabIndex='80' data-function='viewCacheInventory'>View Trackable Inventory</button>";	};			
 			
 			
 						cacheMenuOptions.innerHTML = newCacheOptions;
@@ -5198,7 +5259,10 @@ function viewCacheLogs(CacheID) {
 	initView();	
 };
 
-function viewTrackableInventory(currentCacheID,listType) {
+function viewTrackableInventory(currentCacheID,listType,loadLocation) {
+		// if loadLocation = cacheLog, then we're pushing the inventory list into the cache log view, otherwise we are showing in the generic
+		// inventory page
+
 
 		if (listType == null || listType == 1) {
 			listType = "inventory"; //if no list type is passed in, assume we want an inventory returned
@@ -5223,6 +5287,7 @@ function viewTrackableInventory(currentCacheID,listType) {
 			values = values + "&fields=referenceCode,iconURL,name";
 		} else { // pull the trackable inventory of a cache
 			logAnalytics("Caches","LoadInventory",userMembershipLevelId);		
+			myTrackableView = null;
 		
 			var values = "geocaches/" + currentCacheID + "/trackables?";
 			values = values + "skip=0"; // start at the beginning of the list of trackables?  yes = 0
@@ -5268,112 +5333,177 @@ function viewTrackableInventory(currentCacheID,listType) {
 					
 					var cacheInventoryList = JSON.parse(siteText);
 					trackableCount = cacheInventoryList.length;
-					console.log(`Pulling list of trackables: trackableCount: ${trackableCount}`);
+					//console.log(`Pulling list of trackables: trackableCount: ${trackableCount}`);
 						
 
-					//================================================================
-					// Setup the header of the inventory of trackables
-					//
-					//
-					var headerContainer = document.getElementById('cacheInventoryHeader');
-					var headerAvatar = document.getElementById('cacheInventoryAvatar');
-					var headerName = document.getElementById('cacheInventoryName');
-					var headerSeparator = document.getElementById('cacheInventoryHeaderBreak');
-					headerSeparator.innerHTML = '';
-					headerAvatar.innerHTML = '';
-					headerName.innerHTML = '';
-					headerContainer.innerHTML = '';					
-
-					if (currentCacheID == null) { // pull trackable inventory of the logged in user
-						if (myUserAvatar !== null) {headerAvatar.innerHTML = "<img src='" + myUserAvatar + "' width='40'>"; }
-						headerName.innerHTML = '<b> My<br>Trackables</b>';
-						//1 = Inventory, 2 = Collection, 3 = owned
-						if (listType == 'inventory') {
-							headerSeparator.innerHTML = 'All | <b>In Hand</b> | Collection';							
-						} else if (listType == 'collection') {
-							headerSeparator.innerHTML = 'All | In Hand | <b>Collection</b>';													
-						} else if (listType == 'owned') {
-							headerSeparator.innerHTML = '<b>All</b> | In Hand | Collection';							
-						}
-
-					} else { // inventory of the cache
-						headerSeparator.innerHTML = "<b>Inventory for " + cacheInventoryList[0].currentGeocacheName + "</b><br>";
-					
-					};
-					
-
-
-					//================================================================================
-					//
-					// Display list of trackables
-					//
-					//
-					var listContainer = document.getElementById('cacheInventoryList');
-					listContainer.innerHTML = '';
-					
-					trackableListID = 0;
-		
-					//Loading up trackables...
-					
-					//kaiosToaster({
-					//  message: 'Loading up cache inventory...',
-					//  position: 'north',
-					//  type: 'warning',
-					//  timeout: 3000
-					//});				
-					// turn on the loading spinner
-					loadingOverlay(true);
-
-					//clear out any existing trackables in the array					
-					arrayCacheInventory.length = 0;
-
-					//
-					// cycle through all the returned trackables and 
-					//		load them into the cache inventory page for display / selection by the user 
-					//
-					for (let i = 0; i < trackableCount; i++) {
-						// parse out the returned response 
+					if (loadLocation == 'cacheLog') {
+						//================================================================================
+						//
+						// Display list of trackables
+						//
+						//
+						var listContainer = document.getElementById('logCacheTrackableContainer');
+						listContainer.innerHTML = '';
 						
-						var trackableCode = cacheInventoryList[i].referenceCode;
-						var trackableIcon = cacheInventoryList[i].iconUrl;
-						var trackableName = cacheInventoryList[i].name;
+						trackableListID = 0;
+			
+						//Loading up trackables...
+
+						loadingOverlay(true);
+
+						//clear out any existing trackables in the array					
+						arrayCacheInventory.length = 0;
+
+						//
+						// cycle through all the returned trackables and 
+						//		load them into the cache inventory page for display / selection by the user 
+						//
+						var optionSetup = "<option value='0'>No action</option><option value='75'>Visit</option><option value='14'>Drop</option>";
+						var entryTabIndex;
+						for (let i = 0; i < trackableCount; i++) {
+							// parse out the returned response 
+							
+							var trackableCode = cacheInventoryList[i].referenceCode;
+							var trackableIcon = cacheInventoryList[i].iconUrl;
+							var trackableName = cacheInventoryList[i].name;
+							
+
+							// now work on loading those details into the log cache trackable inventory section 
+								//<fieldset>	
+								//  <legend class="navItem" tabIndex="70">TB3NC58: Dogtag number 2</legend>
+								//  <select id="TB3NC58-01">
+								//	<option value="0">No action</option>
+								//	<option value="75">Visit</option>
+								//	<option value="14">Drop</option>				
+								// </select>
+								//</fieldset>								
+							entryTabIndex = 70 + (i * 10);
+							var entryLine = "<fieldset>";
+							entryLine = entryLine + "<legend class='navItem' tabIndex='" + entryTabIndex + "'><img src='" + trackableIcon + "'>" + trackableCode + ": " + trackableName + "</legend>"
+							entryLine = entryLine + "<select id='" + trackableCode + "'>";
+							entryLine = entryLine + optionSetup;
+							entryLine = entryLine + "</select></fieldset>";
+
+							listContainer.innerHTML = listContainer.innerHTML + entryLine;	
+
+						};
+						loadingOverlay(false);	
+
+					} else {
+						//================================================================
+						// Setup the header of the inventory of trackables
+						//
+						//
+						var headerContainer = document.getElementById('cacheInventoryHeader');
+						var headerAvatar = document.getElementById('cacheInventoryAvatar');
+						var headerName = document.getElementById('cacheInventoryName');
+						var headerSeparator = document.getElementById('cacheInventoryHeaderBreak');
+						headerSeparator.innerHTML = '';
+						headerAvatar.innerHTML = '';
+						headerName.innerHTML = '';
+						headerContainer.innerHTML = '';					
+
+						if (currentCacheID == null) { // pull trackable inventory of the logged in user
+							if (myUserAvatar !== null) {headerAvatar.innerHTML = "<img src='" + myUserAvatar + "' width='40'>"; }
+							headerName.innerHTML = '<b> My<br>Trackables</b>';
+							//1 = Inventory, 2 = Collection, 3 = owned
+							if (listType == 'inventory') {
+								headerSeparator.innerHTML = 'All | <b>In Hand</b> | Collection';							
+							} else if (listType == 'collection') {
+								headerSeparator.innerHTML = 'All | In Hand | <b>Collection</b>';													
+							} else if (listType == 'owned') {
+								headerSeparator.innerHTML = '<b>All</b> | In Hand | Collection';							
+							}
+
+						} else { // inventory of the cache
+							var CacheID;
+							for (let j=0; j < arrayCache.length; j++) {
+								if (arrayCache[j].cacheCode == currentCacheID) {
+									CacheID = j;
+								};
+							}
+							
+							var BadgeContent = document.createElement("span");
+							BadgeContent.innerHTML = arrayCache[CacheID].cacheBadge + "<b>" + arrayCache[CacheID].cacheName + "</b><br>" + arrayCache[CacheID].cacheCode;
+							
+							if(arrayCache[CacheID].cacheIsPremium == "true" || arrayCache[CacheID].cacheIsPremium == true) {
+								BadgeContent.innerHTML = BadgeContent.innerHTML + "&nbsp&nbsp <span class='premium'><b>PREMIUM</b></span>";
+							}							
+							
+							headerName.appendChild(BadgeContent);								
+							headerSeparator.innerHTML = "<b>Trackable Inventory</b>";
+						
+						};
 						
 
-						// now work on loading those details into the cache inventory page 
-						var entry = document.createElement("div");
-						entry.className = 'navItem';
-						entry.tabIndex = i * 10;		
 
-						var trackableImage = document.createElement("div");
-						trackableImage.innerHTML = "<img src='" + trackableIcon + "'>";;
-						trackableImage.className = 'iconLeft';
-						entry.appendChild(trackableImage);
+						//================================================================================
+						//
+						// Display list of trackables
+						//
+						//
+						var listContainer = document.getElementById('cacheInventoryList');
+						listContainer.innerHTML = '';
+						
+						trackableListID = 0;
+			
+						//Loading up trackables...
 
-						var trackableNameInList = document.createElement("div");
-						trackableNameInList.innerHTML = "<b>" + trackableName + "</b>";
-						entry.appendChild(trackableNameInList);	
+						loadingOverlay(true);
 
-						entry.setAttribute('data-function', 'showTrackableDetails');
-						entry.setAttribute('trackableID',trackableCode);
+						//clear out any existing trackables in the array					
+						arrayCacheInventory.length = 0;
 
-						listContainer.appendChild(entry);	
+						if (trackableCount > 0) {
+							//
+							// cycle through all the returned trackables and 
+							//		load them into the cache inventory page for display / selection by the user 
+							//
+							for (let i = 0; i < trackableCount; i++) {
+								// parse out the returned response 
+								
+								var trackableCode = cacheInventoryList[i].referenceCode;
+								var trackableIcon = cacheInventoryList[i].iconUrl;
+								var trackableName = cacheInventoryList[i].name;
+								
 
-					};
+								// now work on loading those details into the cache inventory page 
+								var entry = document.createElement("div");
+								entry.className = 'navItem';
+								entry.tabIndex = i * 10;		
 
-					// let the user know we're done processing data
-					//kaiosToaster({	
-					//  message: 'Cache inventory loaded',	
-					//  position: 'north',	
-					//  type: 'success',	
-					//  timeout: 3000	
-					//});	
-					// turn off the loading spinner
-					loadingOverlay(false);	
-					
-					//now, bounce over to the cache inventory list after loading the inventory
-						windowOpen="viewCacheInventory";
-						showView(25,false);						
-						initView();
+								var trackableImage = document.createElement("div");
+								trackableImage.innerHTML = "<img src='" + trackableIcon + "'>";;
+								trackableImage.className = 'iconLeft';
+								entry.appendChild(trackableImage);
+
+								var trackableNameInList = document.createElement("div");
+								trackableNameInList.innerHTML = "<b>" + trackableName + "</b>";
+								entry.appendChild(trackableNameInList);	
+
+								entry.setAttribute('data-function', 'showTrackableDetails');
+								entry.setAttribute('trackableID',trackableCode);
+
+								listContainer.appendChild(entry);	
+
+							};
+						};
+
+						// let the user know we're done processing data
+						//kaiosToaster({	
+						//  message: 'Cache inventory loaded',	
+						//  position: 'north',	
+						//  type: 'success',	
+						//  timeout: 3000	
+						//});	
+						// turn off the loading spinner
+						loadingOverlay(false);	
+						
+						//now, bounce over to the cache inventory list after loading the inventory
+							windowOpen="viewCacheInventory";
+							showView(25,false);						
+							initView();
+					}
 
 				}  else if (geostatus == 401) {
 					// token has expired, refresh and tell caller to retry
@@ -5683,6 +5813,43 @@ function viewTrackableLogs(trackableID) {
 						var trackableLogCacheName = trackableLogList[i].geocacheName;
 						var trackableLogText = trackableLogList[i].text;
 						
+
+						//in:					
+						//4	Write Note
+						//13	Retrieve It from a Cache
+						//16	Mark Missing
+						//75	Visited		
+
+						//to:
+						//14	Dropped Off
+						//15	Transfer
+
+						//none:
+						//19	Grab It (Not from a Cache)
+						//48	Discovered It
+						//69	Move To Collection
+						//70	Move To Inventory				
+						
+						var trackableQualifier = null;
+						
+						switch (trackableLogAction) {	
+							case 'Retrieve It from a Cache':	
+								trackableQualifier = "in";
+							break;
+							case 'Mark Missing':	
+								trackableQualifier = "in";
+							break;
+							case 'Visited':	
+								trackableQualifier = "in";
+							break;
+							case 'Dropped Off':
+								trackableQualifier = "in";
+							break;
+							case 'Transfer':
+								trackableQualifier = "to";
+							break;							
+						};
+						
 						trackableLogDate = trackableLogDate.slice(0,10);
 
 						// now work on loading those details into the cache inventory page 
@@ -5696,7 +5863,10 @@ function viewTrackableLogs(trackableID) {
 						entry.appendChild(trackableImage);
 
 						var trackableNameInList = document.createElement("div");
-						trackableNameInList.innerHTML = "<b>" + trackableLogDate + "</b> " + trackableLogUsername + " " +  trackableLogAction + " to/in " + trackableLogCacheName;
+						trackableNameInList.innerHTML = "<b>" + trackableLogDate + "</b> " + trackableLogUsername + " " +  trackableLogAction;
+						if (trackableQualifier !== null) {
+							trackableNameInList.innerHTML = trackableNameInList.innerHTML + " " + trackableQualifier + " " + trackableLogCacheName;
+						};
 						if (trackableLogText !== null) {
 							trackableNameInList.innerHTML = trackableNameInList.innerHTML + "<br><br>" + trackableLogText;
 						};
@@ -6129,7 +6299,7 @@ function navToCache(navGeoCode,startNav) {
 		navCacheName = "";
 		CacheHasBeenDefined = false;	
 		focusActionLocation = "focusOnMe";		
-		Cache.remove();		
+		if (Cache !== null) {Cache.remove();};	
 		localStorage.setItem("navToCacheGeoCode",null);
 		goBack();
 	}

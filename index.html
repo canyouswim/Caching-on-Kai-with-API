@@ -338,39 +338,14 @@
 				<option value="true">Yes</option>
 			  </select>	
 			</fieldset>	
-			<div id="addTrackable"><b>Trackables</b></div>
-			<fieldset>
-			  <legend class="navItem" tabIndex="50">TB3NC58: canyouswim's geopatch</legend>
-			  <select id="TB3NC58">
-				<option value="0">No action</option>
-				<option value="75">Visit</option>
-				<option value="14">Drop</option>				
-			  </select>
-			</fieldset>		
-			  <legend class="navItem" tabIndex="60">TB3NC58: Dogtag number 2</legend>
-			  <select id="TB3NC58">
-				<option value="0">No action</option>
-				<option value="75">Visit</option>
-				<option value="14">Drop</option>				
-			  </select>
-			</fieldset>	
-			  <legend class="navItem" tabIndex="70">TB3NC58: Dogtag number 3</legend>
-			  <select id="TB3NC58">
-				<option value="0">No action</option>
-				<option value="75">Visit</option>
-				<option value="14">Drop</option>				
-			  </select>
-			</fieldset>	
-			  <legend class="navItem" tabIndex="80">TB3NC58: Dogtag number 4</legend>
-			  <select id="TB3NC58">
-				<option value="0">No action</option>
-				<option value="75">Visit</option>
-				<option value="14">Drop</option>				
-			  </select>
-			</fieldset>				
-			<button class="navItem" tabIndex="90" data-function="submitLog">Submit</button>
-			<button class="navItem" tabIndex="100" data-function="cancel">Cancel</button>			
-		
+			
+
+			<button class="navItem" tabIndex="50" data-function="submitLog">Submit</button>
+			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>
+
+			<div id="logCacheTrackableContainer" style="block"><b>My Trackable Inventory</b><br>
+
+			</div>		
 		</div>
 
 		<div class="view" id="showModal">  <!-- view 15 -->
@@ -517,11 +492,13 @@
 		</div>	
 
 		<div class="view viewPaddingOverride" id="viewCacheInventory">  <!-- view 25 -->
-			<div class="CacheTopLine">
-				<div id="cacheInventoryHeader"></div>
-				<div id="cacheInventoryAvatar" class="iconLeft"></div>
-				<div id="cacheInventoryName"></div>				
-				<div id="cacheInventoryHeaderBreak" class="kui-separator"></div>	
+			<div class="viewCacheDetails">
+				<div class="CacheTopLine">
+					<div id="cacheInventoryHeader"></div>
+					<div id="cacheInventoryAvatar" class="iconLeft"></div>
+					<div id="cacheInventoryName"></div>				
+					<div id="cacheInventoryHeaderBreak" class="kui-separator"></div>	
+				</div>
 			</div>
 	
 			<div id="cacheInventoryList" class="list">No trackables here...</div>
