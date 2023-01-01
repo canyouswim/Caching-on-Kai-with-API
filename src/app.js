@@ -55,7 +55,7 @@ var basicUserMessageForCacheDownload;
 
 var app = {};
 // use the custom module namespace 'app' for all variables and functions you need to access through other scripts
-app.useProduction = false;
+app.useProduction = true;
 app.rootAPIurl = null; 
 app.rootSiteURL = null;
 app.config = new Array();
@@ -1200,14 +1200,17 @@ function navVertical(forward) {
 		// decide if we wrap back to the top of the list when we get to the bottom
 		var wrapToTop = true;
 		
-		//console.log(`windowOpen: ${windowOpen}`);
+		console.log(`windowOpen: ${windowOpen}`);
 		
 		if (windowOpen == "viewCacheGallery") {
 			var myElement = document.getElementsByClassName("listGalleryView")[0];		
 			wrapToTop = false;			
 		} else if (windowOpen == "viewCacheLogs") {
 			var myElement = document.getElementsByClassName("listLogsView")[0];		
-			wrapToTop = false;			
+			wrapToTop = false;	
+		} else if (windowOpen == "viewTrackableLogs") {
+			var myElement = document.getElementsByClassName("listTrackableLogsView")[0];		
+			wrapToTop = false;							
 		} else if (windowOpen == "About") {
 			var myElement = document.getElementsByClassName("listAttributions")[0];	
 				//console.log(`scrolling about`);
@@ -1236,6 +1239,7 @@ function navVertical(forward) {
 			
 			//console.log(`bound right: ${bounding.right}, bottom: ${bounding.bottom}`);
 
+
 			if (((bounding.bottom <= ((window.innerHeight/2) || (document.documentElement.clientHeight/2))) && forward == true) || ((bounding.top >= (((window.innerHeight/2)-30) || ((document.documentElement.clientHeight/2)-30))) && forward == false) ) {
 				jumpToNextTab = true;
 				//console.log('Element is in the viewport!');
@@ -1243,6 +1247,7 @@ function navVertical(forward) {
 				jumpToNextTab = false;
 				//console.log('Element is NOT in the viewport!');
 			}
+			
 			
 			//console.log(`jumpToTab=${jumpToNextTab} - post bounding check`);
 			// at the top of the list - force to allow to wrap to bottom
@@ -5890,7 +5895,7 @@ function viewTrackableLogs(trackableID) {
 					loadingOverlay(false);	
 					
 					//now, bounce over to the cache inventory list after loading the inventory
-						windowOpen="viewCacheInventory";
+						windowOpen="viewTrackableLogs";
 						showView(23,true);						
 						initView();
 

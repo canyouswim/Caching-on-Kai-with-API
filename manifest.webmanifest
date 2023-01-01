@@ -1,7 +1,7 @@
 {
   "name": "Cache-on-Kai",
   "id": "Cache-on-Kai",
-  "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
+  "description": "Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
   "type": "privileged",
   "lang": "en-US",
   "theme_color": "#02874D",
@@ -31,7 +31,7 @@
     "en-US": {
       "name": "Cache-on-Kai",
       "subtitle": "Geocaching for the rest of us",
-      "description": "Go geocaching with KaiOS! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program."
+      "description": "Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program."
     }
   },
 
