@@ -35,7 +35,7 @@ var prod_secret_id = "";
 var staging_client_id = "";
 var staging_secret_id = "";
 var google_key;
-
+var manualCoordFormat = localStorage.getItem('manualCoordFormat');
 
 //console.log(`userAgent = ${navigator.userAgent}`);
 
@@ -910,6 +910,8 @@ app.newKeyCallback={
 window.addEventListener("load", function () {
 
 	//localStorage.clear();
+	//
+
 
 	
 	// set the correct version number in various places within the app
@@ -960,6 +962,21 @@ window.addEventListener("load", function () {
 	} else if (app.gpsCoordRepresentation == "DMS") {
 		displayCoords.innerHTML = "Toggle " + app.gpsCoordRepresentation + " -> DDD -> DMM";		
 	};
+	
+	var displayManualCoords = document.getElementById("manualCoordsDisplay");
+	var manualCoordFormat = localStorage.getItem('manualCoordFormat');
+	if(manualCoordFormat == null) {
+		//meaning this is the first time the app has been run
+		localStorage.setItem('manualCoordFormat','DMM');
+		displayManualCoords.innerHTML = "Toggle DMM -> DMS -> DDD";		
+	} else if (manualCoordFormat == "DDD") {
+		displayManualCoords.innerHTML = "Toggle DDD -> DMM -> DMS";		
+	} else if (manualCoordFormat == "DMM") {
+		displayManualCoords.innerHTML = "Toggle DMM -> DMS -> DDD";		
+	} else if (manualCoordFormat == "DMS") {
+		displayManualCoords.innerHTML = "Toggle DMS -> DDD -> DMM";		
+	};	
+	
 	
 	storedLat = localStorage.getItem('storedLat');
 	storedLng = localStorage.getItem('storedLng');
@@ -2300,6 +2317,9 @@ function execute() {
 				case 'viewMyTrackables':
 					viewTrackableInventory(null,null);	// don't pass in any cachecode so that we pull the trackables of the user			
 				break;
+				case 'enterCoordinates':
+					enterManualCoordinates(null,null);	// don't pass in any cachecode so that we pull the trackables of the user			
+				break;				
 				case 'showTrackableDetails':
 					trackableID = app.activeNavItem.getAttribute('trackableid');
 					windowOpen = "viewTrackableDetails";
@@ -2445,6 +2465,68 @@ function execute() {
 					//console.log(`now coords are ${app.gpsCoordRepresentation}`);
 				
 				 break;
+				case 'toggleManualCoords':
+					var displayCoords = document.getElementById("manualCoordsDisplay");
+					var manualCoordFormat = localStorage.getItem('manualCoordFormat');
+
+					//console.log(`current coords are ${app.gpsCoordRepresentation}`);
+					if (manualCoordFormat == "DDD") {
+						manualCoordFormat = "DMM";
+						localStorage.setItem('manualCoordFormat',"DMM");
+
+						displayCoords.innerHTML = "Toggle " + manualCoordFormat + " -> DMS -> DDD";
+					} else if (manualCoordFormat == "DMM") {
+						manualCoordFormat = "DMS";						
+						localStorage.setItem('manualCoordFormat',"DMS");
+
+						displayCoords.innerHTML = "Toggle " + manualCoordFormat + " -> DDD -> DMM";						
+					} else {
+						manualCoordFormat = "DDD";						
+						localStorage.setItem('manualCoordFormat',"DDD");
+
+						displayCoords.innerHTML = "Toggle " + manualCoordFormat + " -> DMM -> DMS";							
+					};
+					//console.log(`now coords are ${app.gpsCoordRepresentation}`);
+					var manualLat = document.getElementById('manualLat').value;
+					var manualLng = document.getElementById('manualLng').value;	
+
+					//console.log(`manualLat/Lng: ${manualLat} | ${manualLng}`);
+
+					var rawLat = extractValue(manualLat);
+					var rawLng = extractValue(manualLng);
+
+					//console.log(`Cleaned Lat/Lng: ${rawLat} | ${rawLng}`);
+					
+					displayPosition(rawLat,rawLng,manualCoordFormat,"manualCoordEnter");					
+				 break;	
+				case 'goManualCoords':
+					var manualLat = document.getElementById('manualLat').value;
+					var manualLng = document.getElementById('manualLng').value;	
+
+					current_lat = extractValue(manualLat);
+					current_lng = extractValue(manualLng);
+					isFocusedonMe = "no";
+					map.panTo(new L.LatLng(current_lat,current_lng));	
+					var myCoords=displayPosition(current_lat,current_lng,app.gpsCoordRepresentation);	
+					wpContainer.innerHTML = "&#x2295; "+myCoords;						
+					
+					showView(0,false);
+					initView();	
+				 break;
+				case 'goManualCoordsSetWaypoint':
+					var manualLat = document.getElementById('manualLat').value;
+					var manualLng = document.getElementById('manualLng').value;	
+
+					current_lat = extractValue(manualLat);
+					current_lng = extractValue(manualLng);
+					isFocusedonMe = "no";
+					map.panTo(new L.LatLng(current_lat,current_lng));	
+					var myCoords=displayPosition(current_lat,current_lng,app.gpsCoordRepresentation);	
+					wpContainer.innerHTML = "&#x2295; "+myCoords;						
+					giveMeWayPoint("EndEdition");
+					showView(0,false);
+					initView();	
+				 break;				 
 				case 'createWPfromMap':
 					showView(0,false);
 					initView();						 
@@ -5534,6 +5616,33 @@ function viewTrackableInventory(currentCacheID,listType,loadLocation) {
 };
 
 
+	
+function enterManualCoordinates(){
+	windowOpen="enterManualCoordinates";
+	
+	var manualFormat;
+	var manualLat;
+	var manualLng;
+		
+	manualFormat = localStorage.getItem('manualCoordFormat');
+	
+	if (manualCoordFormat == null) {
+		manualCoordFormat = localStorage.getItem('coorRep');
+		localStorage.setItem('manualCoordFormat',manualCoordFormat);
+	}
+	
+	var mapCrd = map.getCenter();	
+	var mapLat = mapCrd.lat;	
+	var mapLng = mapCrd.lng;	
+	
+	displayPosition(mapLat,mapLng,manualFormat,"manualCoordEnter")
+	
+	showView(29,true);	
+	initView();
+	
+};
+
+
 function viewTrackableDetails(inboundTrackableID) {
 
 	var values = "trackables/" + inboundTrackableID;
@@ -6373,7 +6482,11 @@ function viewShortcuts() {
  * 	
  * @return string with a beautiful pair of coordinates	
  */	
-function displayPosition(lat,lng,format){	
+function displayPosition(lat,lng,format,showWhere){	
+	// where should we update the coordinates?
+	// "manualCoordEnter" is to update where we manually enter coordinates
+	// otherwise we assume we are tweaking the main display, which is also the default
+	
 	var ret=" ";	
 	var latDisplay=0;	
 	var longDisplay=0;	
@@ -6472,9 +6585,16 @@ function displayPosition(lat,lng,format){
 				//and º (masculine ordinal indicator symbol, my keyboard key) aren't the same symbol	
 	      	
 	    }	
-	   	
-	 ret=""+latDisplay+" "+longDisplay;   	
-	return ret;	
+	   
+	if (showWhere == "manualCoordEnter") {
+		var tempLat = document.getElementById('manualLat');
+		var tempLng = document.getElementById('manualLng');
+		tempLat.value = latDisplay;
+		tempLng.value = longDisplay;
+	} else {
+		ret=""+latDisplay+" "+longDisplay;   	
+		return ret;	
+	}
 }	
 
 /**	
