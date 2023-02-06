@@ -222,7 +222,8 @@
 			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
 			<button class="navItem" tabIndex="40" data-function="About">About</button>
 			<button class="navItem" tabIndex="50" data-function="changeLog">Change Log</button>
-			<button class="navItem" tabIndex="60" data-function="Logout">Logout</button>				
+			<button class="navItem" tabIndex="60" data-href="https://www.geocaching.com/account/settings/account" id="deleteAccount">Delete your Geocaching account</button>			
+			<button class="navItem" tabIndex="70" data-function="Logout">Logout</button>				
 		</div>
 	
 		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
@@ -290,6 +291,7 @@
 		<div class="view" id="logCache">  <!-- view 14 -->
 			<div id="logHeader">Log this geocache</div>
 			<br>
+			<div id="tbNotes"></div>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Log Type</legend>
 			  <select id="logType">
@@ -392,10 +394,9 @@
 					chris@caching-on-kai.com
 				</div>					
 				<div class="navItem" tabIndex="20">
-					<b>NOTE: this is connected to STAGING - you can tell because the info bar at the bottom of the screen is in red!</b><br><br>
 					<b>Bug Fixes</b><br>
 					<ul>
-						<li>none</li>
+						<li>Fixed an error when trying to submit a log</li>
 					</ul>
 					
 					<b>Feature Updates</b><br>
@@ -412,6 +413,8 @@
 						<li>Added the ability to message the holder of a trackable, as well as the owner of the trackable</li>
 						<li>You can now refresh a cache's details to see updated logs or other changes</li>
 						<li>Cache details also automatically refresh after logging the cache</li>
+						<li>On app load if there is a timeout when getting a GPS lock, we will move forward with the last known coordinates and keep trying to get a GPS lock</li>
+						<li>Added an option for the user to delete their Geocaching.com account (from the settings screen)</li>
 					</ul>
 					
 					<b>Up Next...</b><br>

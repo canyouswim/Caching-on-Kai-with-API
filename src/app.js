@@ -1692,7 +1692,6 @@ function logThisCache() {
 		document.getElementById("logHeader").innerHTML = BadgeContent;
 		
 		var logTypeSelect = document.getElementById("logType");
-
 		
 		//now clear out the rest of the form for new use
 		// but only clear out the form if the log had previously been submitted 
@@ -1772,6 +1771,7 @@ function submitLog() {
 	var params = {
 		loggedDate: cacheLogDateValue,
 		text: cacheLogText,
+		type: "string",
 		geocacheLogType: {id: cacheLogType.value},
 		geocacheCode: navGeoCode,
 		usedFavoritePoint: cacheLogFav.value
@@ -1906,8 +1906,8 @@ function submitLog() {
 			}		
 			request.open("POST", logURL, true);
 			
-			request.setRequestHeader("Content-Type", "application/json;");
-			request.setRequestHeader("Accept", "application/json;");
+			request.setRequestHeader("Content-Type", "application/json");
+			request.setRequestHeader("Accept", "application/json");
 			request.setRequestHeader("Authorization", "bearer " + token);
 			
 			request.send(JSON.stringify(params));
@@ -1955,8 +1955,8 @@ function submitLogImage(logCode,logImage) {
 		}		
 		request.open("POST", logURL, true);
 		
-		request.setRequestHeader("Content-Type", "application/json;");
-		request.setRequestHeader("Accept", "application/json;");
+		request.setRequestHeader("Content-Type", "application/json");
+		request.setRequestHeader("Accept", "application/json");
 		request.setRequestHeader("Authorization", "bearer " + token);
 		
 		request.send(JSON.stringify(params));	
@@ -2204,8 +2204,8 @@ function submitTrackableLog(submitLocation,tbCode,tbLogType) {
 			}		
 			request.open("POST", logURL, true);
 			
-			request.setRequestHeader("Content-Type", "application/json;");
-			request.setRequestHeader("Accept", "application/json;");
+			request.setRequestHeader("Content-Type", "application/json");
+			request.setRequestHeader("Accept", "application/json");
 			request.setRequestHeader("Authorization", "bearer " + token);
 			
 			request.send(JSON.stringify(params));
@@ -3041,7 +3041,10 @@ function firstRunSetup(startupLat,startupLng,startupRadius) {
 	
 }
 
+var pastFirstTimeout = false;
+
 function success(pos) {
+	pastFirstTimeout = true;
 	// this is a decent spot to check to see if our token has expired
 	time_till_expire = (localStorage.getItem("token_expires") - Date.now())/1000;
 	//console.log(`time till token expires: ${time_till_expire}`);
@@ -3153,30 +3156,37 @@ function success(pos) {
   
 }
 
+var goAhead = true; // meaning, continue loading the app even if we don't have a GPS lock
+
+
 function error(err) {
   console.warn(`ERROR(${err.code}): ${err.message}`);
-  if(err.code == 1 && stopGPSWarning == false) {
+  if((err.code == 1 || err.code == 3) && stopGPSWarning == false && pastFirstTimeout == false) {
 	//either GPS is turned off or we don't have rights to access the GPS
 	
-	stopGPSWarning = true;
+	pastFirstTimeout = true;
 	
-	var respondGPS = confirm("GPS is turned off - Select OK to go turn it on");
-	if (respondGPS == true) {
-		mozactivity.openGPS(); // open up the phone's geoLocation settings screen
-	} else {
-		// didn't get permission to turn on GPS, so stop trying to find GPS location
-		navigator.geolocation.clearWatch(id);
-		//console.log('stopping attempts at locating GPS');
-		container.innerHTML = "No GPS";			
+	if(err.code == 1) {
+		stopGPSWarning = true;
+		var respondGPS = confirm("GPS is turned off - Select OK to go turn it on");
+		if (respondGPS == true) {
+			mozactivity.openGPS(); // open up the phone's geoLocation settings screen
+		} else {
+			// didn't get permission to turn on GPS, so stop trying to find GPS location
+			navigator.geolocation.clearWatch(id);
+			//console.log('stopping attempts at locating GPS');
+			container.innerHTML = "No GPS";			
+		};
 	};
 	
-	var goAhead = true; // meaning, continue loading the app even if we don't have a GPS lock
+	//var goAhead = true; // meaning, continue loading the app even if we don't have a GPS lock
 	
 	if (goAhead == true) {
 		//console.log(`storedLat: ${storedLat}`);
+		goAhead = false;
 		if(storedLat !== '0') {
 			kaiosToaster({
-			  message: 'GPS is turned off or we have not been allowed access. Will use previously stored location',
+			  message: 'No lock yet - will use previously stored location',
 			  position: 'south',
 			  type: 'warning',
 			  timeout: 3000
@@ -3191,7 +3201,7 @@ function error(err) {
 			
 		} else {
 			kaiosToaster({
-			  message: 'GPS is turned off or we have not been allowed access.',
+			  message: 'No lock yet - will used previously stored location',
 			  position: 'south',
 			  type: 'warning',
 			  timeout: 3000
@@ -3202,8 +3212,9 @@ function error(err) {
 		}
 	}
 	
-  } else if (err.code == 1 && stopGPSWarning == true) {
+  } else if ((err.code == 1 || err.code == 3) && stopGPSWarning == true && pastFirstTimeout == false) {
 	  // try stopping and restarting the GPS until the user has set the GPS to be turned on
+	  pastFirstTimeout = true;
 	  navigator.geolocation.clearWatch(id);	  
 	  id = navigator.geolocation.watchPosition(success, error, options);
   } else {
@@ -3217,7 +3228,7 @@ function error(err) {
 			// if we have a previously stored location, use that to load us up 
 			if(myStatus=="First Run") {
 				kaiosToaster({
-				  message: 'Still trying to get a GPS lock. Will use previously stored location as your starting point',
+				  message: 'No lock yet - will use previously stored location as your starting point',
 				  position: 'south',
 				  type: 'warning',
 				  timeout: 3000
@@ -4925,7 +4936,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 			var CacheLevels = document.getElementById('CacheDetails');
 			CacheLevels.innerHTML = '';	
 				var CacheLevelsDetail = document.createElement("span");
-				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
+				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints;
+				if(arrayCache[CacheID].cacheTrackableCount > 0) {
+					CacheLevelsDetail.innerHTML = CacheLevelsDetail.innerHTML + "<br>Trackables: " + arrayCache[CacheID].cacheTrackableCount;
+				}
+				CacheLevelsDetail.innerHTML = CacheLevelsDetail.innerHTML +"<br>&oplus; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
 			if(arrayCache[CacheID].cacheType == "WAYPOINT"){
 				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>" + arrayCache[CacheID].cacheHiddenDate;
 			}
@@ -5178,7 +5193,11 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 			var CacheLevels = document.getElementById('WaypointDetails');
 			CacheLevels.innerHTML = '';	
 				var CacheLevelsDetail = document.createElement("span");
-				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayWaypoint[CacheID].cacheOwner +"<br>Hidden: " + arrayWaypoint[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayWaypoint[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayWaypoint[CacheID].cacheDifficulty + "<br>Terrain: " + arrayWaypoint[CacheID].cacheTerrain + "<br>Size: " + arrayWaypoint[CacheID].cacheSize + "<br>Favorites: " + arrayWaypoint[CacheID].cacheFavoritePoints +"<br>&#x2295; "+displayPosition(arrayWaypoint[CacheID].cacheLat, arrayWaypoint[CacheID].cacheLng,app.gpsCoordRepresentation);
+				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>Owner: " + arrayCache[CacheID].cacheOwner +"<br>Hidden: " + arrayCache[CacheID].cacheHiddenDate + "<br>Last Visited: " + arrayCache[CacheID].cacheLastVisited + "<br>Difficulty: " + arrayCache[CacheID].cacheDifficulty + "<br>Terrain: " + arrayCache[CacheID].cacheTerrain + "<br>Size: " + arrayCache[CacheID].cacheSize + "<br>Favorites: " + arrayCache[CacheID].cacheFavoritePoints;
+				if(arrayCache[CacheID].cacheTrackableCount > 0) {
+					CacheLevelsDetail.innerHTML = CacheLevelsDetail.innerHTML + "<br>Trackables: " + arrayCache[CacheID].cacheTrackableCount;
+				}
+				CacheLevelsDetail.innerHTML = CacheLevelsDetail.innerHTML +"<br>&oplus; "+displayPosition(arrayCache[CacheID].cacheLat, arrayCache[CacheID].cacheLng,app.gpsCoordRepresentation);
 			if(arrayWaypoint[CacheID].cacheType == "WAYPOINT"){
 				CacheLevelsDetail.innerHTML = "Distance: " + strTripDistance + "<br>" + arrayWaypoint[CacheID].cacheHiddenDate;
 			}
@@ -5429,6 +5448,18 @@ function viewTrackableInventory(currentCacheID,listType,loadLocation) {
 						// Display list of trackables
 						//
 						//
+						
+						// start by making at note at the top of the form that we have TBs we can log (as this list is below the fold of the screen 
+						// and below the submit button - don't want users to miss that they can log TBs
+						
+						document.getElementById("tbNotes").innerHTML = "";
+						
+						if(trackableCount == 1) {
+							document.getElementById("tbNotes").innerHTML = "<b>You have 1 trackable in your inventory</b>. View them below the Submit button to drop or visit them at this cache";
+						} else if (trackableCount > 1) {
+							document.getElementById("tbNotes").innerHTML = "<b>You have " + trackableCount + " trackables in your inventory</b>. View them below the Submit button to drop or visit them at this cache";							
+						}
+						
 						var listContainer = document.getElementById('logCacheTrackableContainer');
 						listContainer.innerHTML = '';
 						
