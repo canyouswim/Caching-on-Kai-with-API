@@ -152,14 +152,16 @@
 				<button class="navItem" tabIndex="0" data-function="viewShortcuts">View all Shortcuts</button>	
 				<button class="navItem" tabIndex="10" data-function="takePhoto"><div id="takePhotoText">2: Take a Photo</div></button>	
 				<button class="navItem" tabIndex="20" data-function="refreshList">✆: Refresh Cache List</button>	
-				<button class="navItem" tabIndex="30" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>	
-				<button class="navItem" tabIndex="40" data-function="viewMap">6: View Map</button>	
-				<button class="navItem" tabIndex="50" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
-				<button class="navItem" tabIndex="60" data-function="viewCompass">9: View Compass</button>
-				<button class="navItem" tabIndex="70" data-function="stopNavToCache">Stop Navigation</button>				
-				<button class="navItem" tabIndex="80" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
-				<button class="navItem" tabIndex="90" data-function="viewSettings">Settings/Help/About</button>		
-				<button class="navItem" tabIndex="100" data-function="quit">Quit</button>	
+				<!--<button class="navItem" tabIndex="30" data-function="viewCache"><div id="viewLogsText">4: View Cache List</div></button>-->
+				<button class="navItem" tabIndex="30" data-function="viewMap">6: View Map</button>	
+				<button class="navItem" tabIndex="40" data-function="viewAllCaches">8:<div id="cacheIconDisplay"></div></button>	
+				<button class="navItem" tabIndex="50" data-function="viewCompass">9: View Compass</button>
+				<button class="navItem" tabIndex="60" data-function="viewMyTrackables">My Trackables</button>		
+				<button class="navItem" tabIndex="70" data-function="enterCoordinates">Enter Coordinates</button>	
+				<button class="navItem" tabIndex="80" data-function="stopNavToCache">Stop Navigation</button>				
+				<button class="navItem" tabIndex="90" data-function="enterWaypoint"><div id="enterWaypointText">Manage Waypoints</div></button>				
+				<button class="navItem" tabIndex="100" data-function="viewSettings">Settings/Help/About</button>		
+				<button class="navItem" tabIndex="110" data-function="quit">Quit</button>	
 		</div>	
 
 		<div class="view viewPaddingOverride" id="About">  <!-- view 7 -->
@@ -213,36 +215,15 @@
 			<div id="membershipType"></div>
 			<div id="cacheViewsRemaining"></div>
 			<br>
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="0">Load caches on load...</legend>
-			  <select id="select1">
-				<option value="YesLoadCaches">Yes - load immediately based on my position</option>
-				<option value="NoLoadCaches">No - I'll refresh the list when I'm ready</option>
-			  </select>
-			</fieldset>	-->		
+
 			<button class="navItem" tabIndex="0" data-function="toggleUnits" id="unitsDisplay">Toggle display units</button>
 			<button class="navItem" tabIndex="10" data-function="toggleCoords" id="coordsDisplay">Toggle Coordinates Format</button>			
 			<button class="navItem" tabIndex="20" data-function="showMozSettings" id="showMozSettings">Phone Data Settings</button>			
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="10">Display distance as...</legend>
-			  <select id="select2">
-				<option value="mi" selected>feet/miles</option>
-				<option value="km">meters/kilometers</option>
-			  </select>
-			</fieldset>-->
-			<!--<fieldset>
-			  <legend class="navItem" tabIndex="20">Display coordinates as...</legend>
-			  <select id="select3">
-				<option value="DDD" selected>ND.dº WD.dº</option>
-				<option value="DMM">NDºM.m' WDºM.m'</option>
-				<option value="DMS">NDºM'S.s" WDºM'S.s"</option>
-			  </select>
-			</fieldset>-->
-	
 			<button class="navItem" tabIndex="30" data-function="Help">Help</button>		
 			<button class="navItem" tabIndex="40" data-function="About">About</button>
 			<button class="navItem" tabIndex="50" data-function="changeLog">Change Log</button>
-			<button class="navItem" tabIndex="60" data-function="Logout">Logout</button>				
+			<button class="navItem" tabIndex="60" data-href="https://www.geocaching.com/account/settings/account" id="deleteAccount">Delete your Geocaching account</button>			
+			<button class="navItem" tabIndex="70" data-function="Logout">Logout</button>				
 		</div>
 	
 		<div class="view" id="viewAllShortcuts">  <!-- view 9 -->
@@ -310,6 +291,7 @@
 		<div class="view" id="logCache">  <!-- view 14 -->
 			<div id="logHeader">Log this geocache</div>
 			<br>
+			<div id="tbNotes"></div>
 			<fieldset>
 			  <legend class="navItem" tabIndex="0">Log Type</legend>
 			  <select id="logType">
@@ -336,10 +318,15 @@
 				<option value="false">No</option>
 				<option value="true">Yes</option>
 			  </select>	
-			</fieldset>			  
+			</fieldset>	
+			
+
 			<button class="navItem" tabIndex="50" data-function="submitLog">Submit</button>
-			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>			
-		
+			<button class="navItem" tabIndex="60" data-function="cancel">Cancel</button>
+
+			<div id="logCacheTrackableContainer" style="block"><b>My Trackable Inventory</b><br>
+
+			</div>		
 		</div>
 
 		<div class="view" id="showModal">  <!-- view 15 -->
@@ -409,17 +396,31 @@
 				<div class="navItem" tabIndex="20">
 					<b>Bug Fixes</b><br>
 					<ul>
-						<li>Addressed issue where the bouncing ball may never go away when loading data</li>
+						<li>Fixed an error when trying to submit a log</li>
 					</ul>
 					
 					<b>Feature Updates</b><br>
 					<ul>
-						<li>The app will now finish loading if you have no GPS signal or GPS is turned off.  We will use your last known coordinates </li>
-						<li>Improved the ability to select a cache from the map view</li>
-						<li>Automatically turn off Nav-to-Cache after you log the cache</li>
-						<li>Added the ability to specify which GPS coordinate format you want - DDD, DMM, DMS. This is under the Settings screen</li>
-						<li>Fully added the ability to create Waypoints. The Cache listing page now has a "Waypoints" button which will toggle your view from Caches to Waypoints. Created waypoints will persist until you delete them (delete from the "Manage Waypoints" menu option)</li>
-						<li>Added this change log screen!</li>
+						<li>Added the ability to manually enter new coordinates - go to Options/Enter Coordinates</li>
+						<li>Adjusted how much the map moves when scrolling at different zoom levels</li>
+						<li>Added function to message a cache owner (from the cache options menu)</li>
+						<li>Added list of trackables in a given cache (from the cache options menu if the cache has any trackables in its inventory)</li>
+						<li>Added the ability to see all my own trackables (from the main options menu)</li>
+						<li>Created the trackables details page</li>
+						<li>Drop or visit trackables from your inventory at a cache while logging the cache</li>
+						<li>Pick up trackables from the trackable details page</li>
+						<li>Ad-hoc lookup/search for trackables if you know the trackable number or code</li>
+						<li>Added the ability to message the holder of a trackable, as well as the owner of the trackable</li>
+						<li>You can now refresh a cache's details to see updated logs or other changes</li>
+						<li>Cache details also automatically refresh after logging the cache</li>
+						<li>On app load if there is a timeout when getting a GPS lock, we will move forward with the last known coordinates and keep trying to get a GPS lock</li>
+						<li>Added an option for the user to delete their Geocaching.com account (from the settings screen)</li>
+					</ul>
+					
+					<b>Up Next...</b><br>
+					<ul>
+						<li>Add a few additional log type options when logging a cache</li>
+						<li>Bug Fixes</li>
 					</ul>
 				</div>			
 			</div>
@@ -443,9 +444,148 @@
 				</div>
 			</div>
 		</div>
+		
+		<div class="view viewPaddingOverride" id="viewTrackableDetails">  <!-- view 22 -->
+			<div class="CacheTopLine">
+				<div id="TrackableHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator"><b>Details</b> | Logs</div>	
+			</div>
+			<div id="TrackableDetails">
+			
+				<div id="TrackableDescription">owner/released/origin/recently spotted/collectible pref</div>
+				
+				<div class="kui-separator"><b>Goal</b></div>	
+				<div id="TrackableGoal">goal here</div>
+				
+				<div class="kui-separator"><b>About</b></div>	
+				<div id="TrackableAbout">about here</div>				
+			</div>			
+			
+			<!-- <div class="listLogsView" id="TrackableLogsView"> Logs go here </div> -->
+			<!-- <div class="listGalleryView" id="TrackableGallery"> Image gallery here</div> -->			
+		</div>		
+		
+		<div class="view viewPaddingOverride" id="viewTrackableLogs">  <!-- view 23 -->
+			<div class="CacheTopLine">
+				<div id="TrackableLogsHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator">Details | <b>Logs</b></div>	
+			</div>
+	
+			
+			<div class="listTrackableLogsView" id="TrackableLogsView"> Logs go here </div>
+			<!-- <div class="listGalleryView" id="TrackableGallery"> Image gallery here</div> -->			
+		</div>	
 
-	</div>	 	 
+		<div class="view viewPaddingOverride" id="viewTrackableGallery">  <!-- view 24 -->
+			<div class="CacheTopLine">
+				<div id="TrackableGalleryHeaderDetail">image, name, code<br></div>
+				<div class="kui-separator">Details | Log | <b>Gallery</b></div>	
+			</div>
+	
+			
+			<!--<div class="listLogsView" id="TrackableLogsView"> Logs go here </div> -->
+			<div class="listGalleryView" id="TrackableGallery"> Image gallery here</div>			
+		</div>	
 
+		<div class="view viewPaddingOverride" id="viewCacheInventory">  <!-- view 25 -->
+			<div class="viewCacheDetails">
+				<div class="CacheTopLine">
+					<div id="cacheInventoryHeader"></div>
+					<div id="cacheInventoryAvatar" class="iconLeft"></div>
+					<div id="cacheInventoryName"></div>				
+					<div id="cacheInventoryHeaderBreak" class="kui-separator"></div>	
+				</div>
+			</div>
+	
+			<div id="cacheInventoryList" class="list">No trackables here...</div>
+		</div>
+
+		<div class="view" id="logTrackable">  <!-- view 26 -->
+			<div id="logTrackableHeader">Log this trackable</div>
+			<br>
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Log Type</legend>
+			  <select id="logTrackableType">
+				<option value="13">Retrieved it from ???</option>
+				<option value="19">Grab it from somewhere else</option>
+				<option value="4">Write note</option>	
+				<option value="48">Discovered it</option>				
+			  </select>
+			</fieldset>
+
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Date Found</legend>
+			  <input id="logTrackableDate" type="date"/>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="20">Tracking Number</legend>
+			  <input id="logTrackingCode" type="text"/>
+			</fieldset>			
+			<fieldset>
+			  <legend class="navItem" tabIndex="30">Comments</legend>
+			  <textarea id="logTrackableText" rows="5" columns="20"></textarea>
+			</fieldset>
+			<button class="navItem" tabIndex="40" data-function="submitTrackableLog">Submit</button>
+			<button class="navItem" tabIndex="50" data-function="cancel">Cancel</button>			
+		
+		</div>
+		
+		<div class="view" id="viewTrackableOptions">  <!-- view 27 -->
+			<button class="navItem" tabIndex="0" data-function="logTrackable">
+				<div id="createTrackableLog">Log Trackable</div></button>	
+			<button class="navItem" tabIndex="10" data-function="messageTrackerHolder">
+				<div id="messageTrackableHolder">Message current holder</div></button>				
+			<button class="navItem" tabIndex="20" data-function="messageTrackerOwner">
+				<div id="messageTrackableOwner">Message owner</div></button>				
+		</div>			
+ 	
+
+		<div class="view" id="lookupTrackable">  <!-- view 28 -->
+			<div id="lookupHeader"><b>Trackable lookup - enter one of the following:</b></div>
+			<br>
+
+			<fieldset>
+			  <legend class="navItem" tabIndex="0">Trackable Code</legend>
+			  <input id="lookupTrackableCode" type="text"/>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="10">Tracking Number (the secret code on the dog tag)</legend>
+			  <input id="lookupTrackingNumber" type="text"/>
+			</fieldset>			
+
+			<button class="navItem" tabIndex="20" data-function="lookupTrackable">Search</button>
+			<button class="navItem" tabIndex="30" data-function="cancel">Cancel</button>			
+		
+		</div>	
+
+		<div class="view" id="enterCoords">  <!-- view 29 -->
+			<div id="lookupHeader"><b>Enter Coordinates</b></div>
+			<br>
+			<button class="navItem" tabIndex="0" data-function="toggleManualCoords" id="manualCoordsDisplay">Toggle Coordinates Format</button>			
+			<!--<fieldset>
+			  <legend class="navItem" tabIndex="0">Coordinates Format</legend>
+			  <select id="coordinateFormat" onchange="updateManualCoordDisplay()">
+				<option value="DMM">DMM</option>
+				<option value="DMS">DMS</option>
+				<option value="DDD">DDD</option>					
+			  </select>
+			</fieldset>-->
+			<fieldset>
+			  <legend class="navItem" tabIndex="10"><b>Latitude</b></legend>
+			  <input id="manualLat" type="text"/>
+			</fieldset>	
+			<fieldset>
+			  <legend class="navItem" tabIndex="20"><b>Longitude</b></legend>
+			  <input id="manualLng" type="text"/>
+			</fieldset>				
+
+
+			<button class="navItem" tabIndex="30" data-function="goManualCoords">Go to Coords</button>
+			<button class="navItem" tabIndex="40" data-function="goManualCoordsSetWaypoint">Go to Coords & Set Waypoint</button>			
+			<button class="navItem" tabIndex="50" data-function="cancel">Cancel</button>			
+		
+		</div>		 
+	 
 	 
 	
     <div id="softkeyBar">
