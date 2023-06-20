@@ -5042,8 +5042,10 @@ function ShowCacheDetails(CacheID,promptToLoadFullDetails,isWaypoint) {
 						var fullCallsResetLocal = localStorage.getItem('fullCallsReset');				
 
 						basicUserMessageForCacheDownload = "As a basic Geocaching member, you are permitted to download full details of 3 geocaches per 24 hour period.  You currently have <b>" + localStorage.getItem('fullCallsRemaining') + " caches remaining until " + fullCallsResetLocal + "</b> when your basic member limit will be reset";					
+				
+						basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + 
+						"<br><br>Upgrade to Geocaching Premium today to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade."
 
-						basicUserMessageForCacheDownload = basicUserMessageForCacheDownload + "<br><br>Upgrade to Geocaching.com Premium Membership today for as little at $2.50 per month to download the full details for up to 6000 caches per day, view all cache types in your area, and access many more benefits. Visit Geocaching.com to upgrade.";				
 
 						promptToLoad.innerHTML = basicUserMessageForCacheDownload;
 						
@@ -7469,6 +7471,21 @@ function getToken(signup){
 
 	// start a function to check to see if the auth is complete.  once complete we will push the user to the map screen
 	// also includes a timeout function in case we get stuck somewhere
+	
+	if(rootKaiOSVersion !== 2) { // start up a service worker to listen for the return URL if on KaiOS v3.x
+		//alert('starting eventlistener');
+		//self.addEventListener('fetch', function(event) {
+		//	alert('inside eventlistener');
+		//	if (event.request.url.includes('https://caching-on-kai.com/')) {
+		//	alert('inside found URL');
+		//	var urlParams = new URLSearchParams(event.request.url.split('?')[1]);
+		//	var myQueryParam = urlParams.get('myQueryParam');
+			// Do something with the query parameter
+		//	console.log('Serviceworker watching: myQueryParam:' + myQueryParam);
+		//	alert(myQueryParam);
+		//	}
+		//});
+	};
 	
 	var loginCheck = setInterval(myTimer, 500);
 	var loginCheckCounter = 0;
