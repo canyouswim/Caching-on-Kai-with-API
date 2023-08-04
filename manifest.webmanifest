@@ -1,7 +1,7 @@
 {
   "name": "Cache-on-Kai",
   "id": "Cache-on-Kai",
-  "description": "Login has been fixed! Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
+  "description": "Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program.",
   "type": "privileged",
   "lang": "en-US",
   "theme_color": "#02874D",
@@ -31,7 +31,7 @@
     "en-US": {
       "name": "Cache-on-Kai",
       "subtitle": "Geocaching for the rest of us",
-      "description": "Login has been fixed! Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program."
+      "description": "Go geocaching with KaiOS, now with trackables! Developed by a geocaching community member and officially authorized by geocaching.com through the Geocaching Authorized Developer program."
     }
   },
 
@@ -44,17 +44,11 @@
   ],
 
     "b2g_features": {
-	  "version": "4.26",
-
+	  "version": "4.26.12",
     "developer": {
       "name": "canyouswim",
       "url": "https://caching-on-kai.com"
     },	  
-	
-    "serviceworker": {
-      "script_url": "/src/app.js"
-    },	
-	
     "permissions": {
       "geolocation": {
         "description": "Required to show user's location on map"
@@ -65,7 +59,7 @@
       "device-storage:apps": {
         "access": "readonly"
       },
-      "systemXHR": {app
+      "systemXHR": {
         "description": "Required to load remote content from geocaching.com"
       }
     },

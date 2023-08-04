@@ -3424,7 +3424,8 @@ or:
 	User-Agent: user_agent_string
 
 */
-
+  var writeThisLog = false; // turn on/off writing of logs to GA
+  if(writeThisLog){
 	var xhr = new XMLHttpRequest({ mozSystem: true });
 	var method = "GET";	
 	var url = "https://www.google-analytics.com/collect?";
@@ -3464,6 +3465,7 @@ or:
 		  }
 		}; 
 		xhr.send();	
+  };
 }
 
 function getChangeLog() {
@@ -3877,7 +3879,14 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 						};
 						// once we're done processing the array, we need to push it back to localstorage 
 						// so that we commit any removed / expired cacheShortDescription
-						localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
+							try {
+							  localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));	
+							}
+							catch(err) {
+							  //alert(`Error on saving to localstore: ${err.message}`);
+							}							
+						
+						//localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
 					};
 
 					// let the user know we're done processing data
@@ -4250,7 +4259,14 @@ function ListCaches(myLat,myLng,loadFromStorage,showListWhenDone) {
 			};
 			// once we're done processing the array, we need to push it back to localstorage 
 			// so that we commit any removed / expired cacheShortDescription
-			localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
+							try {
+							  localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));	
+							}
+							catch(err) {
+							  //alert(`Error on saving to localstore: ${err.message}`);
+							}				
+			
+			//localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));			
 		};
 
 		// second, pull the current list of stored cache images
@@ -4589,7 +4605,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 							//console.log(`status: ${geostatus}`);
 						if (geostatus >= 200 && geostatus < 400) {
 						  var siteText = xhr.response;				
-							//console.log(`response: ${siteText}`);
+							//alert(`load cache details response: ${siteText}`);
 
 							//===========================================================
 							// first drop the cache details response into our array of loaded cache details
@@ -4600,7 +4616,7 @@ function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 							
 							if(arrayCacheDetailsStr !== null) {
 								arrayCacheDetails = JSON.parse(localStorage.getItem("arrayCacheDetails"));
-								
+								//alert('finished putting RAW cache to array for later');
 							};
 							
 							var cacheExpires = localStorage.getItem("fullCallsReset");
@@ -4612,6 +4628,8 @@ function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 								expires: cacheExpires,
 								cacheDetails: siteText
 							};
+							
+							//alert(`arrayCacheDetailsObject = ${arrayCacheDetailsObject}`);
 							
 							// drop that new cache detail into the list of loaded caches, but only if not a refresh
 							if (isRefresh !== true) {
@@ -4625,16 +4643,48 @@ function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 								  }
 								}									
 							};
+							//alert('finished updating details (if we were refreshing) into list of loaded caches');
 							
 							// finally update our localstore of fully loaded caches 
-							localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));							
+								//if (confirm("Should we try to write this cache to localstore so we don't need to load it again next time?")) {
+								//	localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));	
+								//}							
+							try {
+							  localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));	
+							}
+							catch(err) {
+							  //alert(`Error on saving to localstore: ${err.message}`);
+							}							
+							//localStorage.setItem("arrayCacheDetails", JSON.stringify(arrayCacheDetails));	
+							//alert('finished updating our localstore of fully loaded caches');
 							//===============================================================
 							// now parse the returned JSON out and do stuff with it
+							
 							var cacheDetails = JSON.parse(siteText);
-							var imageCount = cacheDetails.images.length;
-							var logCount = cacheDetails.geocacheLogs.length;
-							//var logImageCount
+							//alert('starting problem area... define imageCountRaw');
+							
+							var imageCount;
+							var imageCountRaw = cacheDetails.images;
+							//alert(`do we have images? cacheDetails.images = ${imageCountRaw}`);
+							if (imageCountRaw !== null) {
+								imageCount = cacheDetails.images.length;
+							} else {
+								imageCount = 0;
+							};
+							
+							//alert('now define logCountRaw');
+							
+							var logCountRaw = cacheDetails.geocacheLogs;
+							//alert(`do we have logs? cacheDetails.gecocacheLogs = ${logCountRaw}`);
+							var logCount;
+							if (logCountRaw !== null) {
+								logCount = cacheDetails.geocacheLogs.length;
+							} else {
+								logCount = 0;
+							};
+
 								
+							//alert('starting to write cache details to cache array');
 
 							var lastVisitedRaw = cacheDetails.lastVisitedDate;	
 							if(lastVisitedRaw !== null){
@@ -4647,33 +4697,49 @@ function LoadCacheDetails(CacheCode,loadFullDetails,isRefresh) {
 							
 							//update the cache array entry with the rest of the live details 
 							arrayCache[CacheID].cacheName = cacheDetails.name;
+							//alert('updated cacheDetails');
 							arrayCache[CacheID].cacheDescription = cacheDetails.longDescription;
+							//alert('updated description');
 							//arrayCache[CacheID].cacheHiddenDate = Placed;
 							//arrayCache[CacheID].cacheDifficulty = Difficulty;
 							//arrayCache[CacheID].cacheTerrain = Terrain;
 							//arrayCache[CacheID].cacheSize = ContainerSize;
 							arrayCache[CacheID].cacheHint = cacheDetails.hints;
+							//alert('about to write logs');
 							arrayCache[CacheID].cacheLogs = cacheDetails.geocacheLogs;
-							arrayCache[CacheID].cacheFullyLoaded = true;	
+							//alert('updated logs');
+							arrayCache[CacheID].cacheFullyLoaded = true;
+							//alert('set fully loaded to TRUE');
 							arrayCache[CacheID].cacheTrackableCount = cacheDetails.trackableCount;
+							//alert('updated trackable count');
 							arrayCache[CacheID].cacheStatus = cacheDetails.status;
+							//alert('updated status');
 							arrayCache[CacheID].cacheLastVisited = lastVisited;
+							//alert('updated lastVisited');
 							arrayCache[CacheID].cacheShortDescription = cacheDetails.shortDescription;
+							//alert('updated short description');
 							arrayCache[CacheID].cacheAttributes = cacheDetails.attributes;
+							//alert('updated attributes');
 							//arrayCache[CacheID].cacheFindCount = cacheDetails.findCount;
-							arrayCache[CacheID].cacheUserData = cacheDetails.userData;		
+							arrayCache[CacheID].cacheUserData = cacheDetails.userData;	
+							//alert('updated userData');
 							//arrayCache[CacheID].cacheImages = cacheDetails.images;
+							//alert('about to write number of logs');
 							arrayCache[CacheID].cacheLogLoadCount = cacheDetails.geocacheLogs.length;
+							//alert('updated number of logs loaded');
 							arrayCache[CacheID].cacheIsPremium = cacheDetails.isPremiumOnly;
+							//alert('updated isPremiumOnly');
 								
 							// our array is now updated - go show the cache details
 							//viewCacheLogs(CacheID);
 							currentCacheFullLoaded = true;
 							// update our stored user stats as a result of loading this cache.
 							updateUserDetails();	
+							//alert('finished updating UserDetails and stats');
 
 							//now load up images for this cache 
 							loadCacheImages(CacheCode, CacheID);
+							//alert('finished loading cache images');
 							
 							logAnalytics("Caches","ViewFullDetails",userMembershipLevelId);
 							// now that we're done, push over to showing the cache details 
